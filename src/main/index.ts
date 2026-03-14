@@ -3,6 +3,8 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { initDatabase } from './infrastructure/database/sqliteClient';
+import { SqliteCotizacionRepository } from './infrastructure/database/repositories/SqliteCotizacionRepository';
+import { GuardarBorradorUseCase } from './application/useCases/GuardarBorradorUseCase';
 
 function createWindow(): void {
   // Create the browser window.
@@ -54,6 +56,21 @@ app.whenReady().then(() => {
   ipcMain.on('ping', () => console.log('pong'))
 
   initDatabase();
+
+  // 2. Instanciar nuestras capas
+  const cotizacionRepo = new SqliteCotizacionRepository();
+  const guardarBorradorUseCase = new GuardarBorradorUseCase(cotizacionRepo);
+
+  // 3. Abrir el canal IPC para React
+  ipcMain.handle('cotizaciones:guardar-borrador', (_event, payload) => {
+    try {
+      console.log('Main recibió petición para guardar borrador:', payload);
+      return guardarBorradorUseCase.execute(payload);
+    } catch (error) {
+      console.error('Error al guardar borrador:', error);
+      return { success: false, error: (error as Error).message };
+    }
+  });
 
   createWindow()
 

@@ -1,8 +1,13 @@
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
+import { CotizacionBorrador } from '../shared/types/Cotizacion';
 
 // Custom APIs for renderer
-const api = {}
+const api = {
+  // Exponemos una función fuertemente tipada para las chicas de frontend
+  guardarBorrador: (datos: CotizacionBorrador) => 
+    ipcRenderer.invoke('cotizaciones:guardar-borrador', datos)
+};
 
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise

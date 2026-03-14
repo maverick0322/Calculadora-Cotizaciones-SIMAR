@@ -1,34 +1,55 @@
-import Versions from './components/Versions'
-import electronLogo from './assets/electron.svg'
+import { JSX } from 'react';
+import { CotizacionBorrador } from '../../shared/types/Cotizacion'
 
-function App(): React.JSX.Element {
-  const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
+function App(): JSX.Element {
+  
+  const probarBackend = async () => {
+    // 1. Armamos un DTO falso que cumple perfectamente con el contrato
+    const datosPrueba: CotizacionBorrador = {
+      ubicacion: {
+        direccion: 'Av. Lázaro Cárdenas 100',
+        municipio: 'Xalapa',
+        colonia: 'Centro'
+      },
+      actividad: 'recoleccion',
+      residuo: 'peligroso',
+      volumenCantidad: 50,
+      volumenUnidad: 'kg',
+      frecuencia: 'semanal',
+      fechaCreacion: Date.now(),
+      estado: 'borrador'
+    }
+
+    try {
+      // 2. Disparamos la bala trazadora hacia el backend
+      console.log('Enviando datos a SQLite...');
+      const respuesta = await window.api.guardarBorrador(datosPrueba);
+      
+      // 3. Vemos qué nos respondió el Caso de Uso
+      console.log('Respuesta del Backend:', respuesta);
+      
+      if (respuesta.success) {
+        alert(`¡Éxito! Cotización guardada en SQLite con el ID: ${respuesta.id}`);
+      } else {
+        alert(`Error del backend: ${respuesta.error}`);
+      }
+    } catch (error) {
+      console.error('Error en el puente IPC:', error);
+    }
+  }
 
   return (
-    <>
-      <img alt="logo" className="logo" src={electronLogo} />
-      <div className="creator">Powered by electron-vite</div>
-      <div className="text">
-        Build an Electron app with <span className="react">React</span>
-        &nbsp;and <span className="ts">TypeScript</span>
-      </div>
-      <p className="tip">
-        Please try pressing <code>F12</code> to open the devTool
-      </p>
-      <div className="actions">
-        <div className="action">
-          <a href="https://electron-vite.org/" target="_blank" rel="noreferrer">
-            Documentation
-          </a>
-        </div>
-        <div className="action">
-          <a target="_blank" rel="noreferrer" onClick={ipcHandle}>
-            Send IPC
-          </a>
-        </div>
-      </div>
-      <Versions></Versions>
-    </>
+    <div style={{ padding: '50px', fontFamily: 'sans-serif' }}>
+      <h2>Arquitectura Clean Electron 🚀</h2>
+      <p>Prueba de integración End-to-End</p>
+      
+      <button 
+        onClick={probarBackend}
+        style={{ padding: '10px 20px', fontSize: '16px', cursor: 'pointer' }}
+      >
+        Guardar Borrador de Prueba en SQLite
+      </button>
+    </div>
   )
 }
 
