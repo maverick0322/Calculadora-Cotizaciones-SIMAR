@@ -1,34 +1,51 @@
-# calculadora-cotizaciones-simar
+# Sistema de Cotizaciones SIMAR - Desktop App 🚛♻️
 
-An Electron application with React and TypeScript
+Subsistema de escritorio local-first para la generación y gestión de cotizaciones del área comercial.
+Desarrollado con Electron, React, TypeScript y SQLite bajo principios de Clean Architecture.
 
-## Recommended IDE Setup
+## 🚀 Requisitos Previos
 
-- [VSCode](https://code.visualstudio.com/) + [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
+Antes de empezar, asegúrate de tener instalado:
+* [Node.js](https://nodejs.org/) (Versión 20 o superior recomendada)
+* Git
 
-## Project Setup
+## 🛠️ Instalación y Configuración para el Equipo
 
-### Install
+**1. Clonar el repositorio**
+\`\`\`bash
+git clone https://github.com/maverick0322/GestorResiduos-Desktop.git
+cd GestorResiduos-Desktop
+\`\`\`
 
-```bash
-$ npm install
-```
+**2. Instalar dependencias**
+\`\`\`bash
+npm install
+\`\`\`
 
-### Development
+**3. Compilar módulos nativos (¡MUY IMPORTANTE!)**
+Como usamos SQLite (una base de datos nativa en C++), cada vez que instales paquetes nuevos debes decirle a Electron que los recompile para su entorno interno. Ejecuta:
+\`\`\`bash
+npx electron-builder install-app-deps
+\`\`\`
 
-```bash
-$ npm run dev
-```
+**4. Levantar el entorno de desarrollo**
+\`\`\`bash
+npm run dev
+\`\`\`
 
-### Build
+## 🌿 Flujo de Trabajo (Git Workflow)
 
-```bash
-# For windows
-$ npm run build:win
+**NUNCA trabajes directamente en la rama `main`.**
 
-# For macOS
-$ npm run build:mac
+1. Actualiza tu rama principal: `git checkout main` y luego `git pull`
+2. Crea tu rama de trabajo: `git checkout -b feature/nombre-de-tu-tarea`
+3. Haz tus cambios y guárdalos: `git commit -m "feat: agregué X componente"`
+4. Sube tu rama: `git push -u origin feature/nombre-de-tu-tarea`
+5. Ve a GitHub y abre un **Pull Request** para revisión.
 
-# For Linux
-$ npm run build:linux
-```
+## 🏗️ Arquitectura del Proyecto
+
+* **`src/main/`**: Backend local (Node.js). Aquí vive SQLite, los Casos de Uso y las reglas de negocio.
+* **`src/renderer/`**: Frontend (React). Aquí viven los componentes visuales de Tailwind. *Regla de oro: El frontend no puede importar nada directamente del main.*
+* **`src/shared/`**: Contratos e interfaces compartidas entre ambos mundos.
+* **`src/preload/`**: El puente de seguridad IPC que conecta React con Node.

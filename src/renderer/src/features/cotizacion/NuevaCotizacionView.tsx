@@ -1,1 +1,0 @@
-//El componente padre que une los pasos y tiene el botón Guardar
