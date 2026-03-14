@@ -1,0 +1,1 @@
+//Solo los inputs de frecuencia

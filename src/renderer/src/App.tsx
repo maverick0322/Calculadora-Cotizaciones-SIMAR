@@ -4,7 +4,7 @@ import { CotizacionBorrador } from '../../shared/types/Cotizacion'
 function App(): JSX.Element {
   
   const probarBackend = async () => {
-    // 1. Armamos un DTO falso que cumple perfectamente con el contrato
+    //Armamos un DTO falso que cumple perfectamente con el contrato
     const datosPrueba: CotizacionBorrador = {
       ubicacion: {
         direccion: 'Av. Lázaro Cárdenas 100',
@@ -21,11 +21,11 @@ function App(): JSX.Element {
     }
 
     try {
-      // 2. Disparamos la bala trazadora hacia el backend
+      //Disparamos la bala trazadora hacia el backend
       console.log('Enviando datos a SQLite...');
       const respuesta = await window.api.guardarBorrador(datosPrueba);
       
-      // 3. Vemos qué nos respondió el Caso de Uso
+      // Vemos qué nos respondió el Caso de Uso
       console.log('Respuesta del Backend:', respuesta);
       
       if (respuesta.success) {
