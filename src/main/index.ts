@@ -5,6 +5,7 @@ import icon from '../../resources/icon.png?asset'
 import { initDatabase } from './infrastructure/database/sqliteClient';
 import { SqliteCotizacionRepository } from './infrastructure/database/repositories/SqliteCotizacionRepository';
 import { GuardarBorradorUseCase } from './application/useCases/GuardarBorradorUseCase';
+import { GetDraftsUseCase } from './application/useCases/GetDraftsUseCase';
 
 function createWindow(): void {
   // Create the browser window.
@@ -60,6 +61,7 @@ app.whenReady().then(() => {
   // 2. Instanciar nuestras capas
   const cotizacionRepo = new SqliteCotizacionRepository();
   const guardarBorradorUseCase = new GuardarBorradorUseCase(cotizacionRepo);
+  const getDraftsUseCase = new GetDraftsUseCase(cotizacionRepo);
 
   // 3. Abrir el canal IPC para React
   ipcMain.handle('cotizaciones:guardar-borrador', (_event, payload) => {
@@ -68,6 +70,16 @@ app.whenReady().then(() => {
       return guardarBorradorUseCase.execute(payload);
     } catch (error) {
       console.error('Error al guardar borrador:', error);
+      return { success: false, error: (error as Error).message };
+    }
+  });
+
+  ipcMain.handle('quotes:get-drafts', () => {
+    try {
+      console.log('Main recibió petición para listar borradores');
+      return getDraftsUseCase.execute();
+    } catch (error) {
+      console.error('Error al listar borradores:', error);
       return { success: false, error: (error as Error).message };
     }
   });
