@@ -1,6 +1,6 @@
 import db from '../sqliteClient';
 import { ICotizacionRepository } from '../../../domain/repositories/ICotizacionRepository';
-import { CotizacionBorrador } from '../../../../shared/types/Cotizacion';
+import { CotizacionBorrador, QuoteSummary } from '../../../../shared/types/Cotizacion';
 
 export class SqliteCotizacionRepository implements ICotizacionRepository {
   guardarBorrador(cotizacion: CotizacionBorrador): number | bigint {
@@ -30,5 +30,25 @@ export class SqliteCotizacionRepository implements ICotizacionRepository {
 
     // lastInsertRowid nos devuelve el ID autoincremental que SQLite acaba de generar
     return info.lastInsertRowid;
+  }
+
+  getDrafts(): QuoteSummary[] {
+    // Usamos alias (AS) para que el resultado haga match perfecto con la interfaz QuoteSummary
+    const stmt = db.prepare(`
+      SELECT 
+        id, 
+        folio, 
+        location_address AS locationAddress, 
+        activity_type AS activityType, 
+        waste_type AS wasteType, 
+        created_at AS createdAt, 
+        status
+      FROM quotes 
+      WHERE status = 'draft' 
+      ORDER BY created_at DESC
+    `);
+
+    // .all() ejecuta la consulta y devuelve un arreglo de objetos
+    return stmt.all() as QuoteSummary[];
   }
 }

@@ -4,9 +4,10 @@ import { CotizacionBorrador } from '../shared/types/Cotizacion';
 
 // Custom APIs for renderer
 const api = {
-  // Exponemos una función fuertemente tipada para las chicas de frontend
   guardarBorrador: (datos: CotizacionBorrador) => 
-    ipcRenderer.invoke('cotizaciones:guardar-borrador', datos)
+    ipcRenderer.invoke('cotizaciones:guardar-borrador', datos),
+  
+  getDrafts: () => ipcRenderer.invoke('quotes:get-drafts')
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to
