@@ -1,14 +1,15 @@
 //El componente padre que une los pasos y tiene el botón Guardar
 import { FormProvider } from 'react-hook-form';
-import { useQuoteForm } from './hooks/useQuoteForm';
+import { QuoteFormValues, useQuoteForm } from './hooks/useQuoteForm';
 import { LocationStep } from './components/LocationStep';
 import { WasteStep } from './components/WasteStep';
+import { JSX } from 'react';
 // Importa los demás steps...
 
-export const NewQuoteView = () => {
+export const NewQuoteView = ():  JSX.Element => {
   const { form, submitDraft } = useQuoteForm();
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: QuoteFormValues): Promise<void> => {
     const success = await submitDraft(data);
     if (success) {
       alert('Draft saved successfully!');
