@@ -1,31 +1,19 @@
 // src/main/infrastructure/database/sqliteClient.ts
 import Database from 'better-sqlite3';
-import type { Database as DatabaseType } from 'better-sqlite3'; // <-- Importamos el Tipo explícitamente
+import type { Database as DatabaseType } from 'better-sqlite3'; 
 import { app } from 'electron';
 import path from 'path';
-// 1. DEFINIR LA UBICACIÓN SEGURA DEL ARCHIVO
-// En Electron no debes guardar la base de datos en la misma carpeta del proyecto,
-// porque cuando instales la app en Windows (Archivos de Programa), el sistema
-// bloqueará la escritura por seguridad. 
-// app.getPath('userData') apunta a C:\Users\TuUsuario\AppData\Roaming\TuApp\
-const dbPath = path.join(app.getPath('userData'), 'gestor_residuos.sqlite');
 
-// 2. CREAR LA INSTANCIA DE LA BASE DE DATOS
-// El objeto db mantendrá la conexión abierta con el archivo.
+const dbPath = path.join(app.getPath('userData'), 'gestor_residuos.sqlite');
 const db: DatabaseType = new Database(dbPath, { 
-    // verbose: console.log 
 });
 
-// 3. CONFIGURACIONES CRÍTICAS DE SQLITE (PRAGMAS)
-// Activa el modo WAL (Write-Ahead Logging). Hace que SQLite sea mucho más rápido y evita bloqueos.
 db.pragma('journal_mode = WAL');
-// ¡Mortalmente importante! SQLite tiene las llaves foráneas APAGADAS por defecto por razones históricas.
-// Si no prendemos esto, las relaciones de tus tablas no se respetarán.
 db.pragma('foreign_keys = ON');
 
-// 4. FUNCIÓN PARA INICIALIZAR EL ESQUEMA (TABLAS)
+
 export const initDatabase = () => {
-    // Aquí usamos el esquema que definimos, adaptado a la sintaxis de SQLite
+
     const schema = `
         -- 1. CATÁLOGOS CORE
         CREATE TABLE IF NOT EXISTS users (
