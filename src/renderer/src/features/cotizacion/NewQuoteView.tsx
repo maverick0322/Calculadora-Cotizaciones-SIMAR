@@ -1,21 +1,25 @@
 //El componente padre que une los pasos y tiene el botón Guardar
 import { FormProvider } from 'react-hook-form';
-import { QuoteFormValues, useQuoteForm } from './hooks/useQuoteForm';
+import { useQuoteForm } from './hooks/useQuoteForm';
+import { QuoteFormValues } from '../../../../shared/schemas/quoteSchema';
 import { LocationStep } from './components/LocationStep';
 import { WasteStep } from './components/WasteStep';
 import { JSX } from 'react';
-// Importa los demás steps...
+import toast from 'react-hot-toast';
 
 export const NewQuoteView = ():  JSX.Element => {
   const { form, submitDraft } = useQuoteForm();
 
   const onSubmit = async (data: QuoteFormValues): Promise<void> => {
+    const toastId = toast.loading('Saving draft...');
     const success = await submitDraft(data);
+
     if (success) {
-      alert('Draft saved successfully!');
+      toast.success('Draft saved successfully!', {id: toastId});
+
       form.reset();
     } else {
-      alert('Error saving draft. Check console.');
+      toast.error('Error saving draft. Check connection.', {id: toastId});
     }
   };
 
