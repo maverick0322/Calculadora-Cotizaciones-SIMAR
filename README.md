@@ -13,25 +13,19 @@ Antes de empezar, asegúrate de tener instalado:
 
 **1. Clonar el repositorio**
 \`\`\`bash
-git clone https://github.com/maverick0322/GestorResiduos-Desktop.git
-cd GestorResiduos-Desktop
+**`git clone https://github.com/maverick0322/Calculadora-Cotizaciones-SIMAR.git`**
+**`cd GestorResiduos-Desktop`**
 \`\`\`
 
 **2. Instalar dependencias**
-\`\`\`bash
-npm install
-\`\`\`
+**`npm install`**
 
 **3. Compilar módulos nativos (¡MUY IMPORTANTE!)**
 Como usamos SQLite (una base de datos nativa en C++), cada vez que instales paquetes nuevos debes decirle a Electron que los recompile para su entorno interno. Ejecuta:
-\`\`\`bash
-npx electron-builder install-app-deps
-\`\`\`
+**`npx electron-builder install-app-deps`**
 
 **4. Levantar el entorno de desarrollo**
-\`\`\`bash
-npm run dev
-\`\`\`
+**`npm run dev`**
 
 ## 🌿 Flujo de Trabajo (Git Workflow)
 
