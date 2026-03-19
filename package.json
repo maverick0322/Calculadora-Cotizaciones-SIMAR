@@ -26,6 +26,7 @@
     "@hookform/resolvers": "^5.2.2",
     "better-sqlite3": "^12.6.2",
     "electron-updater": "^6.3.9",
+    "lucide-react": "^0.577.0",
     "react-hook-form": "^7.71.2",
     "react-hot-toast": "^2.6.0",
     "zod": "^4.3.6"

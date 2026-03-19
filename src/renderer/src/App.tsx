@@ -2,6 +2,7 @@ import { JSX, useState, useEffect } from 'react';
 import { Toaster } from 'react-hot-toast'; 
 import { NewQuoteView } from './features/cotizacion/NewQuoteView';
 import logoImg from './assets/logo.png'; 
+import { DashboardView } from './features/cotizacion/DashboardView';
 
 type View = 'splash' | 'newQuote' | 'dashboard';
 
@@ -92,19 +93,10 @@ function App(): JSX.Element {
       {/* CONTENIDO DE LA VISTA SELECCIONADA */}
       <main className="py-8">
         {currentView === 'newQuote' && <NewQuoteView />}
-        {currentView === 'dashboard' && <DashboardPlaceholder />}
+        
+        {/* LÍNEA CORREGIDA: Ahora sí llamamos a tu componente real */}
+        {currentView === 'dashboard' && <DashboardView />}
       </main>
-    </div>
-  );
-}
-
-// Un componente temporal para Xcaret mañana (puedes borrarlo después de su sesión)
-function DashboardPlaceholder() {
-  return (
-    <div className="max-w-4xl mx-auto p-10 bg-white rounded-lg border border-gray-200 shadow-sm text-center">
-      <div className="text-6xl mb-4">📊</div>
-      <h2 className="text-2xl font-bold text-gray-900">Dashboard de borradores</h2>
-      <p className="text-gray-600 mt-2">Xcaret y Erick llenarán este espacio con la lista de cotizaciones reales de SQLite.</p>
     </div>
   );
 }
