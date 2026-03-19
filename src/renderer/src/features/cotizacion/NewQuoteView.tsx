@@ -25,7 +25,7 @@ export const NewQuoteView = ():  JSX.Element => {
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold mb-6 text-gray-800">New Quote</h1>
+      <h1 className="text-2xl font-bold mb-6 text-gray-800">Nueva Cotización</h1>
       
       {/* FormProvider inyecta el estado del formulario a todos los componentes hijos mágicamente */}
       <FormProvider {...form}>
@@ -40,7 +40,7 @@ export const NewQuoteView = ():  JSX.Element => {
               type="submit"
               className="px-6 py-2 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 transition"
             >
-              Save Draft
+              Guardar Borrador
             </button>
           </div>
         </form>

@@ -1,7 +1,7 @@
 //Solo los inputs de direccion
 
 import { useFormContext } from 'react-hook-form';
-import { QuoteFormValues } from '../hooks/useQuoteForm';
+import { QuoteFormValues } from '../../../../../shared/schemas/quoteSchema';
 import { JSX } from 'react';
 
 export const LocationStep = (): JSX.Element => {
@@ -11,13 +11,13 @@ export const LocationStep = (): JSX.Element => {
   return (
     <div className="mb-10">
       <h2 className="text-lg font-semibold text-gray-900 mb-6 pb-2 border-b border-gray-100">
-        Location Details
+        Detalles de Ubicación
       </h2>
       
       <div className="space-y-5">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Street Address <span className="text-gray-400 ml-2">(Dirección)</span>
+            Dirección <span className="text-gray-400 ml-2">(Calle, Número)</span>
           </label>
           <input
             type="text"
@@ -30,7 +30,7 @@ export const LocationStep = (): JSX.Element => {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Ciudad</label>
             <input
               type="text"
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -38,7 +38,7 @@ export const LocationStep = (): JSX.Element => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Neighborhood</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Colonia</label>
             <input
               type="text"
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
