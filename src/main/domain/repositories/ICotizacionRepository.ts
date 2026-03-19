@@ -2,10 +2,6 @@ import { CotizacionBorrador, QuoteSummary } from '../../../shared/types/Cotizaci
 
 export interface ICotizacionRepository {
   guardarBorrador(cotizacion: CotizacionBorrador): number | bigint;
-}
-
-export interface ICotizacionRepository {
-  guardarBorrador(cotizacion: CotizacionBorrador): number | bigint;
   
   getDrafts(): QuoteSummary[];
 }
