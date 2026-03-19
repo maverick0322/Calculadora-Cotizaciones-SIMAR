@@ -1,5 +1,4 @@
 import { JSX } from 'react';
-// 1. Importamos el Toaster
 import { Toaster } from 'react-hot-toast'; 
 import { NewQuoteView } from './features/cotizacion/NewQuoteView';
 

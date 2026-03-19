@@ -13,7 +13,7 @@ export const useQuoteForm = () => {
       residuo: 'domestico',
       volumenCantidad: 0,
       volumenUnidad: 'kg',
-      frecuencia: 'semanal'
+      frecuencia: ''
     }
   });
 
