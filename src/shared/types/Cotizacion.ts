@@ -24,3 +24,12 @@ export interface CotizacionBorrador {
   fechaCreacion: number;     // Timestamp en milisegundos (mejor que Date para SQLite/IPC)
   estado: 'borrador' | 'emitida' | 'cancelada';
 }
+export interface QuoteSummary {
+  id: number;
+  folio: string;
+  ubicacion: string;    // Aquí vendrá la dirección ya concatenada
+  residuo: string;      // El tipo de residuo
+  volumen: string;      // Ej. "50 kg"
+  fechaCreacion: number;
+  estado: string;
+}
