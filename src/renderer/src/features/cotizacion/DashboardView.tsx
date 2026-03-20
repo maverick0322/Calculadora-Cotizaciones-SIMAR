@@ -43,10 +43,10 @@ export const DashboardView = (): JSX.Element => {
       {/* Header Section */}
       <div className="mb-8">
         <h1 className="text-2xl font-semibold text-gray-900 mb-1">
-          Recent Drafts
+          Borradores recientes
         </h1>
         <p className="text-sm text-gray-500">
-          Manage your saved quotes
+          Administra tus borradores
         </p>
       </div>
 
@@ -65,7 +65,7 @@ export const DashboardView = (): JSX.Element => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              
+
               {/* ESTADO DE CARGA O VACÍO */}
               {loading && (
                 <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">Loading drafts...</td></tr>
