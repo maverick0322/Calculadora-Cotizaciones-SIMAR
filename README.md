@@ -12,17 +12,15 @@ Antes de empezar, asegúrate de tener instalado:
 ## 🛠️ Instalación y Configuración para el Equipo
 
 **1. Clonar el repositorio**
-\`\`\`bash
 **`git clone https://github.com/maverick0322/Calculadora-Cotizaciones-SIMAR.git`**
 **`cd GestorResiduos-Desktop`**
-\`\`\`
 
 **2. Instalar dependencias**
 **`npm install`**
 
-**3. Compilar módulos nativos (¡MUY IMPORTANTE!)**
+**3. Compilar módulos nativos**
 Como usamos SQLite (una base de datos nativa en C++), cada vez que instales paquetes nuevos debes decirle a Electron que los recompile para su entorno interno. Ejecuta:
-**`npx electron-builder install-app-deps`**
+**`npx electron-builder install-app-deps`** y **`npm install lucide-react`**
 
 **4. Levantar el entorno de desarrollo**
 **`npm run dev`**
@@ -31,11 +29,21 @@ Como usamos SQLite (una base de datos nativa en C++), cada vez que instales paqu
 
 **NUNCA trabajes directamente en la rama `main`.**
 
-1. Actualiza tu rama principal: `git checkout main` y luego `git pull`
+1. Actualiza tu rama principal: `git checkout main` y luego `git pull origin main`
 2. Crea tu rama de trabajo: `git checkout -b feature/nombre-de-tu-tarea`
-3. Haz tus cambios y guárdalos: `git commit -m "feat: agregué X componente"`
-4. Sube tu rama: `git push -u origin feature/nombre-de-tu-tarea`
-5. Ve a GitHub y abre un **Pull Request** para revisión.
+* **`[FEAT]`**: Para añadir funcionalidades, describe lo que añadiste en el commit.
+* **`[CHORE]`**: Para tareas, describe la tarea hecha en el commit.
+* **`[FIX]`**: Para arreglar, describe el problema que arreglaste en el commit.
+* **`[DOC]`**: para documentación, describe la documentación agregada en el commit.
+* **`[PERF]`**: Para optimización, describe lo que optimizaste en el commit.
+* **`[REFACTOR]`**: para refactorización, describe lo que refactorizaste en el commit.
+3. Revisamos en qué rama nos encontramos: `git branch`
+3. Revisamos qué archivos hemos modificado: `git status`
+4. Añade todos los cambios trabajados en memoria: `git add .`
+5. Guarda los cambios: `git commit -m "feat: agregué X componente"`
+6. Sube tu rama: `git push -u origin feature/nombre-de-tu-tarea`
+8. Ve a GitHub y abre un **Pull Request** para revisión, agrega una descripción clara y crea el pull request.
+7. Cuando se apruebe el merge regresa a la rama principal y actualízala: `git checkout main` y luego `git pull origin main`
 
 ## 🏗️ Arquitectura del Proyecto
 
