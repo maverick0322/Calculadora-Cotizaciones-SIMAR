@@ -57,21 +57,21 @@ export const DashboardView = (): JSX.Element => {
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50/50">
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Folio</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Waste Type</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Creation Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Direccion</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo de residuo</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha de creacion</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Accion</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
 
               {/* ESTADO DE CARGA O VACÍO */}
               {loading && (
-                <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">Loading drafts...</td></tr>
+                <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">Cargando borradores...</td></tr>
               )}
               {!loading && drafts.length === 0 && (
-                <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">No drafts found. Create a new one!</td></tr>
+                <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">No se encontraron borradores. ¡Crea uno nuevo!</td></tr>
               )}
 
               {/* 4. EL MAPEO: Convertimos cada dato de SQLite en una fila HTML */}
