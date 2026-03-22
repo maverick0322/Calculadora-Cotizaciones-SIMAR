@@ -59,8 +59,8 @@ export const WasteStep = (): JSX.Element => {
               <option value="kg">kg</option>
               <option value="ton">ton</option>
               <option value="m3">m³</option>
-              <option value="contenedores">containers</option>
-              <option value="viajes">trips</option>
+              <option value="contenedores">contenedores</option>
+              <option value="viajes">viajes</option>
             </select>
           </div>
         </div>
