@@ -15,6 +15,7 @@ export const DashboardView = (): JSX.Element => {
       try {
         const response = await window.api.getDrafts();
         if (response.success) {
+          console.log("🕵️ Datos crudos de SQLite:", response.data);
           setDrafts(response.data || []);
         } else {
           toast.error('Error al cargar la base de datos');
@@ -74,41 +75,62 @@ export const DashboardView = (): JSX.Element => {
                 <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">No se encontraron borradores. ¡Crea uno nuevo!</td></tr>
               )}
 
-              {/* 4. EL MAPEO: Convertimos cada dato de SQLite en una fila HTML */}
-              {drafts.map((draft) => (
-                <tr key={draft.id} className="hover:bg-gray-50/50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm font-medium text-gray-900">{draft.folio || `#00${draft.id}`}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm text-gray-900">{draft.ubicacion}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm">
-                      <div className="text-gray-900 capitalize">{draft.residuo}</div>
-                      <div className="text-gray-500">{draft.volumen}</div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-500">{formatDate(draft.fechaCreacion)}</span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200 capitalize">
-                      {draft.estado}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button className="inline-flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 text-gray-600 hover:text-gray-900 transition-colors">
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                      <button className="inline-flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 text-gray-600 hover:text-gray-900 transition-colors">
-                        <FileText className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {/* 4. EL MAPEO DEFINITIVO (Sincronizado con SQLite) */}
+              {drafts.map((draft: any) => {
+                
+                // 1. Fecha: Asumiendo que tu backend lo manda como createdAt o creationDate
+                // Si la fecha sigue fallando, revisa en la consola cómo se llama exactamente esa llave
+                const rawDate = draft.createdAt || draft.creationDate || draft.fechaCreacion;
+                const dateToShow = rawDate ? formatDate(Number(rawDate)) : 'Fecha desconocida';
+
+                // 2. Ubicación: Directo a la vena con la llave en inglés
+                const locationToShow = draft.locationAddress || 'Sin dirección';
+
+                // 3. Residuo y Volumen:
+                const wasteToShow = draft.wasteType || 'No especificado';
+                // Asumiendo que el volumen viene como volumeQuantity / volumeUnit o volume
+                const volumeToShow = draft.volume || (draft.volumeQuantity ? `${draft.volumeQuantity} ${draft.volumeUnit}` : '');
+
+                // 4. Estado: 
+                const statusToShow = draft.status || draft.estado || 'draft';
+
+                return (
+                  <tr key={draft.id} className="hover:bg-gray-50/50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm font-medium text-gray-900">{draft.folio || `#00${draft.id}`}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm text-gray-900">{locationToShow}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm">
+                        <div className="text-gray-900 capitalize">{wasteToShow}</div>
+                        <div className="text-gray-500">{volumeToShow}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-gray-500">{dateToShow}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200 capitalize">
+                        {statusToShow}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        {/* Botón de Editar */}
+                        <button className="inline-flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 text-gray-600 hover:text-gray-900 transition-colors" title="Editar Borrador">
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        {/* Botón de Imprimir a PDF */}
+                        <button className="inline-flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 text-gray-600 hover:text-gray-900 transition-colors" title="Generar PDF">
+                          <FileText className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
 
             </tbody>
           </table>

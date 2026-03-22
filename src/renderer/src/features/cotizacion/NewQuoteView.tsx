@@ -11,15 +11,15 @@ export const NewQuoteView = ():  JSX.Element => {
   const { form, submitDraft } = useQuoteForm();
 
   const onSubmit = async (data: QuoteFormValues): Promise<void> => {
-    const toastId = toast.loading('Saving draft...');
+    const toastId = toast.loading('Guardando borrador...');
     const success = await submitDraft(data);
 
     if (success) {
-      toast.success('Draft saved successfully!', {id: toastId});
+      toast.success('¡Borrador guardado exitosamente!', {id: toastId});
 
       form.reset();
     } else {
-      toast.error('Error saving draft. Check connection.', {id: toastId});
+      toast.error('Error al guardar el borrador.  r evida tu conexión.', {id: toastId});
     }
   };
 
