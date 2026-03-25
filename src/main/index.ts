@@ -7,6 +7,7 @@ import { SqliteCotizacionRepository } from './infrastructure/database/repositori
 import { GuardarBorradorUseCase } from './application/useCases/GuardarBorradorUseCase';
 import { GetDraftsUseCase } from './application/useCases/GetDraftsUseCase';
 import { quoteSchema } from '../shared/schemas/quoteSchema';
+import db from './infrastructure/database/sqliteClient';
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -59,16 +60,46 @@ app.whenReady().then(() => {
 
       if (!validacion.success) {
         console.warn('Bloqueado por el backend (Datos inválidos):', validacion.error.format());
-        return { 
-          success: false, 
-          error: 'Validación de seguridad fallida en el servidor local', 
-          details: validacion.error.format() 
+        return {
+          success: false,
+          error: 'Validación de seguridad fallida en el servidor local',
+          details: validacion.error.format()
         };      }
       return guardarBorradorUseCase.execute(payload);
-      
+
     } catch (error) {
       console.error('Error al guardar borrador:', error);
       return { success: false, error: (error as Error).message };
+    }
+  });
+
+  // --- NUEVO: CANAL DE AUTENTICACIÓN ---
+  ipcMain.handle('auth:login', async (_event, credentials) => {
+    try {
+      const { email, password } = credentials;
+      console.log(`Intentando iniciar sesión para: ${email}`);
+
+      // Consultamos a SQLite usando el password_hash (que por ahora es texto plano '123456')
+      // Nota: Excluimos password_hash en el SELECT por seguridad, solo traemos los datos útiles
+      const stmt = db.prepare(`
+        SELECT id, central_id, full_name, email, role, is_active
+        FROM users
+        WHERE email = ? AND password_hash = ?
+      `);
+
+      const user = stmt.get(email, password) as any;
+
+      if (user) {
+        if (user.is_active === 0) {
+          return { success: false, error: 'Tu cuenta está desactivada. Contacta al administrador.' };
+        }
+        return { success: true, data: user };
+      } else {
+        return { success: false, error: 'Correo o contraseña incorrectos.' };
+      }
+    } catch (error) {
+      console.error('Error en el login:', error);
+      return { success: false, error: 'Error interno de la base de datos.' };
     }
   });
 

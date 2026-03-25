@@ -1,16 +1,15 @@
 // src/main/infrastructure/database/sqliteClient.ts
 import Database from 'better-sqlite3';
-import type { Database as DatabaseType } from 'better-sqlite3'; 
+import type { Database as DatabaseType } from 'better-sqlite3';
 import { app } from 'electron';
 import path from 'path';
 
 const dbPath = path.join(app.getPath('userData'), 'gestor_residuos.sqlite');
-const db: DatabaseType = new Database(dbPath, { 
+const db: DatabaseType = new Database(dbPath, {
 });
 
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
-
 
 export const initDatabase = () => {
 
@@ -108,10 +107,28 @@ export const initDatabase = () => {
         );
     `;
 
-    // db.exec ejecuta múltiples sentencias SQL de un solo golpe.
-    // Usamos IF NOT EXISTS para que solo las cree la primera vez que se abre la app.
     db.exec(schema);
-    
+
+    try {
+        const stmt = db.prepare('SELECT COUNT(*) as count FROM users');
+        const result = stmt.get() as { count: number };
+
+        if (result.count === 0) {
+            console.log('🌱 Sembrando usuario administrador por defecto...');
+            const insertUser = db.prepare(`
+                INSERT INTO users (email, password_hash, full_name, role)
+                VALUES (?, ?, ?, ?)
+            `);
+
+            // Usamos password_hash y full_name para respetar tu esquema
+            insertUser.run('admin@simar.com', '123456', 'Administrador SIMAR', 'admin');
+            console.log('✅ Administrador creado: admin@simar.com / 123456');
+        }
+    } catch (error) {
+        console.error('❌ Error al inyectar el usuario semilla:', error);
+    }
+    // ----------------------------------------------
+
     console.log('Base de datos SQLite inicializada correctamente en:', dbPath);
 };
 
