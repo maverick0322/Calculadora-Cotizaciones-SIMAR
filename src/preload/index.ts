@@ -6,6 +6,7 @@ import { CotizacionBorrador } from '../shared/types/Cotizacion';
 const api = {
   guardarBorrador: (datos: CotizacionBorrador) => 
     ipcRenderer.invoke('cotizaciones:guardar-borrador', datos),
+  getDraftById: (id) => ipcRenderer.invoke('quotes:get-draft-by-id', id),
   
   getDrafts: () => ipcRenderer.invoke('quotes:get-drafts')
 };

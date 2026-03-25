@@ -10,6 +10,9 @@ function App(): JSX.Element {
   const [currentView, setCurrentView] = useState<View>('splash');
   const [fadeStatus, setFadeStatus] = useState<'in' | 'out'>('in');
 
+  // NUEVO: Estado para saber si estamos editando un borrador (guarda el ID)
+  const [editDraftId, setEditDraftId] = useState<number | null>(null);
+
   useEffect(() => {
     if (currentView !== 'splash') return;
 
@@ -27,6 +30,17 @@ function App(): JSX.Element {
     };
   }, [currentView]);
 
+  // NUEVA FUNCIÓN: Para ir a crear uno en blanco
+  const handleNewDraft = () => {
+    setEditDraftId(null); // Limpiamos cualquier edición previa
+    setCurrentView('newQuote');
+  };
+
+  // NUEVA FUNCIÓN: Para ir a editar uno existente
+  const handleEditDraft = (id: number) => {
+    setEditDraftId(id); // Guardamos el ID que queremos editar
+    setCurrentView('newQuote'); // Cambiamos a la vista del formulario
+  };
 
   if (currentView === 'splash') {
     return (
@@ -63,9 +77,9 @@ function App(): JSX.Element {
           </div>
           
           <div className="flex items-center gap-2 border border-gray-200 rounded-full p-1 bg-gray-50">
-            {/* Botón 1: Nuevo Borrador */}
+            {/* ACTUALIZADO: Botón 1 (Llama a handleNewDraft) */}
             <button
-              onClick={() => setCurrentView('newQuote')}
+              onClick={handleNewDraft}
               className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-colors
                 ${currentView === 'newQuote' 
                   ? 'bg-blue-600 text-white shadow-sm' 
@@ -92,10 +106,10 @@ function App(): JSX.Element {
 
       {/* CONTENIDO DE LA VISTA SELECCIONADA */}
       <main className="py-8">
-        {currentView === 'newQuote' && <NewQuoteView />}
+        {/* ACTUALIZADO: Pasamos las propiedades a los componentes */}
+        {currentView === 'newQuote' && <NewQuoteView editId={editDraftId} />}
         
-        {/* LÍNEA CORREGIDA: Ahora sí llamamos a tu componente real */}
-        {currentView === 'dashboard' && <DashboardView />}
+        {currentView === 'dashboard' && <DashboardView onEditClick={handleEditDraft} />}
       </main>
     </div>
   );
