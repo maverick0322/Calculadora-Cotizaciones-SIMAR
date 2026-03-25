@@ -4,10 +4,11 @@ import { CotizacionBorrador } from '../shared/types/Cotizacion';
 
 // Custom APIs for renderer
 const api = {
-  guardarBorrador: (datos: CotizacionBorrador) => 
+  guardarBorrador: (datos: CotizacionBorrador) =>
     ipcRenderer.invoke('cotizaciones:guardar-borrador', datos),
   getDraftById: (id) => ipcRenderer.invoke('quotes:get-draft-by-id', id),
-  
+  login: (credentials) => ipcRenderer.invoke('auth:login', credentials),
+
   getDrafts: () => ipcRenderer.invoke('quotes:get-drafts')
 };
 
