@@ -6,6 +6,7 @@ import { LocationStep } from './components/LocationStep';
 import { WasteStep } from './components/WasteStep';
 import { JSX } from 'react';
 import toast from 'react-hot-toast';
+import { TripStep } from './components/TripStep';
 
 export const NewQuoteView = ():  JSX.Element => {
   const { form, submitDraft } = useQuoteForm();
@@ -33,7 +34,8 @@ export const NewQuoteView = ():  JSX.Element => {
           
           {/* Aquí Ana y Xcaret irán acomodando sus componentes visuales */}
           <LocationStep />
-          <WasteStep />
+          <WasteStep /> 
+          <TripStep />
           
           <div className="flex justify-end pt-4 border-t">
             <button 
