@@ -4,7 +4,6 @@ import { CotizacionBorrador, QuoteSummary } from '../../../../shared/types/Cotiz
 
 export class SqliteCotizacionRepository implements ICotizacionRepository {
   guardarBorrador(cotizacion: CotizacionBorrador): number | bigint {
-    // Usamos sentencias preparadas (Prepared Statements) para evitar SQL Injection
     const stmt = db.prepare(`
       INSERT INTO quotes (
         location_address, activity_type, waste_type, 
@@ -17,7 +16,6 @@ export class SqliteCotizacionRepository implements ICotizacionRepository {
       )
     `);
 
-    // Ejecutamos la consulta mapeando el DTO a los parámetros del SQL
     const info = stmt.run({
       direccion: `${cotizacion.ubicacion.direccion}, ${cotizacion.ubicacion.colonia}, ${cotizacion.ubicacion.municipio}`,
       actividad: cotizacion.actividad,
@@ -28,12 +26,10 @@ export class SqliteCotizacionRepository implements ICotizacionRepository {
       fechaCreacion: cotizacion.fechaCreacion || Date.now()
     });
 
-    // lastInsertRowid nos devuelve el ID autoincremental que SQLite acaba de generar
     return info.lastInsertRowid;
   }
 
   getDrafts(): QuoteSummary[] {
-    // Usamos alias (AS) para que el resultado haga match perfecto con la interfaz QuoteSummary
     const stmt = db.prepare(`
       SELECT 
         id, 
@@ -48,7 +44,33 @@ export class SqliteCotizacionRepository implements ICotizacionRepository {
       ORDER BY created_at DESC
     `);
 
-    // .all() ejecuta la consulta y devuelve un arreglo de objetos
     return stmt.all() as QuoteSummary[];
+  }
+
+  getDraftById(id: number): any {
+    const stmt = db.prepare(`
+      SELECT * FROM quotes WHERE id = ? AND status = 'draft'
+    `);
+    
+    const row = stmt.get(id) as any;
+
+    if (!row) return null;
+
+    const partesDireccion = row.location_address ? row.location_address.split(', ') : ['', '', ''];
+
+    return {
+      id: row.id,
+      ubicacion: {
+        direccion: partesDireccion[0] || '',
+        colonia: partesDireccion[1] || '',
+        municipio: partesDireccion[2] || ''
+      },
+      actividad: row.activity_type,
+      residuo: row.waste_type,
+      volumenCantidad: row.volume_quantity,
+      volumenUnidad: row.volume_unit,
+      frecuencia: row.service_frequency,
+      fechaCreacion: row.created_at
+    };
   }
 }
