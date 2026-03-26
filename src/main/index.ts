@@ -73,14 +73,11 @@ app.whenReady().then(() => {
     }
   });
 
-  // --- NUEVO: CANAL DE AUTENTICACIÓN ---
   ipcMain.handle('auth:login', async (_event, credentials) => {
     try {
       const { email, password } = credentials;
       console.log(`Intentando iniciar sesión para: ${email}`);
 
-      // Consultamos a SQLite usando el password_hash (que por ahora es texto plano '123456')
-      // Nota: Excluimos password_hash en el SELECT por seguridad, solo traemos los datos útiles
       const stmt = db.prepare(`
         SELECT id, central_id, full_name, email, role, is_active
         FROM users
@@ -100,6 +97,23 @@ app.whenReady().then(() => {
     } catch (error) {
       console.error('Error en el login:', error);
       return { success: false, error: 'Error interno de la base de datos.' };
+    }
+  });
+
+  ipcMain.handle('quotes:get-draft-by-id', async (_event, id) => {
+    try {
+      console.log(`Main recibió petición para buscar borrador #${id}`);
+      
+      const data = cotizacionRepo.getDraftById(id);
+      
+      if (data) {
+        return { success: true, data };
+      } else {
+        return { success: false, error: 'Borrador no encontrado' };
+      }
+    } catch (error) {
+      console.error('Error al buscar borrador:', error);
+      return { success: false, error: (error as Error).message };
     }
   });
 
