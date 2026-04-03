@@ -1,15 +1,20 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import { CotizacionBorrador } from '../shared/types/Cotizacion';
+import { QuoteDraft } from '../shared/types/Quote'; 
 
 // Custom APIs for renderer
 const api = {
-  guardarBorrador: (datos: CotizacionBorrador) =>
-    ipcRenderer.invoke('cotizaciones:guardar-borrador', datos),
-  getDraftById: (id) => ipcRenderer.invoke('quotes:get-draft-by-id', id),
-  login: (credentials) => ipcRenderer.invoke('auth:login', credentials),
+  saveDraft: (data: QuoteDraft) =>
+    ipcRenderer.invoke('quotes:save-draft', data),
+    
+  getDraftById: (id: number | string) => 
+    ipcRenderer.invoke('quotes:get-draft-by-id', id),
+    
+  login: (credentials: Record<string, string>) => 
+    ipcRenderer.invoke('auth:login', credentials),
 
-  getDrafts: () => ipcRenderer.invoke('quotes:get-drafts')
+  getDrafts: () => 
+    ipcRenderer.invoke('quotes:get-drafts')
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to

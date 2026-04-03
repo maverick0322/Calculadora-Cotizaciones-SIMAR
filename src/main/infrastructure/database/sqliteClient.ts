@@ -5,16 +5,13 @@ import { app } from 'electron';
 import path from 'path';
 
 const dbPath = path.join(app.getPath('userData'), 'gestor_residuos.sqlite');
-const db: DatabaseType = new Database(dbPath, {
-});
+const db: DatabaseType = new Database(dbPath, {});
 
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
 export const initDatabase = () => {
-
     const schema = `
-        -- 1. CATÁLOGOS CORE
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             central_id VARCHAR,
@@ -56,7 +53,6 @@ export const initDatabase = () => {
             estimated_cost DECIMAL
         );
 
-        -- 2. TRANSACCIONAL CORE
         CREATE TABLE IF NOT EXISTS quotes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             folio VARCHAR UNIQUE,
@@ -64,7 +60,11 @@ export const initDatabase = () => {
             customer_id INTEGER,
             seller_id INTEGER,
             replaces_quote_id INTEGER,
-            location_address TEXT,
+            
+            street TEXT,
+            neighborhood TEXT,
+            municipality TEXT,
+            
             activity_type VARCHAR,
             waste_type VARCHAR,
             volume_quantity DECIMAL,
@@ -72,13 +72,22 @@ export const initDatabase = () => {
             service_frequency VARCHAR,
             subtotal DECIMAL,
             total DECIMAL,
+            trip_kilometers DECIMAL,
+            trip_vehicles INTEGER,
+            trip_crew_members INTEGER,
+            trip_routes INTEGER,
+            trip_fuel_liters DECIMAL,
+            trip_road_type VARCHAR,
+            trip_tolls INTEGER,
+            trip_total_toll_cost DECIMAL,
+            trip_origin VARCHAR,
+            trip_destination_warehouse VARCHAR,
             created_at INTEGER,
             FOREIGN KEY (customer_id) REFERENCES customers(id),
             FOREIGN KEY (seller_id) REFERENCES users(id),
             FOREIGN KEY (replaces_quote_id) REFERENCES quotes(id)
         );
 
-        -- 3. TABLAS INTERMEDIAS (SNAPSHOTS)
         CREATE TABLE IF NOT EXISTS quote_supplies (
             quote_id INTEGER,
             supply_id INTEGER,
@@ -120,14 +129,12 @@ export const initDatabase = () => {
                 VALUES (?, ?, ?, ?)
             `);
 
-            // Usamos password_hash y full_name para respetar tu esquema
             insertUser.run('admin@simar.com', '123456', 'Administrador SIMAR', 'admin');
             console.log('✅ Administrador creado: admin@simar.com / 123456');
         }
     } catch (error) {
         console.error('❌ Error al inyectar el usuario semilla:', error);
     }
-    // ----------------------------------------------
 
     console.log('Base de datos SQLite inicializada correctamente en:', dbPath);
 };

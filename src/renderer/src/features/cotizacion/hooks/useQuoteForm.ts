@@ -1,40 +1,56 @@
-import { useForm } from 'react-hook-form';
+import { useEffect } from 'react';
+import { useForm, Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-// 1. Importamos el esquema y el tipo desde la carpeta compartida
+import toast from 'react-hot-toast';
 import { quoteSchema, QuoteFormValues } from '../../../../../shared/schemas/quoteSchema';
-import { CotizacionBorrador } from '../../../../../shared/types/Cotizacion';
+import { QuoteDraft } from '../../../../../shared/types/Quote';
 
-export const useQuoteForm = () => {
+export const useQuoteForm = (editId?: number | null) => {
   const form = useForm<QuoteFormValues>({
-    resolver: zodResolver(quoteSchema),
+    resolver: zodResolver(quoteSchema) as unknown as Resolver<QuoteFormValues>,
     defaultValues: {
-      ubicacion: { direccion: '', municipio: '', colonia: '' },
-      actividad: 'recoleccion',
-      residuo: 'domestico',
-      volumenCantidad: 0,
-      volumenUnidad: 'kg',
-      frecuencia: ''
-    }
+      location: { street: '', municipality: '', neighborhood: '' },
+      activity: 'collection',
+      waste: 'domestic',
+      volumeQuantity: 0,
+      volumeUnit: 'kg',
+    } as Partial<QuoteFormValues>                                                   
   });
 
-  const submitDraft = async (data: QuoteFormValues): Promise<boolean> => {
-    const draftPayload: CotizacionBorrador = {
-      ...data,
-      fechaCreacion: Date.now(),
-      estado: 'borrador'
+  useEffect(() => {
+    if (!editId) {
+      form.reset();
+      return;
+    }
+
+    const fetchDraftData = async () => {
+      const toastId = toast.loading('Cargando borrador...');
+      try {
+        const response = await window.api.getDraftById(editId);
+        if (response.success && response.data) {
+          const draft: QuoteDraft = response.data;
+          form.reset({
+            location: draft.location, activity: draft.activity,
+            waste: draft.waste, volumeQuantity: draft.volumeQuantity,
+            volumeUnit: draft.volumeUnit, frequency: draft.frequency, trip: draft.trip 
+          });
+          toast.success('Borrador listo para editar', { id: toastId });
+        } else {
+          toast.error('No se pudo cargar el borrador', { id: toastId });
+        }
+      } catch (error) {
+        toast.error(`Error de conexión`, { id: toastId });
+      }
     };
 
+    fetchDraftData();
+  }, [editId, form]);
+
+  const submitDraft = async (draftPayload: QuoteDraft): Promise<boolean> => {
     try {
-      const response = await window.api.guardarBorrador(draftPayload);
-      if (response.success) {
-        console.log('Draft saved successfully with ID:', response.id);
-        return true;
-      } else {
-        console.error('Backend error:', response.error);
-        return false;
-      }
+      const response = await window.api.saveDraft(draftPayload);
+      return response.success;
     } catch (error) {
-      console.error('IPC error:', error);
       return false;
     }
   };
