@@ -2,12 +2,17 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import { initDatabase } from './infrastructure/database/sqliteClient';
-import { SqliteCotizacionRepository } from './infrastructure/database/repositories/SqliteCotizacionRepository';
-import { GuardarBorradorUseCase } from './application/useCases/GuardarBorradorUseCase';
+
+import db, { initDatabase } from './infrastructure/database/sqliteClient'; 
+import { SqliteQuoteRepository } from './infrastructure/database/repositories/SqliteQuoteRepository';
+import { SqliteAuthRepository } from './infrastructure/database/repositories/SqliteAuthRepository';
+
+import { SaveDraftUseCase } from './application/useCases/SaveDraftUseCase'; 
 import { GetDraftsUseCase } from './application/useCases/GetDraftsUseCase';
+import { GetDraftByIdUseCase } from './application/useCases/GetDraftByIdUseCase'; 
+import { LoginUseCase } from './application/useCases/LoginUseCase';
+
 import { quoteSchema } from '../shared/schemas/quoteSchema';
-import db from './infrastructure/database/sqliteClient';
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -49,80 +54,65 @@ app.whenReady().then(() => {
 
   initDatabase();
 
-  const cotizacionRepo = new SqliteCotizacionRepository();
-  const guardarBorradorUseCase = new GuardarBorradorUseCase(cotizacionRepo);
-  const getDraftsUseCase = new GetDraftsUseCase(cotizacionRepo);
+  const quoteRepo = new SqliteQuoteRepository(db);
+  const authRepo = new SqliteAuthRepository(db);
 
-  ipcMain.handle('cotizaciones:guardar-borrador', (_event, payload) => {
+  const saveDraftUseCase = new SaveDraftUseCase(quoteRepo);
+  const getDraftsUseCase = new GetDraftsUseCase(quoteRepo);
+  const getDraftByIdUseCase = new GetDraftByIdUseCase(quoteRepo);
+  const loginUseCase = new LoginUseCase(authRepo);
+
+  ipcMain.handle('quotes:save-draft', (_event, payload) => {
     try {
-      console.log('Main recibió petición para guardar borrador:', payload);
-      const validacion = quoteSchema.safeParse(payload);
+      console.log('Main received request to save draft:', payload);
+      
+      const validation = quoteSchema.safeParse(payload);
 
-      if (!validacion.success) {
-        console.warn('Bloqueado por el backend (Datos inválidos):', validacion.error.format());
+      if (!validation.success) {
+        console.warn('Blocked by local backend (Invalid data):', validation.error.format());
         return {
           success: false,
-          error: 'Validación de seguridad fallida en el servidor local',
-          details: validacion.error.format()
-        };      }
-      return guardarBorradorUseCase.execute(payload);
+          error: 'Local server security validation failed',
+          details: validation.error.format()
+        };      
+      }
+      
+      return saveDraftUseCase.execute(payload);
 
     } catch (error) {
-      console.error('Error al guardar borrador:', error);
+      console.error('Error saving draft:', error);
       return { success: false, error: (error as Error).message };
     }
   });
 
   ipcMain.handle('auth:login', async (_event, credentials) => {
-    try {
-      const { email, password } = credentials;
-      console.log(`Intentando iniciar sesión para: ${email}`);
-
-      const stmt = db.prepare(`
-        SELECT id, central_id, full_name, email, role, is_active
-        FROM users
-        WHERE email = ? AND password_hash = ?
-      `);
-
-      const user = stmt.get(email, password) as any;
-
-      if (user) {
-        if (user.is_active === 0) {
-          return { success: false, error: 'Tu cuenta está desactivada. Contacta al administrador.' };
-        }
-        return { success: true, data: user };
-      } else {
-        return { success: false, error: 'Correo o contraseña incorrectos.' };
-      }
-    } catch (error) {
-      console.error('Error en el login:', error);
-      return { success: false, error: 'Error interno de la base de datos.' };
-    }
+    console.log(`Attempting login for: ${credentials?.email}`);
+    return loginUseCase.execute(credentials);
   });
 
   ipcMain.handle('quotes:get-draft-by-id', async (_event, id) => {
     try {
-      console.log(`Main recibió petición para buscar borrador #${id}`);
+      console.log(`Main received request to fetch draft #${id}`);
       
-      const data = cotizacionRepo.getDraftById(id);
+      const data = getDraftByIdUseCase.execute(id);
       
       if (data) {
         return { success: true, data };
       } else {
-        return { success: false, error: 'Borrador no encontrado' };
+        return { success: false, error: 'Draft not found' };
       }
     } catch (error) {
-      console.error('Error al buscar borrador:', error);
+      console.error('Error fetching draft:', error);
       return { success: false, error: (error as Error).message };
     }
   });
 
   ipcMain.handle('quotes:get-drafts', () => {
     try {
-      console.log('Main recibió petición para listar borradores');
+      console.log('Main received request to list drafts');
       return getDraftsUseCase.execute();
     } catch (error) {
-      console.error('Error al listar borradores:', error);
+      console.error('Error listing drafts:', error);
       return { success: false, error: (error as Error).message };
     }
   });
@@ -130,7 +120,6 @@ app.whenReady().then(() => {
   createWindow()
 
   app.on('activate', function () {
-
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 })

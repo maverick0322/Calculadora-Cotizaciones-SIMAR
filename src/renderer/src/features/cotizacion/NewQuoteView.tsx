@@ -1,54 +1,72 @@
-import { FormProvider } from 'react-hook-form';
+import { FormProvider, FieldErrors } from 'react-hook-form';
+import toast from 'react-hot-toast';
 import { useQuoteForm } from './hooks/useQuoteForm';
 import { QuoteFormValues } from '../../../../shared/schemas/quoteSchema';
+import { QuoteDraft, RoadType } from '../../../../shared/types/Quote'; 
 import { LocationStep } from './components/LocationStep';
 import { WasteStep } from './components/WasteStep';
-import { TripStep } from './components/TripStep'; // <-- El componente de Ana
-import { JSX, useEffect } from 'react'; 
-import toast from 'react-hot-toast';
+import { TripStep } from './components/TripStep';
 
-export const NewQuoteView = ({editId}: {editId?: number | null}):  JSX.Element => {
-  const { form, submitDraft } = useQuoteForm();
+interface INewQuoteViewProps {
+  editId?: number | null;
+}
 
-  // EFECTO DE AUTOLLENADO DE XCARET
-  useEffect(() => {
-    if (editId) {
-      const fetchDraftData = async () => {
-        const toastId = toast.loading('Cargando borrador...');
-        try {
-          const response = await window.api.getDraftById(editId);
-          
-          if (response.success && response.data) {
-            form.reset(response.data);
-            toast.success('Borrador listo para editar', { id: toastId });
-          } else {
-            toast.error('No se pudo cargar el borrador', { id: toastId });
-          }
-        } catch (error) {
-          console.error('Error:', error);
-          toast.error('Error de conexión', { id: toastId });
-        }
+export const NewQuoteView = ({ editId }: INewQuoteViewProps) => {
+  const { form, submitDraft } = useQuoteForm(editId);
+
+  const handleQuoteSubmit = async (data: QuoteFormValues): Promise<void> => {
+    const toastId = toast.loading(editId ? 'Actualizando borrador...' : 'Guardando borrador...');
+
+    try {
+      let cleanTrip = data.trip as QuoteDraft['trip'];
+      
+      if (data.trip) {
+        const cleanRoadType = (data.trip.roadType === '' || data.trip.roadType === null) 
+          ? undefined 
+          : data.trip.roadType as RoadType;
+
+        cleanTrip = {
+          ...data.trip,
+          roadType: cleanRoadType,
+          kilometers: data.trip.kilometers,
+          vehicles: data.trip.vehicles,
+          crewMembers: data.trip.crewMembers,
+          routes: data.trip.routes,
+          fuelLiters: data.trip.fuelLiters,
+          origin: data.trip.origin,
+          destinationWarehouse: data.trip.destinationWarehouse
+        };
+      }
+
+      const payload: QuoteDraft = {
+        id: editId || undefined,
+        status: 'draft',
+        createdAt: Date.now(),
+        ...data,
+        trip: cleanTrip
       };
 
-      fetchDraftData();
-    } else {
-      form.reset(); 
-    }
-  }, [editId, form]);
+      const isSuccess = await submitDraft(payload);
 
-  const onSubmit = async (data: QuoteFormValues): Promise<void> => {
-    const toastId = toast.loading('Guardando borrador...');
-    
-    // Lógica combinada: Mandar el ID si estamos editando
-    const dataWithId = editId ? { ...data, id: editId } : data;
-    const success = await submitDraft(dataWithId);
+      if (!isSuccess) {
+        toast.error('Error al guardar el borrador. Revisa tu conexión.', { id: toastId });
+        return;
+      }
 
-    if (success) {
-      toast.success(editId ? '¡Borrador actualizado!' : '¡Borrador guardado exitosamente!', {id: toastId});
-      if (!editId) form.reset();
-    } else {
-      toast.error('Error al guardar el borrador. Revisa tu conexión.', {id: toastId});
+      toast.success(editId ? '¡Borrador actualizado!' : '¡Borrador guardado exitosamente!', { id: toastId });
+      
+      if (!editId) {
+        form.reset();
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      toast.error(`Error inesperado al guardar: ${errorMessage}`, { id: toastId });
     }
+  };
+
+  const onFormError = (errors: FieldErrors<QuoteFormValues>) => {
+    console.error('❌ Errores de validación bloqueando el guardado:', errors);
+    toast.error('Hay campos inválidos o incompletos. Revisa la consola.');
   };
 
   return (
@@ -56,16 +74,15 @@ export const NewQuoteView = ({editId}: {editId?: number | null}):  JSX.Element =
       <h1 className="text-2xl font-bold mb-6 text-gray-800">
         {editId ? `Editando Borrador #${editId}` : 'Nueva Cotización'}
       </h1>
-      
+
       <FormProvider {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          
+        <form onSubmit={form.handleSubmit(handleQuoteSubmit, onFormError)} className="space-y-8">
           <LocationStep />
           <WasteStep />
-          <TripStep /> {/* <-- Integración del paso de Ana */}
-          
+          <TripStep />
+
           <div className="flex justify-end pt-4 border-t">
-            <button 
+            <button
               type="submit"
               className="px-6 py-2 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 transition"
             >
