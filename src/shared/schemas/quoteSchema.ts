@@ -24,7 +24,6 @@ export const quoteSchema = z.object({
     crewMembers: z.coerce.number().min(1, 'Minimum 1 crew member'),
     routes: z.coerce.number().min(1, 'Minimum 1 route'),
     fuelLiters: z.coerce.number().min(0, 'Fuel estimation is required'),
-    // CAMBIO: Ahora acepta literalmente que no haya nada seleccionado
     roadType: z.enum(['free', 'toll']).nullable().optional().or(z.literal('')),
     tolls: z.coerce.number().min(0).optional(),
     totalTollCost: z.coerce.number().min(0).optional(),
