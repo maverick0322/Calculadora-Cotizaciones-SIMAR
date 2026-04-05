@@ -21,7 +21,9 @@ jobs:
         node-version: '20'
 
     - name: Instalar dependencias
-      run: npm install
+        run: |
+          npm ci
+          npm rebuild better-sqlite3
 
     - name: Ejecutar pruebas unitarias
       run: npx vitest run

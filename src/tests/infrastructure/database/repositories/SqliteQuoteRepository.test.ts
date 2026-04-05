@@ -37,7 +37,7 @@ describe('SqliteQuoteRepository', () => {
   });
 
   afterAll(() => {
-    db.close();
+    db?.close();
   });
 
   beforeEach(() => {

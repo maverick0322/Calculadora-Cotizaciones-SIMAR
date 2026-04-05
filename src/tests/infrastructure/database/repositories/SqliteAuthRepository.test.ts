@@ -23,7 +23,7 @@ describe('SqliteAuthRepository', () => {
   });
 
   afterAll(() => {
-    db.close();
+    db?.close();
   });
 
   beforeEach(() => {
