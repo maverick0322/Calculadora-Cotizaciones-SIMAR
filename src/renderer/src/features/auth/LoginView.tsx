@@ -1,5 +1,5 @@
 import logoImg from '../../assets/logo.png'; 
-import { useLoginForm } from '../cotizacion/hooks/useLoginForm';
+import { useLoginForm } from './hooks/useLoginForm';
 
 export const LoginView = ({ onLoginSuccess }: { onLoginSuccess: () => void }) => {
   const { form, submitLogin, errorMsg, isLoading } = useLoginForm(onLoginSuccess);

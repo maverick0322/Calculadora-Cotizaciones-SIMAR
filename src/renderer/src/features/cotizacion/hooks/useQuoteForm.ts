@@ -3,7 +3,7 @@ import { useForm, Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import toast from 'react-hot-toast';
 import { quoteSchema, QuoteFormValues } from '../../../../../shared/schemas/quoteSchema';
-import { QuoteDraft } from '../../../../../shared/types/Quote';
+import { QuoteDraft, RoadType } from '../../../../../shared/types/Quote';
 
 export const useQuoteForm = (editId?: number | null) => {
   const form = useForm<QuoteFormValues>({
@@ -14,7 +14,7 @@ export const useQuoteForm = (editId?: number | null) => {
       waste: 'domestic',
       volumeQuantity: 0,
       volumeUnit: 'kg',
-    } as Partial<QuoteFormValues>                                                   
+    } as Partial<QuoteFormValues>
   });
 
   useEffect(() => {
@@ -46,9 +46,31 @@ export const useQuoteForm = (editId?: number | null) => {
     fetchDraftData();
   }, [editId, form]);
 
-  const submitDraft = async (draftPayload: QuoteDraft): Promise<boolean> => {
+  // AHORA EL HOOK RECIBE DATOS CRUDOS Y LOS FORMATEA
+  const submitDraft = async (data: QuoteFormValues): Promise<boolean> => {
     try {
-      const response = await window.api.saveDraft(draftPayload);
+      let cleanTrip = data.trip as QuoteDraft['trip'];
+      
+      if (data.trip) {
+        const cleanRoadType = (data.trip.roadType === '' || data.trip.roadType === null) 
+          ? undefined 
+          : data.trip.roadType as RoadType;
+
+        cleanTrip = {
+          ...data.trip,
+          roadType: cleanRoadType,
+        };
+      }
+
+      const payload: QuoteDraft = {
+        id: editId || undefined,
+        status: 'draft',
+        createdAt: Date.now(),
+        ...data,
+        trip: cleanTrip
+      };
+
+      const response = await window.api.saveDraft(payload);
       return response.success;
     } catch (error) {
       return false;
