@@ -2,7 +2,6 @@ import { FormProvider, FieldErrors } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { useQuoteForm } from './hooks/useQuoteForm';
 import { QuoteFormValues } from '../../../../shared/schemas/quoteSchema';
-import { QuoteDraft, RoadType } from '../../../../shared/types/Quote'; 
 import { LocationStep } from './components/LocationStep';
 import { WasteStep } from './components/WasteStep';
 import { TripStep } from './components/TripStep';
@@ -18,35 +17,8 @@ export const NewQuoteView = ({ editId }: INewQuoteViewProps) => {
     const toastId = toast.loading(editId ? 'Actualizando borrador...' : 'Guardando borrador...');
 
     try {
-      let cleanTrip = data.trip as QuoteDraft['trip'];
-      
-      if (data.trip) {
-        const cleanRoadType = (data.trip.roadType === '' || data.trip.roadType === null) 
-          ? undefined 
-          : data.trip.roadType as RoadType;
-
-        cleanTrip = {
-          ...data.trip,
-          roadType: cleanRoadType,
-          kilometers: data.trip.kilometers,
-          vehicles: data.trip.vehicles,
-          crewMembers: data.trip.crewMembers,
-          routes: data.trip.routes,
-          fuelLiters: data.trip.fuelLiters,
-          origin: data.trip.origin,
-          destinationWarehouse: data.trip.destinationWarehouse
-        };
-      }
-
-      const payload: QuoteDraft = {
-        id: editId || undefined,
-        status: 'draft',
-        createdAt: Date.now(),
-        ...data,
-        trip: cleanTrip
-      };
-
-      const isSuccess = await submitDraft(payload);
+      // Le pasamos el problema al hook
+      const isSuccess = await submitDraft(data);
 
       if (!isSuccess) {
         toast.error('Error al guardar el borrador. Revisa tu conexión.', { id: toastId });
