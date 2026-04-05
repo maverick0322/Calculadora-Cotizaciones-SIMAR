@@ -25,6 +25,22 @@ Como usamos SQLite (una base de datos nativa en C++), cada vez que instales paqu
 **4. Levantar el entorno de desarrollo**
 **`npm run dev`**
 
+## 🧪 Pruebas Unitarias (Testing)
+
+El proyecto cuenta con una robusta malla de seguridad de pruebas unitarias (Vitest + React Testing Library) para garantizar que la lógica de negocio y la interfaz funcionen correctamente antes de subir cambios.
+
+**1. Ejecutar todas las pruebas (Modo Interactivo)**
+Ideal para cuando estás desarrollando. La terminal se quedará "escuchando" y correrá las pruebas automáticamente cada vez que guardes un archivo.
+**`npx vitest`**
+
+**2. Ejecutar las pruebas una sola vez**
+Ideal para comprobar que todo está verde antes de hacer un commit.
+**`npx vitest run`**
+
+> **⚠️ IMPORTANTE: Error de Módulos Nativos (SQLite)**
+> Si al correr las pruebas ves un error rojo gigante que menciona `NODE_MODULE_VERSION` o `better-sqlite3`, significa que tu terminal y Electron están usando versiones distintas de Node. 
+> **Solución:** Detén las pruebas (`q`), ejecuta **`npm rebuild better-sqlite3`** en tu terminal y vuelve a correr `npx vitest`.
+
 ## 🌿 Flujo de Trabajo (Git Workflow)
 
 **NUNCA trabajes directamente en la rama `main`.**
@@ -38,12 +54,12 @@ Como usamos SQLite (una base de datos nativa en C++), cada vez que instales paqu
 * **`[PERF]`**: Para optimización, describe lo que optimizaste en el commit.
 * **`[REFACTOR]`**: para refactorización, describe lo que refactorizaste en el commit.
 3. Revisamos en qué rama nos encontramos: `git branch`
-3. Revisamos qué archivos hemos modificado: `git status`
-4. Añade todos los cambios trabajados en memoria: `git add .`
-5. Guarda los cambios: `git commit -m "feat: agregué X componente"`
-6. Sube tu rama: `git push -u origin feature/nombre-de-tu-tarea`
+4. Revisamos qué archivos hemos modificado: `git status`
+5. Añade todos los cambios trabajados en memoria: `git add .`
+6. Guarda los cambios: `git commit -m "feat: agregué X componente"`
+7. Sube tu rama: `git push -u origin feature/nombre-de-tu-tarea`
 8. Ve a GitHub y abre un **Pull Request** para revisión, agrega una descripción clara y crea el pull request.
-7. Cuando se apruebe el merge regresa a la rama principal y actualízala: `git checkout main` y luego `git pull origin main`
+9. Cuando se apruebe el merge regresa a la rama principal y actualízala: `git checkout main` y luego `git pull origin main`
 
 ## 🏗️ Arquitectura del Proyecto
 
