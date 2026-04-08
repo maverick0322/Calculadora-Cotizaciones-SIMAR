@@ -3,9 +3,10 @@ import { Toaster } from 'react-hot-toast';
 import { NewQuoteView } from './features/cotizacion/NewQuoteView';
 import logoImg from './assets/logo.png';
 import { DashboardView } from './features/cotizacion/DashboardView';
+import { IssuedQuotesDashboardView } from './features/cotizacion/IssuedQuotesDashboardView';
 import { LoginView } from './features/auth/LoginView';
 
-type View = 'splash' | 'newQuote' | 'dashboard';
+type View = 'splash' | 'newQuote' | 'dashboard' | 'issuedQuotes';
 
 function App() {
   const [currentView, setCurrentView] = useState<View>('splash');
@@ -91,7 +92,18 @@ function App() {
                       : 'text-gray-600 hover:text-blue-600'}`
                   }
                 >
-                  📊 Borradores
+                  📝 Borradores
+                </button>
+
+                <button
+                  onClick={() => setCurrentView('issuedQuotes')}
+                  className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-colors
+                    ${currentView === 'issuedQuotes'
+                      ? 'bg-green-600 text-white shadow-sm'
+                      : 'text-gray-600 hover:text-green-600'}`
+                  }
+                >
+                  ✅ Emitidas
                 </button>
 
                 <button
@@ -107,6 +119,7 @@ function App() {
           <main className="py-8">
             {currentView === 'newQuote' && <NewQuoteView editId={editDraftId} />}
             {currentView === 'dashboard' && <DashboardView onEditClick={handleEditDraft} />}
+            {currentView === 'issuedQuotes' && <IssuedQuotesDashboardView />}
           </main>
         </div>
       )}

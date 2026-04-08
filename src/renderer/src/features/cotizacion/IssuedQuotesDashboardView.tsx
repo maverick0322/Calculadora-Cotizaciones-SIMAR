@@ -1,0 +1,119 @@
+import { FileText, CheckCircle } from 'lucide-react';
+import { QuoteSummary } from '../../../../shared/types/Quote';
+import { useIssuedQuotes } from './hooks/useIssuedQuotes';
+import { usePdfWorkflow } from './hooks/usePdfWorkflow';
+import { PdfPreviewModal } from './components/PdfPreviewModal';
+
+const wasteTranslations: Record<string, string> = {
+  domestic: 'Doméstico',
+  organic: 'Orgánico',
+  recyclable: 'Reciclable',
+  hazardous: 'Peligroso',
+  bulky: 'Voluminoso'
+};
+
+export const IssuedQuotesDashboardView = () => {  
+  const { issuedQuotes, loading, fetchIssuedQuotes } = useIssuedQuotes();
+
+  const { 
+    isModalOpen, 
+    isLoading: isPdfLoading, 
+    pdfBase64, 
+    openPdfPreview, 
+    downloadPdf, 
+    closeModal 
+  } = usePdfWorkflow(() => {
+    fetchIssuedQuotes(); 
+  });
+
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp).toLocaleDateString('es-MX', {
+      year: 'numeric', month: 'short', day: 'numeric'
+    });
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold text-gray-900 mb-1 flex items-center gap-2">
+          Cotizaciones Emitidas <CheckCircle className="w-6 h-6 text-green-500" />
+        </h1>
+        <p className="text-sm text-gray-500">
+          Historial de documentos oficiales. Estos registros son inmutables.
+        </p>
+      </div>
+
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-gray-200 bg-gray-50/50">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Folio Oficial</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dirección</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo de residuo</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha de Emisión</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Documento</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+
+              {loading && (
+                <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">Cargando historial...</td></tr>
+              )}
+              
+              {!loading && issuedQuotes.length === 0 && (
+                <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-500">Aún no has emitido ninguna cotización.</td></tr>
+              )}
+
+              {issuedQuotes.map((quote: QuoteSummary) => {
+                const dateToShow = quote.createdAt ? formatDate(Number(quote.createdAt)) : 'Fecha desconocida';
+                const locationToShow = quote.location || 'Sin dirección';
+                const wasteToShow = wasteTranslations[quote.waste] || quote.waste || 'No especificado';
+
+                return (
+                  <tr key={quote.id} className="hover:bg-gray-50/50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm font-bold text-gray-900">{quote.folio || `#00${quote.id}`}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm text-gray-900">{locationToShow}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm">
+                        <div className="text-gray-900 capitalize">{wasteToShow}</div>
+                        <div className="text-gray-500">{quote.volume}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-gray-500">{dateToShow}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <button 
+                        onClick={() => openPdfPreview(Number(quote.id), false)} 
+                        disabled={isPdfLoading}
+                        className="inline-flex items-center justify-center px-3 py-1.5 rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors disabled:opacity-50 font-medium text-sm gap-2" 
+                        title="Ver Documento PDF"
+                      >
+                        <FileText className="w-4 h-4" />
+                        Ver PDF
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <PdfPreviewModal 
+        isOpen={isModalOpen}
+        isLoading={isPdfLoading}
+        pdfBase64={pdfBase64}
+        onClose={closeModal}
+        onDownload={downloadPdf}
+      />
+
+    </div>
+  );
+};

@@ -15,6 +15,7 @@ import { LoginUseCase } from './application/useCases/LoginUseCase';
 import { FetchQuoteByIdUseCase } from './application/useCases/FetchQuoteByIdUseCase';
 import { IssueQuoteUseCase } from './application/useCases/IssueQuoteUseCase';
 import { GeneratePdfPreviewUseCase } from './application/useCases/GeneratePdfPreviewUseCase';
+import { GetIssuedQuotesUseCase } from './application/useCases/GetIssuedQuotesUseCase';
 import { SavePdfUseCase } from './application/useCases/SavePdfUseCase';
 
 import { quoteSchema } from '../shared/schemas/quoteSchema';
@@ -71,6 +72,7 @@ app.whenReady().then(() => {
   const fetchQuoteByIdUseCase = new FetchQuoteByIdUseCase(quoteRepo);  
   const issueQuoteUseCase = new IssueQuoteUseCase(quoteRepo);
   const generatePdfPreviewUseCase = new GeneratePdfPreviewUseCase();
+  const getIssuedQuotesUseCase = new GetIssuedQuotesUseCase(quoteRepo);
   const savePdfUseCase = new SavePdfUseCase();
 
   ipcMain.handle('quotes:save-draft', (_event, payload) => {
@@ -133,11 +135,6 @@ app.whenReady().then(() => {
     return await issueQuoteUseCase.execute(id);
   });
 
-  ipcMain.handle('quotes:get-issued', () => {
-    console.log('Main received request to list issued quotes');
-    return quoteRepo.getIssuedQuotes(); 
-  });
-
   ipcMain.handle('quotes:get-quote-by-id', (_event, id) => {
     console.log(`Main received request to fetch ANY quote #${id}`);
     return fetchQuoteByIdUseCase.execute(id);
@@ -152,6 +149,11 @@ app.whenReady().then(() => {
     console.log('Main received request to save PDF to disk');
     return await savePdfUseCase.execute(pdfBase64, defaultFolio);
   });
+
+  ipcMain.handle('quotes:get-issued', () => {
+  console.log("Main received request to get issued quotes");
+  return getIssuedQuotesUseCase.execute(); 
+});
 
   createWindow()
 
