@@ -3,6 +3,17 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { DashboardView } from '@renderer/features/cotizacion/DashboardView';
 import * as useDraftsModule from '@renderer/features/cotizacion/hooks/useDrafts';
 
+vi.mock('@renderer/features/cotizacion/hooks/usePdfWorkflow', () => ({
+  usePdfWorkflow: vi.fn(() => ({
+    isModalOpen: false,
+    isLoading: false,
+    pdfBase64: null,
+    openPdfPreview: vi.fn(),
+    downloadPdf: vi.fn(),
+    closeModal: vi.fn()
+  }))
+}));
+
 describe('DashboardView Component', () => {
   const mockOnEditClick = vi.fn();
 
@@ -16,6 +27,7 @@ describe('DashboardView Component', () => {
     vi.spyOn(useDraftsModule, 'useDrafts').mockReturnValue({
       drafts: [],
       loading: true,
+      fetchDrafts: vi.fn()
     } as any);
 
     // [ ACT ]
@@ -31,6 +43,7 @@ describe('DashboardView Component', () => {
     vi.spyOn(useDraftsModule, 'useDrafts').mockReturnValue({
       drafts: [],
       loading: false,
+      fetchDrafts: vi.fn()
     } as any);
 
     // [ ACT ]
@@ -58,6 +71,7 @@ describe('DashboardView Component', () => {
     vi.spyOn(useDraftsModule, 'useDrafts').mockReturnValue({
       drafts: mockDrafts,
       loading: false,
+      fetchDrafts: vi.fn()
     } as any);
 
     // [ ACT ]
@@ -81,6 +95,7 @@ describe('DashboardView Component', () => {
     vi.spyOn(useDraftsModule, 'useDrafts').mockReturnValue({
       drafts: mockDrafts,
       loading: false,
+      fetchDrafts: vi.fn()
     } as any);
 
     render(<DashboardView onEditClick={mockOnEditClick} />);

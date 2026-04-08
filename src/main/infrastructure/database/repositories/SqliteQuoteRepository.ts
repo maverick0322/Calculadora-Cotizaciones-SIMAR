@@ -175,4 +175,55 @@ export class SqliteQuoteRepository implements IQuoteRepository {
       } : undefined
     };
   }
+
+  getQuoteById(id: number): QuoteDraft | null {
+    const stmt = this.db.prepare(`SELECT * FROM quotes WHERE id = ?`);
+    const row = stmt.get(id) as any;
+
+    if (!row) return null;
+    const hasTrip = row.trip_kilometers !== null;
+
+    return {
+      id: row.id,
+      folio: row.folio || undefined,
+      location: { street: row.street, neighborhood: row.neighborhood, municipality: row.municipality },
+      activity: row.activity_type, waste: row.waste_type, volumeQuantity: row.volume_quantity,
+      volumeUnit: row.volume_unit, frequency: row.service_frequency, createdAt: row.created_at,
+      status: row.status,
+      trip: hasTrip ? {
+        kilometers: row.trip_kilometers, vehicles: row.trip_vehicles, crewMembers: row.trip_crew_members,
+        routes: row.trip_routes, fuelLiters: row.trip_fuel_liters, roadType: row.trip_road_type,
+        tolls: row.trip_tolls ?? undefined, totalTollCost: row.trip_total_toll_cost ?? undefined,
+        origin: row.trip_origin, destinationWarehouse: row.trip_destination_warehouse
+      } : undefined
+    };
+  }
+
+  issueQuote(id: number): boolean {
+    const stmt = this.db.prepare(`
+      UPDATE quotes 
+      SET status = 'issued' 
+      WHERE id = ? AND status = 'draft'
+    `);
+    const info = stmt.run(id);
+    return info.changes > 0; 
+  }
+
+  getIssuedQuotes(): QuoteSummary[] {
+    const stmt = this.db.prepare(`
+      SELECT 
+        id, 
+        folio, 
+        (street || ', ' || neighborhood || ', ' || municipality) AS location, 
+        waste_type AS waste, 
+        (volume_quantity || ' ' || volume_unit) AS volume,
+        created_at AS createdAt, 
+        status
+      FROM quotes 
+      WHERE status = 'issued' 
+      ORDER BY created_at DESC
+    `);
+
+    return stmt.all() as QuoteSummary[];
+  }
 }

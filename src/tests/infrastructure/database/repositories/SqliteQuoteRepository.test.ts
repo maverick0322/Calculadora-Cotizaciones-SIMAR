@@ -134,4 +134,40 @@ describe('SqliteQuoteRepository', () => {
     const issuedDraft = repository.getDraftById(Number(info.lastInsertRowid));
     expect(issuedDraft).toBeNull();
   });
+
+  // --- AC 6: ISSUE QUOTE ---
+  it('should successfully change a quote status from draft to issued', () => {
+    const insertId = Number(repository.saveDraft(mockDraftPayload));
+    
+    const success = repository.issueQuote(insertId);
+    
+    expect(success).toBe(true);
+    
+    const row = db.prepare('SELECT status FROM quotes WHERE id = ?').get(insertId) as any;
+    expect(row.status).toBe('issued');
+  });
+
+  it('should return false if trying to issue a quote that does not exist or is already issued', () => {
+    const fail1 = repository.issueQuote(9999);
+    expect(fail1).toBe(false);
+
+    const insertId = Number(repository.saveDraft(mockDraftPayload));
+    repository.issueQuote(insertId);
+    const fail2 = repository.issueQuote(insertId);
+    expect(fail2).toBe(false); 
+  });
+
+  // --- AC 7: GET ISSUED QUOTES ---
+  it('should return only issued quotes for the PDF dashboard', () => {
+    const id1 = Number(repository.saveDraft({ ...mockDraftPayload, volumeQuantity: 10 }));
+    const id2 = Number(repository.saveDraft({ ...mockDraftPayload, volumeQuantity: 20 }));
+    
+    repository.issueQuote(id2);
+
+    const issuedQuotes = repository.getIssuedQuotes();
+
+    expect(issuedQuotes).toHaveLength(1);
+    expect(issuedQuotes[0].volume).toBe('20.0 kg');
+    expect(issuedQuotes[0].status).toBe('issued');
+  });
 });
