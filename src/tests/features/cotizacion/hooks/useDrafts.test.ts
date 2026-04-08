@@ -1,9 +1,3 @@
-declare global {
-  interface Window {
-    api: any;
-  }
-}
-
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useDrafts } from '@renderer/features/cotizacion/hooks/useDrafts';
@@ -12,9 +6,10 @@ describe('useDrafts Hook', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     
+
     window.api = {
       getDrafts: vi.fn(),
-    };
+    } as any;
   });
 
   // --- AC 1: SUCCESFUL LOAD ---
@@ -38,6 +33,7 @@ describe('useDrafts Hook', () => {
 
     expect(window.api.getDrafts).toHaveBeenCalledTimes(1);
     expect(result.current.drafts).toEqual(mockDrafts);
+    expect(typeof result.current.fetchDrafts).toBe('function');
   });
 
   // --- AC 2: HANDLED ERROR ---

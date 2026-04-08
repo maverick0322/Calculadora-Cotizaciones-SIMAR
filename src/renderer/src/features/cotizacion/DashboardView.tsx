@@ -1,6 +1,8 @@
 import { Pencil, FileText } from 'lucide-react';
 import { QuoteSummary } from '../../../../shared/types/Quote';
 import { useDrafts } from './hooks/useDrafts';
+import { usePdfWorkflow } from './hooks/usePdfWorkflow';
+import { PdfPreviewModal } from './components/PdfPreviewModal';
 
 const wasteTranslations: Record<string, string> = {
   domestic: 'Doméstico',
@@ -17,7 +19,18 @@ const statusTranslations: Record<string, string> = {
 };
 
 export const DashboardView = ({ onEditClick }: { onEditClick: (id: number) => void }) => {  
-  const { drafts, loading } = useDrafts();
+  const { drafts, loading, fetchDrafts } = useDrafts();
+
+  const { 
+    isModalOpen, 
+    isLoading: isPdfLoading, 
+    pdfBase64, 
+    openPdfPreview, 
+    downloadPdf, 
+    closeModal 
+  } = usePdfWorkflow(() => {
+    fetchDrafts(); 
+  });
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString('es-MX', {
@@ -32,7 +45,7 @@ export const DashboardView = ({ onEditClick }: { onEditClick: (id: number) => vo
           Borradores recientes
         </h1>
         <p className="text-sm text-gray-500">
-          Administra tus borradores
+          Administra tus borradores editables
         </p>
       </div>
 
@@ -46,7 +59,7 @@ export const DashboardView = ({ onEditClick }: { onEditClick: (id: number) => vo
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo de residuo</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha de creación</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acción</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -91,12 +104,19 @@ export const DashboardView = ({ onEditClick }: { onEditClick: (id: number) => vo
                       <div className="flex items-center justify-end gap-2">
                         <button 
                           onClick={() => onEditClick(Number(draft.id))} 
-                          className="inline-flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 text-gray-600 hover:text-gray-900 transition-colors" 
+                          disabled={isPdfLoading}
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 text-gray-600 hover:text-blue-600 transition-colors disabled:opacity-50" 
                           title="Editar Borrador"
                         >
                           <Pencil className="w-4 h-4" />
                         </button>
-                        <button className="inline-flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 text-gray-600 hover:text-gray-900 transition-colors" title="Generar PDF">
+
+                        <button 
+                          onClick={() => openPdfPreview(Number(draft.id), true)}
+                          disabled={isPdfLoading}
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 text-gray-600 hover:text-red-600 transition-colors disabled:opacity-50" 
+                          title="Emitir y Generar PDF Oficial"
+                        >
                           <FileText className="w-4 h-4" />
                         </button>
                       </div>
@@ -108,6 +128,15 @@ export const DashboardView = ({ onEditClick }: { onEditClick: (id: number) => vo
           </table>
         </div>
       </div>
+
+      <PdfPreviewModal 
+        isOpen={isModalOpen}
+        isLoading={isPdfLoading}
+        pdfBase64={pdfBase64}
+        onClose={closeModal}
+        onDownload={downloadPdf}
+      />
+
     </div>
   );
 };

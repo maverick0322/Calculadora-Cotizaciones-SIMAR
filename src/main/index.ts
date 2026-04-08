@@ -12,6 +12,12 @@ import { GetDraftsUseCase } from './application/useCases/GetDraftsUseCase';
 import { GetDraftByIdUseCase } from './application/useCases/GetDraftByIdUseCase'; 
 import { LoginUseCase } from './application/useCases/LoginUseCase';
 
+import { FetchQuoteByIdUseCase } from './application/useCases/FetchQuoteByIdUseCase';
+import { IssueQuoteUseCase } from './application/useCases/IssueQuoteUseCase';
+import { GeneratePdfPreviewUseCase } from './application/useCases/GeneratePdfPreviewUseCase';
+import { GetIssuedQuotesUseCase } from './application/useCases/GetIssuedQuotesUseCase';
+import { SavePdfUseCase } from './application/useCases/SavePdfUseCase';
+
 import { quoteSchema } from '../shared/schemas/quoteSchema';
 
 function createWindow(): void {
@@ -23,7 +29,8 @@ function createWindow(): void {
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
+      sandbox: false,
+      plugins: true
     }
   })
 
@@ -61,6 +68,12 @@ app.whenReady().then(() => {
   const getDraftsUseCase = new GetDraftsUseCase(quoteRepo);
   const getDraftByIdUseCase = new GetDraftByIdUseCase(quoteRepo);
   const loginUseCase = new LoginUseCase(authRepo);
+
+  const fetchQuoteByIdUseCase = new FetchQuoteByIdUseCase(quoteRepo);  
+  const issueQuoteUseCase = new IssueQuoteUseCase(quoteRepo);
+  const generatePdfPreviewUseCase = new GeneratePdfPreviewUseCase();
+  const getIssuedQuotesUseCase = new GetIssuedQuotesUseCase(quoteRepo);
+  const savePdfUseCase = new SavePdfUseCase();
 
   ipcMain.handle('quotes:save-draft', (_event, payload) => {
     try {
@@ -116,6 +129,31 @@ app.whenReady().then(() => {
       return { success: false, error: (error as Error).message };
     }
   });
+  
+  ipcMain.handle('quotes:issue', async (_event, id) => {
+    console.log(`Main received request to issue quote #${id}`);
+    return await issueQuoteUseCase.execute(id);
+  });
+
+  ipcMain.handle('quotes:get-quote-by-id', (_event, id) => {
+    console.log(`Main received request to fetch ANY quote #${id}`);
+    return fetchQuoteByIdUseCase.execute(id);
+  });
+
+  ipcMain.handle('pdf:generate-preview', async (_event, quoteData) => {
+    console.log('Main received request to generate PDF preview');
+    return await generatePdfPreviewUseCase.execute(quoteData);
+  });
+
+  ipcMain.handle('pdf:save', async (_event, pdfBase64, defaultFolio) => {
+    console.log('Main received request to save PDF to disk');
+    return await savePdfUseCase.execute(pdfBase64, defaultFolio);
+  });
+
+  ipcMain.handle('quotes:get-issued', () => {
+  console.log("Main received request to get issued quotes");
+  return getIssuedQuotesUseCase.execute(); 
+});
 
   createWindow()
 

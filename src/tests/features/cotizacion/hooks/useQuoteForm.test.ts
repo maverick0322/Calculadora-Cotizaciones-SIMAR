@@ -1,4 +1,3 @@
-declare global { interface Window { api: any; } }
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { useQuoteForm } from '@renderer/features/cotizacion/hooks/useQuoteForm';
@@ -11,7 +10,11 @@ vi.mock('react-hot-toast', () => ({
 describe('useQuoteForm Hook', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    window.api = { getDraftById: vi.fn(), saveDraft: vi.fn() };
+    
+    window.api = { 
+      getDraftById: vi.fn(), 
+      saveDraft: vi.fn() 
+    } as any;
   });
 
   it('should initialize with default values when no editId is provided', () => {
@@ -35,12 +38,10 @@ describe('useQuoteForm Hook', () => {
     expect(toast.error).toHaveBeenCalledWith('No se pudo cargar el borrador', { id: 'mock-toast-id' });
   });
 
-  // AC NUEVO: AQUÍ VIVE AHORA LA LIMPIEZA DE DATOS
   it('should format payload, clean roadType, and inject metadata before saving', async () => {
     const rawData = { activity: 'collection', waste: 'hazardous', trip: { roadType: '', kilometers: 10 } };
     vi.mocked(window.api.saveDraft).mockResolvedValue({ success: true, data: 1 });
     
-    // Lo instanciamos con un ID para comprobar que lo inyecte
     const { result } = renderHook(() => useQuoteForm(5));
 
     let successResult = false;
@@ -51,11 +52,11 @@ describe('useQuoteForm Hook', () => {
     const calledPayload = vi.mocked(window.api.saveDraft).mock.calls[0][0];
     
     expect(successResult).toBe(true);
-    expect(calledPayload.status).toBe('draft'); // Inyectó estatus
-    expect(calledPayload.id).toBe(5); // Inyectó ID
-    expect(calledPayload.createdAt).toBeTypeOf('number'); // Inyectó fecha
-    expect(calledPayload.trip.roadType).toBeUndefined(); // Limpió el roadType
-    expect(calledPayload.trip.kilometers).toBe(10);
+    expect(calledPayload.status).toBe('draft'); 
+    expect(calledPayload.id).toBe(5); 
+    expect(calledPayload.createdAt).toBeTypeOf('number'); 
+    expect(calledPayload.trip!.roadType).toBeUndefined(); 
+    expect(calledPayload.trip!.kilometers).toBe(10);
   });
 
   it('should return false when saveDraft catches an exception', async () => {

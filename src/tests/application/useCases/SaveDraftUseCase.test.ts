@@ -12,8 +12,10 @@ describe('SaveDraftUseCase', () => {
       saveDraft: vi.fn(),
       getDrafts: vi.fn(),
       getDraftById: vi.fn(),
+      issueQuote: vi.fn(),
+      getIssuedQuotes: vi.fn(),
+      getQuoteById: vi.fn()
     };
-    
     saveDraftUseCase = new SaveDraftUseCase(mockRepository);
   });
 

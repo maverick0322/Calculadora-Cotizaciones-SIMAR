@@ -1,5 +1,5 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
-import { CotizacionBorrador, QuoteSummary } from '../shared/types/Quote'
+import { QuoteDraft, QuoteSummary } from '../shared/types/Quote'
 
 declare global {
   interface Window {
