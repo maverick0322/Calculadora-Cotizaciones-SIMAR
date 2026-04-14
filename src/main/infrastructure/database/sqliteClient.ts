@@ -114,6 +114,17 @@ export const initDatabase = () => {
             amount DECIMAL,
             FOREIGN KEY (quote_id) REFERENCES quotes(id)
         );
+
+        CREATE TABLE IF NOT EXISTS audit_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            action VARCHAR,
+            entity VARCHAR,
+            entity_id VARCHAR,
+            details TEXT,
+            created_at INTEGER,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        );
     `;
 
     db.exec(schema);

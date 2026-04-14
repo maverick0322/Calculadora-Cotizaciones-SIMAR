@@ -5,7 +5,7 @@ export type ActivityType = 'collection' | 'transport' | 'transfer' | 'final_disp
 export type WasteType = 'domestic' | 'organic' | 'recyclable' | 'hazardous' | 'bulky';
 export type VolumeUnit = 'kg' | 'ton' | 'm3' | 'containers' | 'trips';
 export type ServiceFrequency = 'daily' | 'weekly' | 'monthly' | 'one_time';
-export type QuoteStatus = 'draft' | 'issued' | 'cancelled';
+export type QuoteStatus = 'draft' | 'issued' | 'cancelled' | 'replaced';
 export type RoadType = 'free' | 'toll';
 
 export interface Location {
@@ -18,6 +18,7 @@ export interface Location {
 export interface QuoteDraft {
   id?: string | number;      // Supports both UUID (string) or SQLite auto-increment (number)
   folio?: string;            // Null while it's a draft
+  replacesQuoteId?: number | string;
   location: Location;
   activity: ActivityType;
   waste: WasteType;

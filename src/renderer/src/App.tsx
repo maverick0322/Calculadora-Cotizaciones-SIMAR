@@ -117,9 +117,14 @@ function App() {
           </header>
 
           <main className="py-8">
-            {currentView === 'newQuote' && <NewQuoteView editId={editDraftId} />}
+            {currentView === 'newQuote' && (
+              <NewQuoteView 
+                editId={editDraftId} 
+                onSaveSuccess={() => setCurrentView('dashboard')} 
+              />
+            )}
             {currentView === 'dashboard' && <DashboardView onEditClick={handleEditDraft} />}
-            {currentView === 'issuedQuotes' && <IssuedQuotesDashboardView />}
+            {currentView === 'issuedQuotes' && <IssuedQuotesDashboardView onCloneRedirect={handleEditDraft} />}
           </main>
         </div>
       )}

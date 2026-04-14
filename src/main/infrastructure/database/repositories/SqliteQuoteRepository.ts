@@ -24,6 +24,7 @@ interface RawQuoteRow {
   service_frequency: string;
   created_at: number;
   status: string;
+  replaces_quote_id: number | null;
   
   trip_kilometers: number | null;
   trip_vehicles: number | null;
@@ -52,6 +53,7 @@ export class SqliteQuoteRepository implements IQuoteRepository {
       unit: quote.volumeUnit,
       frequency: quote.frequency,
       createdAt: quote.createdAt || Date.now(),
+      replacesQuoteId: quote.replacesQuoteId ?? null,
       
       tripKilometers: quote.trip?.kilometers ?? null,
       tripVehicles: quote.trip?.vehicles ?? null,
@@ -76,6 +78,7 @@ export class SqliteQuoteRepository implements IQuoteRepository {
           volume_quantity = @quantity,
           volume_unit = @unit, 
           service_frequency = @frequency, 
+          replaces_quote_id = @replacesQuoteId,
           trip_kilometers = @tripKilometers, 
           trip_vehicles = @tripVehicles, 
           trip_crew_members = @tripCrewMembers, 
@@ -98,14 +101,14 @@ export class SqliteQuoteRepository implements IQuoteRepository {
       INSERT INTO quotes (
         street, neighborhood, municipality, 
         activity_type, waste_type, volume_quantity, 
-        volume_unit, service_frequency, created_at, status,
+        volume_unit, service_frequency, created_at, status, replaces_quote_id,
         trip_kilometers, trip_vehicles, trip_crew_members, trip_routes,
         trip_fuel_liters, trip_road_type, trip_tolls, trip_total_toll_cost,
         trip_origin, trip_destination_warehouse
       ) VALUES (
         @street, @neighborhood, @municipality, 
         @activity, @waste, @quantity, 
-        @unit, @frequency, @createdAt, 'draft',
+        @unit, @frequency, @createdAt, 'draft', @replacesQuoteId,
         @tripKilometers, @tripVehicles, @tripCrewMembers, @tripRoutes,
         @tripFuelLiters, @tripRoadType, @tripTolls, @tripTotalTollCost,
         @tripOrigin, @tripDestinationWarehouse
@@ -148,6 +151,7 @@ export class SqliteQuoteRepository implements IQuoteRepository {
     return {
       id: row.id,
       folio: row.folio || undefined,
+      replacesQuoteId: row.replaces_quote_id || undefined,
       location: {
         street: row.street,
         neighborhood: row.neighborhood,
@@ -186,6 +190,7 @@ export class SqliteQuoteRepository implements IQuoteRepository {
     return {
       id: row.id,
       folio: row.folio || undefined,
+      replacesQuoteId: row.replaces_quote_id || undefined,
       location: { street: row.street, neighborhood: row.neighborhood, municipality: row.municipality },
       activity: row.activity_type, waste: row.waste_type, volumeQuantity: row.volume_quantity,
       volumeUnit: row.volume_unit, frequency: row.service_frequency, createdAt: row.created_at,
@@ -200,13 +205,22 @@ export class SqliteQuoteRepository implements IQuoteRepository {
   }
 
   issueQuote(id: number): boolean {
-    const stmt = this.db.prepare(`
-      UPDATE quotes 
-      SET status = 'issued' 
-      WHERE id = ? AND status = 'draft'
-    `);
-    const info = stmt.run(id);
-    return info.changes > 0; 
+    const checkStmt = this.db.prepare(`SELECT replaces_quote_id FROM quotes WHERE id = ?`);
+    const row = checkStmt.get(id) as { replaces_quote_id: number | null };
+
+    const issueStmt = this.db.prepare(`UPDATE quotes SET status = 'issued' WHERE id = ? AND status = 'draft'`);
+    const replaceStmt = this.db.prepare(`UPDATE quotes SET status = 'replaced' WHERE id = ?`);
+
+    const transaction = this.db.transaction(() => {
+      const info = issueStmt.run(id);
+      
+      if (info.changes > 0 && row && row.replaces_quote_id) {
+        replaceStmt.run(row.replaces_quote_id);
+      }
+      return info.changes > 0; 
+    });
+
+    return transaction();
   }
 
   getIssuedQuotes(): QuoteSummary[] {

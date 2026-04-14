@@ -1,4 +1,6 @@
-import { FileText, CheckCircle } from 'lucide-react';
+import { FileText, CheckCircle, Copy } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { QuoteDraft } from '../../../../shared/types/Quote';
 import { QuoteSummary } from '../../../../shared/types/Quote';
 import { useIssuedQuotes } from './hooks/useIssuedQuotes';
 import { usePdfWorkflow } from './hooks/usePdfWorkflow';
@@ -12,7 +14,7 @@ const wasteTranslations: Record<string, string> = {
   bulky: 'Voluminoso'
 };
 
-export const IssuedQuotesDashboardView = () => {  
+export const IssuedQuotesDashboardView = ({ onCloneRedirect }: { onCloneRedirect?: (newId: number) => void }) => {  
   const { issuedQuotes, loading, fetchIssuedQuotes } = useIssuedQuotes();
 
   const { 
@@ -32,8 +34,42 @@ export const IssuedQuotesDashboardView = () => {
     });
   };
 
+  const handleCloneAndReplace = async (originalId: number | string) => {
+    const loadingId = toast.loading('Generando clon editable...');
+    try {
+      const originalQuote = await window.api.getQuoteById(Number(originalId));
+      
+      if (!originalQuote) throw new Error("No se encontraron los datos originales");
+
+      const clonedPayload = {
+        ...originalQuote,
+        id: undefined,         
+        folio: undefined,      
+        status: 'draft' as const,
+        createdAt: Date.now(), 
+        replacesQuoteId: originalQuote.id 
+      } as QuoteDraft; 
+
+      const response = await window.api.saveDraft(clonedPayload);
+      
+      if (response.success) {
+        toast.success('Borrador de reemplazo creado', { id: loadingId });
+        
+        const newDraftId = typeof response.data === 'object' ? response.data?.id : response.data;
+
+        if (onCloneRedirect && newDraftId) {
+           onCloneRedirect(Number(newDraftId));
+        }
+      } else {
+        toast.error('Error al clonar', { id: loadingId });
+      }
+    } catch (error) {
+      toast.error('Ocurrió un error inesperado al clonar', { id: loadingId });
+    }
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 animate-in fade-in">
       <div className="mb-8">
         <h1 className="text-2xl font-semibold text-gray-900 mb-1 flex items-center gap-2">
           Cotizaciones Emitidas <CheckCircle className="w-6 h-6 text-green-500" />
@@ -52,7 +88,7 @@ export const IssuedQuotesDashboardView = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dirección</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo de residuo</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha de Emisión</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Documento</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -88,15 +124,28 @@ export const IssuedQuotesDashboardView = () => {
                       <span className="text-sm text-gray-500">{dateToShow}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <button 
-                        onClick={() => openPdfPreview(Number(quote.id), false)} 
-                        disabled={isPdfLoading}
-                        className="inline-flex items-center justify-center px-3 py-1.5 rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors disabled:opacity-50 font-medium text-sm gap-2" 
-                        title="Ver Documento PDF"
-                      >
-                        <FileText className="w-4 h-4" />
-                        Ver PDF
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        {/* Botón de Inmutabilidad (Clonar) */}
+                        <button 
+                          onClick={() => handleCloneAndReplace(quote.id)} 
+                          className="inline-flex items-center justify-center px-3 py-1.5 rounded-md bg-orange-50 text-orange-700 hover:bg-orange-100 transition-colors font-medium text-sm gap-2" 
+                          title="Crear un borrador basado en esta cotización para reemplazarla"
+                        >
+                          <Copy className="w-4 h-4" />
+                          Modificar
+                        </button>
+                        
+                        {/* Botón de PDF original */}
+                        <button 
+                          onClick={() => openPdfPreview(Number(quote.id), false)} 
+                          disabled={isPdfLoading}
+                          className="inline-flex items-center justify-center px-3 py-1.5 rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors disabled:opacity-50 font-medium text-sm gap-2" 
+                          title="Ver Documento PDF"
+                        >
+                          <FileText className="w-4 h-4" />
+                          Ver PDF
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
