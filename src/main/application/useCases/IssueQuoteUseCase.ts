@@ -25,3 +25,4 @@ export class IssueQuoteUseCase {
     }
   }
 }
+// Added new temporary feature that has to be replaced
