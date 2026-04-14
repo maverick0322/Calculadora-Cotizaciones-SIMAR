@@ -17,6 +17,8 @@ import { IssueQuoteUseCase } from './application/useCases/IssueQuoteUseCase';
 import { GeneratePdfPreviewUseCase } from './application/useCases/GeneratePdfPreviewUseCase';
 import { GetIssuedQuotesUseCase } from './application/useCases/GetIssuedQuotesUseCase';
 import { SavePdfUseCase } from './application/useCases/SavePdfUseCase';
+import { SqliteAuditRepository } from './infrastructure/database/repositories/SqliteAuditRepository';
+import { LogAuditActionUseCase } from './application/useCases/LogAuditActionUseCase';
 
 import { quoteSchema } from '../shared/schemas/quoteSchema';
 
@@ -63,14 +65,16 @@ app.whenReady().then(() => {
 
   const quoteRepo = new SqliteQuoteRepository(db);
   const authRepo = new SqliteAuthRepository(db);
+  const auditRepo = new SqliteAuditRepository(db);
+  const logAuditUseCase = new LogAuditActionUseCase(auditRepo);
 
-  const saveDraftUseCase = new SaveDraftUseCase(quoteRepo);
+  const saveDraftUseCase = new SaveDraftUseCase(quoteRepo, logAuditUseCase);
   const getDraftsUseCase = new GetDraftsUseCase(quoteRepo);
   const getDraftByIdUseCase = new GetDraftByIdUseCase(quoteRepo);
   const loginUseCase = new LoginUseCase(authRepo);
 
   const fetchQuoteByIdUseCase = new FetchQuoteByIdUseCase(quoteRepo);  
-  const issueQuoteUseCase = new IssueQuoteUseCase(quoteRepo);
+  const issueQuoteUseCase = new IssueQuoteUseCase(quoteRepo, logAuditUseCase);
   const generatePdfPreviewUseCase = new GeneratePdfPreviewUseCase();
   const getIssuedQuotesUseCase = new GetIssuedQuotesUseCase(quoteRepo);
   const savePdfUseCase = new SavePdfUseCase();
