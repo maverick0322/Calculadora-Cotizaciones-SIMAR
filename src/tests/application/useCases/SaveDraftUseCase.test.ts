@@ -5,6 +5,7 @@ import { QuoteDraft } from '../../../shared/types/Quote';
 
 describe('SaveDraftUseCase', () => {
   let mockRepository: IQuoteRepository;
+  let mockAuditUseCase: any;
   let saveDraftUseCase: SaveDraftUseCase;
 
   beforeEach(() => {
@@ -16,7 +17,12 @@ describe('SaveDraftUseCase', () => {
       getIssuedQuotes: vi.fn(),
       getQuoteById: vi.fn()
     };
-    saveDraftUseCase = new SaveDraftUseCase(mockRepository);
+    
+    mockAuditUseCase = {
+      execute: vi.fn()
+    };
+
+    saveDraftUseCase = new SaveDraftUseCase(mockRepository, mockAuditUseCase);
   });
 
   // --- AC 1: HAPPY PATH (CREATE) ---
@@ -41,6 +47,7 @@ describe('SaveDraftUseCase', () => {
     // [ ASSERT ]
     expect(mockRepository.saveDraft).toHaveBeenCalledTimes(1);
     expect(mockRepository.saveDraft).toHaveBeenCalledWith(newDraftPayload);
+    expect(mockAuditUseCase.execute).toHaveBeenCalledTimes(1);
     expect(result).toEqual({ 
       success: true, 
       id: expectedGeneratedId, 
@@ -70,6 +77,7 @@ describe('SaveDraftUseCase', () => {
     // [ ASSERT ]
     expect(mockRepository.saveDraft).toHaveBeenCalledTimes(1);
     expect(mockRepository.saveDraft).toHaveBeenCalledWith(existingDraftPayload);
+    expect(mockAuditUseCase.execute).toHaveBeenCalledTimes(1);
     expect(result).toEqual({ 
       success: true, 
       id: 5, 
@@ -98,5 +106,6 @@ describe('SaveDraftUseCase', () => {
     // [ ACT & ASSERT ]
     expect(() => saveDraftUseCase.execute(validPayload)).toThrowError('Database locked');
     expect(mockRepository.saveDraft).toHaveBeenCalledTimes(1);
+    expect(mockAuditUseCase.execute).not.toHaveBeenCalled();
   });
 });

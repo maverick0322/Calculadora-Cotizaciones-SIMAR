@@ -1,10 +1,11 @@
-import { describe, it, expect, vi, beforeEach, Mocked } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { IssueQuoteUseCase } from '../../../main/application/useCases/IssueQuoteUseCase';
 import { IQuoteRepository } from '../../../main/domain/repositories/IQuoteRepository';
 
 describe('IssueQuoteUseCase', () => {
-  let useCase: IssueQuoteUseCase;
-  let mockRepository: Mocked<IQuoteRepository>;
+  let mockRepository: IQuoteRepository;
+  let mockAuditUseCase: any;
+  let issueQuoteUseCase: IssueQuoteUseCase;
 
   beforeEach(() => {
     mockRepository = {
@@ -15,36 +16,46 @@ describe('IssueQuoteUseCase', () => {
       getIssuedQuotes: vi.fn(),
       getQuoteById: vi.fn()
     };
-    useCase = new IssueQuoteUseCase(mockRepository);
+    
+    mockAuditUseCase = {
+      execute: vi.fn()
+    };
+
+    issueQuoteUseCase = new IssueQuoteUseCase(mockRepository, mockAuditUseCase);
   });
 
   it('should return success true when the repository successfully issues the quote', async () => {
-    mockRepository.issueQuote.mockReturnValue(true);
+    vi.mocked(mockRepository.issueQuote).mockReturnValue(true);
 
-    const result = await useCase.execute(15);
+    const result = await issueQuoteUseCase.execute(15);
 
     expect(mockRepository.issueQuote).toHaveBeenCalledWith(15);
+    expect(mockAuditUseCase.execute).toHaveBeenCalledTimes(1);
     expect(result.success).toBe(true);
     expect(result.error).toBeUndefined();
   });
 
   it('should return success false and an error message when the repository fails to issue the quote', async () => {
-    mockRepository.issueQuote.mockReturnValue(false);
+    vi.mocked(mockRepository.issueQuote).mockReturnValue(false);
 
-    const result = await useCase.execute(99);
+    const result = await issueQuoteUseCase.execute(99);
 
+    expect(mockRepository.issueQuote).toHaveBeenCalledWith(99);
+    expect(mockAuditUseCase.execute).not.toHaveBeenCalled();
     expect(result.success).toBe(false);
-    expect(result.error).toContain('No se pudo emitir la cotización');
+    expect(result.error).toBe('No se pudo emitir la cotización. Verifica que exista y sea un borrador.');
   });
 
   it('should return success false when the repository throws an exception', async () => {
-    mockRepository.issueQuote.mockImplementation(() => {
-      throw new Error('Database locked');
+    vi.mocked(mockRepository.issueQuote).mockImplementation(() => {
+      throw new Error('Database connection failed');
     });
 
-    const result = await useCase.execute(15);
+    const result = await issueQuoteUseCase.execute(15);
 
+    expect(mockRepository.issueQuote).toHaveBeenCalledWith(15);
+    expect(mockAuditUseCase.execute).not.toHaveBeenCalled();
     expect(result.success).toBe(false);
-    expect(result.error).toBe('Database locked');
+    expect(result.error).toBe('Database connection failed');
   });
 });

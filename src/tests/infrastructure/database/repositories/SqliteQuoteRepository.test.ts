@@ -22,6 +22,7 @@ describe('SqliteQuoteRepository', () => {
         service_frequency TEXT,
         created_at INTEGER,
         status TEXT,
+        replaces_quote_id INTEGER,
         trip_kilometers REAL,
         trip_vehicles INTEGER,
         trip_crew_members INTEGER,
