@@ -4,14 +4,6 @@ import { useDrafts } from './hooks/useDrafts';
 import { usePdfWorkflow } from './hooks/usePdfWorkflow';
 import { PdfPreviewModal } from './components/PdfPreviewModal';
 
-const wasteTranslations: Record<string, string> = {
-  domestic: 'Doméstico',
-  organic: 'Orgánico',
-  recyclable: 'Reciclable',
-  hazardous: 'Peligroso',
-  bulky: 'Voluminoso'
-};
-
 const statusTranslations: Record<string, string> = {
   draft: 'Borrador',
   issued: 'Emitida',
@@ -38,6 +30,12 @@ export const DashboardView = ({ onEditClick }: { onEditClick: (id: number) => vo
     });
   };
 
+  const handleEmitPdf = (id: number) => {
+    if (window.confirm('¿Quieres convertir este archivo en PDF definitivamente?')) {
+      openPdfPreview(id, true);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="mb-8">
@@ -56,7 +54,7 @@ export const DashboardView = ({ onEditClick }: { onEditClick: (id: number) => vo
               <tr className="border-b border-gray-200 bg-gray-50/50">
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Folio</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dirección</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo de residuo</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Residuos</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha de creación</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
@@ -75,7 +73,8 @@ export const DashboardView = ({ onEditClick }: { onEditClick: (id: number) => vo
                 const dateToShow = draft.createdAt ? formatDate(Number(draft.createdAt)) : 'Fecha desconocida';
                 const locationToShow = draft.location || 'Sin dirección';
                 
-                const wasteToShow = wasteTranslations[draft.waste] || draft.waste || 'No especificado';
+                // Usamos el string que ya viene armado desde SQLite
+                const wastesToShow = draft.wastesSummary || 'No especificado';
                 const statusToShow = statusTranslations[draft.status] || draft.status || 'Borrador';
 
                 return (
@@ -87,9 +86,8 @@ export const DashboardView = ({ onEditClick }: { onEditClick: (id: number) => vo
                       <span className="text-sm text-gray-900">{locationToShow}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm">
-                        <div className="text-gray-900 capitalize">{wasteToShow}</div>
-                        <div className="text-gray-500">{draft.volume}</div>
+                      <div className="text-sm text-gray-900">
+                        {wastesToShow}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -112,7 +110,7 @@ export const DashboardView = ({ onEditClick }: { onEditClick: (id: number) => vo
                         </button>
 
                         <button 
-                          onClick={() => openPdfPreview(Number(draft.id), true)}
+                          onClick={() => handleEmitPdf(Number(draft.id))}
                           disabled={isPdfLoading}
                           className="inline-flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 text-gray-600 hover:text-red-600 transition-colors disabled:opacity-50" 
                           title="Emitir y Generar PDF Oficial"

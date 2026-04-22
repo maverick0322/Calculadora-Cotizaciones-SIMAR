@@ -1,18 +1,9 @@
 import { FileText, CheckCircle, Copy } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { QuoteDraft } from '../../../../shared/types/Quote';
-import { QuoteSummary } from '../../../../shared/types/Quote';
+import { QuoteDraft, QuoteSummary } from '../../../../shared/types/Quote';
 import { useIssuedQuotes } from './hooks/useIssuedQuotes';
 import { usePdfWorkflow } from './hooks/usePdfWorkflow';
 import { PdfPreviewModal } from './components/PdfPreviewModal';
-
-const wasteTranslations: Record<string, string> = {
-  domestic: 'Doméstico',
-  organic: 'Orgánico',
-  recyclable: 'Reciclable',
-  hazardous: 'Peligroso',
-  bulky: 'Voluminoso'
-};
 
 export const IssuedQuotesDashboardView = ({ onCloneRedirect }: { onCloneRedirect?: (newId: number) => void }) => {  
   const { issuedQuotes, loading, fetchIssuedQuotes } = useIssuedQuotes();
@@ -86,7 +77,7 @@ export const IssuedQuotesDashboardView = ({ onCloneRedirect }: { onCloneRedirect
               <tr className="border-b border-gray-200 bg-gray-50/50">
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Folio Oficial</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dirección</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo de residuo</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Residuos</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha de Emisión</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
               </tr>
@@ -104,7 +95,7 @@ export const IssuedQuotesDashboardView = ({ onCloneRedirect }: { onCloneRedirect
               {issuedQuotes.map((quote: QuoteSummary) => {
                 const dateToShow = quote.createdAt ? formatDate(Number(quote.createdAt)) : 'Fecha desconocida';
                 const locationToShow = quote.location || 'Sin dirección';
-                const wasteToShow = wasteTranslations[quote.waste] || quote.waste || 'No especificado';
+                const wastesToShow = quote.wastesSummary || 'No especificado';
 
                 return (
                   <tr key={quote.id} className="hover:bg-gray-50/50 transition-colors">
@@ -115,9 +106,8 @@ export const IssuedQuotesDashboardView = ({ onCloneRedirect }: { onCloneRedirect
                       <span className="text-sm text-gray-900">{locationToShow}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm">
-                        <div className="text-gray-900 capitalize">{wasteToShow}</div>
-                        <div className="text-gray-500">{quote.volume}</div>
+                      <div className="text-sm text-gray-900">
+                        {wastesToShow}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

@@ -1,10 +1,7 @@
-// src/shared/types/Quote.ts
-// Nota: Recuerda renombrar el archivo físico de Cotizacion.ts a Quote.ts
-
 export type ActivityType = 'collection' | 'transport' | 'transfer' | 'final_disposal';
 export type WasteType = 'domestic' | 'organic' | 'recyclable' | 'hazardous' | 'bulky';
 export type VolumeUnit = 'kg' | 'ton' | 'm3' | 'containers' | 'trips';
-export type ServiceFrequency = 'daily' | 'weekly' | 'monthly' | 'one_time';
+export type ServiceFrequencyType = 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'one_time' | 'custom';
 export type QuoteStatus = 'draft' | 'issued' | 'cancelled' | 'replaced';
 export type RoadType = 'free' | 'toll';
 
@@ -12,7 +9,7 @@ export interface Location {
   street: string;
   municipality: string;
   neighborhood: string;
-  coordinates?: string; // Optional for now, for future Maps integration
+  coordinates?: string; 
 }
 
 export interface WasteItem {
@@ -22,19 +19,26 @@ export interface WasteItem {
   unit: VolumeUnit;
 }
 
+export interface ServiceFrequencyDetail {
+  type: ServiceFrequencyType;
+  duration?: number; 
+  customDescription?: string;
+}
+
 export interface QuoteDraft {
-  id?: string | number;  // Supports both UUID (string) or SQLite auto-increment (number)
-  folio?: string;        // Null while it's a draft
+  id?: string | number;  
+  folio?: string;        
   replacesQuoteId?: number | string;
   clientName: string;
   clientRfc: string;
+  validityDays: number;
   location: Location;
   activity: ActivityType;
   wastes: WasteItem[];
-  frequency: ServiceFrequency; 
-  createdAt: number;     // Timestamp in milliseconds
+  frequency: ServiceFrequencyDetail;
+  createdAt: number;     
   status: QuoteStatus;
-  trip?: TripLogistics;  // Optional trip logistics block
+  trip?: TripLogistics;  
 }
 
 export interface QuoteSummary {
