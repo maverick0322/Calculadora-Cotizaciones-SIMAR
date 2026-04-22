@@ -1,9 +1,17 @@
-import logoImg from '../../assets/logo.png'; 
+import logoImg from '../../assets/logo.png';
 import { useLoginForm } from './hooks/useLoginForm';
 
-export const LoginView = ({ onLoginSuccess }: { onLoginSuccess: () => void }) => {
+// 1. Agregamos 'onGoToRegister' a las propiedades (Props)
+interface LoginProps {
+  onLoginSuccess: () => void;
+  onGoToRegister: () => void;
+}
+
+export const LoginView = ({ onLoginSuccess, onGoToRegister }: LoginProps) => {
   const { form, submitLogin, errorMsg, isLoading } = useLoginForm(onLoginSuccess);
   const { register, handleSubmit } = form;
+
+  // Quitamos el navigate porque no lo necesitamos con tu lógica de App.tsx
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -16,11 +24,8 @@ export const LoginView = ({ onLoginSuccess }: { onLoginSuccess: () => void }) =>
         </div>
 
         <form onSubmit={handleSubmit(submitLogin)} className="space-y-6">
-
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Correo Electrónico
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Correo Electrónico</label>
             <input
               type="email"
               {...register('email', { required: true })}
@@ -30,9 +35,7 @@ export const LoginView = ({ onLoginSuccess }: { onLoginSuccess: () => void }) =>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Contraseña
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
             <input
               type="password"
               {...register('password', { required: true })}
@@ -42,9 +45,7 @@ export const LoginView = ({ onLoginSuccess }: { onLoginSuccess: () => void }) =>
           </div>
 
           {errorMsg && (
-            <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md border border-red-100">
-              {errorMsg}
-            </div>
+            <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md border border-red-100">{errorMsg}</div>
           )}
 
           <button
@@ -52,14 +53,21 @@ export const LoginView = ({ onLoginSuccess }: { onLoginSuccess: () => void }) =>
             disabled={isLoading}
             className="w-full bg-blue-600 text-white font-semibold py-2.5 px-4 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-400 flex justify-center items-center"
           >
-            {isLoading ? (
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-            ) : (
-              'Ingresar'
-            )}
+            {isLoading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : 'Ingresar'}
           </button>
-
         </form>
+
+        {/* --- Sección de registro usando el estado de App.tsx --- */}
+        <div className="mt-6 pt-6 border-t border-gray-200">
+          <p className="text-xs text-center">
+            <span
+              onClick={onGoToRegister} // <--- Llamamos a la función que viene de App.tsx
+              className="text-blue-600 hover:text-blue-700 cursor-pointer font-medium hover:underline"
+            >
+              Registrar empleado
+            </span>
+          </p>
+        </div>
       </div>
     </div>
   );

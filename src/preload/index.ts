@@ -5,6 +5,7 @@ declare global {
   interface Window {
     electron: ElectronAPI
     api: {
+      registerWorker: (workerData: any) => Promise<any>;
       saveDraft: (data: QuoteDraft) => Promise<any>;
       getDraftById: (id: number | string) => Promise<any>;
       login: (credentials: Record<string, string>) => Promise<any>;
@@ -23,31 +24,35 @@ import { electronAPI } from '@electron-toolkit/preload'
 
 // Custom APIs for renderer
 const api = {
+
+  registerWorker: (workerData: any) =>
+    ipcRenderer.invoke('workers:register', workerData),
+
   saveDraft: (data: QuoteDraft) =>
     ipcRenderer.invoke('quotes:save-draft', data),
-    
-  getDraftById: (id: number | string) => 
+
+  getDraftById: (id: number | string) =>
     ipcRenderer.invoke('quotes:get-draft-by-id', id),
-    
-  login: (credentials: Record<string, string>) => 
+
+  login: (credentials: Record<string, string>) =>
     ipcRenderer.invoke('auth:login', credentials),
 
-  getDrafts: () => 
+  getDrafts: () =>
     ipcRenderer.invoke('quotes:get-drafts'),
 
-  issueQuote: (id: number | string) => 
+  issueQuote: (id: number | string) =>
     ipcRenderer.invoke('quotes:issue', id),
 
-  getIssuedQuotes: () => 
+  getIssuedQuotes: () =>
     ipcRenderer.invoke('quotes:get-issued'),
 
-  getQuoteById: (id: number | string) => 
+  getQuoteById: (id: number | string) =>
     ipcRenderer.invoke('quotes:get-quote-by-id', id),
 
-  generatePdfPreview: (quoteData: QuoteDraft) => 
+  generatePdfPreview: (quoteData: QuoteDraft) =>
     ipcRenderer.invoke('pdf:generate-preview', quoteData),
 
-  savePdf: (pdfBase64: string, defaultFolio: string) => 
+  savePdf: (pdfBase64: string, defaultFolio: string) =>
     ipcRenderer.invoke('pdf:save', pdfBase64, defaultFolio)
 };
 

@@ -5,8 +5,10 @@ import logoImg from './assets/logo.png';
 import { DashboardView } from './features/cotizacion/DashboardView';
 import { IssuedQuotesDashboardView } from './features/cotizacion/IssuedQuotesDashboardView';
 import { LoginView } from './features/auth/LoginView';
+// Importa tu nueva vista (asegúrate que la ruta sea correcta)
+import WorkerRegistrationView from './features/registro/WorkerRegistrationView';
 
-type View = 'splash' | 'newQuote' | 'dashboard' | 'issuedQuotes';
+type View = 'splash' | 'newQuote' | 'dashboard' | 'issuedQuotes' | 'registerWorker';
 
 function App() {
   const [currentView, setCurrentView] = useState<View>('splash');
@@ -41,6 +43,7 @@ function App() {
     setCurrentView('newQuote');
   };
 
+  // --- 1. Pantalla de Bienvenida (Splash) ---
   if (currentView === 'splash') {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -61,9 +64,19 @@ function App() {
     <>
       <Toaster position="top-right" />
 
+      {/* --- 2. Lógica cuando NO hay sesión iniciada --- */}
       {!isAuthenticated ? (
-        <LoginView onLoginSuccess={() => setIsAuthenticated(true)} />
+        currentView === 'registerWorker' ? (
+          // CAMBIO AQUÍ: Usamos 'dashboard' para que regrese al Login directo
+          <WorkerRegistrationView onBack={() => setCurrentView('dashboard')} />
+        ) : (
+          <LoginView
+            onLoginSuccess={() => setIsAuthenticated(true)}
+            onGoToRegister={() => setCurrentView('registerWorker')}
+          />
+        )
       ) : (
+        /* --- 3. Lógica cuando SÍ hay sesión (Dashboard Principal) --- */
         <div className="min-h-screen bg-gray-50">
           <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
             <nav className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -107,6 +120,17 @@ function App() {
                 </button>
 
                 <button
+                  onClick={() => setCurrentView('registerWorker')}
+                  className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-colors
+                    ${currentView === 'registerWorker'
+                      ? 'bg-purple-600 text-white shadow-sm'
+                      : 'text-gray-600 hover:text-purple-600'}`
+                  }
+                >
+                  👥 Empleados
+                </button>
+
+                <button
                   onClick={() => setIsAuthenticated(false)}
                   className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-full transition-colors ml-2"
                 >
@@ -117,14 +141,20 @@ function App() {
           </header>
 
           <main className="py-8">
+            {/* Vistas principales del dashboard */}
             {currentView === 'newQuote' && (
-              <NewQuoteView 
-                editId={editDraftId} 
-                onSaveSuccess={() => setCurrentView('dashboard')} 
+              <NewQuoteView
+                editId={editDraftId}
+                onSaveSuccess={() => setCurrentView('dashboard')}
               />
             )}
             {currentView === 'dashboard' && <DashboardView onEditClick={handleEditDraft} />}
             {currentView === 'issuedQuotes' && <IssuedQuotesDashboardView onCloneRedirect={handleEditDraft} />}
+
+            {/* Vista de registro (dentro de sesión) */}
+            {currentView === 'registerWorker' && (
+              <WorkerRegistrationView onBack={() => setCurrentView('dashboard')} />
+            )}
           </main>
         </div>
       )}

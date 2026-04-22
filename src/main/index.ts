@@ -3,13 +3,13 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 
-import db, { initDatabase } from './infrastructure/database/sqliteClient'; 
+import db, { initDatabase } from './infrastructure/database/sqliteClient';
 import { SqliteQuoteRepository } from './infrastructure/database/repositories/SqliteQuoteRepository';
 import { SqliteAuthRepository } from './infrastructure/database/repositories/SqliteAuthRepository';
 
-import { SaveDraftUseCase } from './application/useCases/SaveDraftUseCase'; 
+import { SaveDraftUseCase } from './application/useCases/SaveDraftUseCase';
 import { GetDraftsUseCase } from './application/useCases/GetDraftsUseCase';
-import { GetDraftByIdUseCase } from './application/useCases/GetDraftByIdUseCase'; 
+import { GetDraftByIdUseCase } from './application/useCases/GetDraftByIdUseCase';
 import { LoginUseCase } from './application/useCases/LoginUseCase';
 
 import { FetchQuoteByIdUseCase } from './application/useCases/FetchQuoteByIdUseCase';
@@ -19,6 +19,8 @@ import { GetIssuedQuotesUseCase } from './application/useCases/GetIssuedQuotesUs
 import { SavePdfUseCase } from './application/useCases/SavePdfUseCase';
 import { SqliteAuditRepository } from './infrastructure/database/repositories/SqliteAuditRepository';
 import { LogAuditActionUseCase } from './application/useCases/LogAuditActionUseCase';
+import { SqliteWorkerRepository } from './infrastructure/database/repositories/SqliteWorkerRepository';
+import { RegisterWorkerUseCase } from './application/useCases/RegisterWorkerUseCase';
 
 import { quoteSchema } from '../shared/schemas/quoteSchema';
 
@@ -65,6 +67,8 @@ app.whenReady().then(() => {
 
   const quoteRepo = new SqliteQuoteRepository(db);
   const authRepo = new SqliteAuthRepository(db);
+  const workerRepo = new SqliteWorkerRepository(db);
+  const registerWorkerUseCase = new RegisterWorkerUseCase(workerRepo);
   const auditRepo = new SqliteAuditRepository(db);
   const logAuditUseCase = new LogAuditActionUseCase(auditRepo);
 
@@ -73,7 +77,7 @@ app.whenReady().then(() => {
   const getDraftByIdUseCase = new GetDraftByIdUseCase(quoteRepo);
   const loginUseCase = new LoginUseCase(authRepo);
 
-  const fetchQuoteByIdUseCase = new FetchQuoteByIdUseCase(quoteRepo);  
+  const fetchQuoteByIdUseCase = new FetchQuoteByIdUseCase(quoteRepo);
   const issueQuoteUseCase = new IssueQuoteUseCase(quoteRepo, logAuditUseCase);
   const generatePdfPreviewUseCase = new GeneratePdfPreviewUseCase();
   const getIssuedQuotesUseCase = new GetIssuedQuotesUseCase(quoteRepo);
@@ -82,7 +86,7 @@ app.whenReady().then(() => {
   ipcMain.handle('quotes:save-draft', (_event, payload) => {
     try {
       console.log('Main received request to save draft:', payload);
-      
+
       const validation = quoteSchema.safeParse(payload);
 
       if (!validation.success) {
@@ -91,9 +95,9 @@ app.whenReady().then(() => {
           success: false,
           error: 'Local server security validation failed',
           details: validation.error.format()
-        };      
+        };
       }
-      
+
       return saveDraftUseCase.execute(payload);
 
     } catch (error) {
@@ -107,12 +111,16 @@ app.whenReady().then(() => {
     return loginUseCase.execute(credentials);
   });
 
+  ipcMain.handle('workers:register', async (_event, workerData) => {
+    return registerWorkerUseCase.execute(workerData);
+  });
+
   ipcMain.handle('quotes:get-draft-by-id', async (_event, id) => {
     try {
       console.log(`Main received request to fetch draft #${id}`);
-      
+
       const data = getDraftByIdUseCase.execute(id);
-      
+
       if (data) {
         return { success: true, data };
       } else {
@@ -133,7 +141,7 @@ app.whenReady().then(() => {
       return { success: false, error: (error as Error).message };
     }
   });
-  
+
   ipcMain.handle('quotes:issue', async (_event, id) => {
     console.log(`Main received request to issue quote #${id}`);
     return await issueQuoteUseCase.execute(id);
@@ -156,7 +164,7 @@ app.whenReady().then(() => {
 
   ipcMain.handle('quotes:get-issued', () => {
   console.log("Main received request to get issued quotes");
-  return getIssuedQuotesUseCase.execute(); 
+  return getIssuedQuotesUseCase.execute();
 });
 
   createWindow()
