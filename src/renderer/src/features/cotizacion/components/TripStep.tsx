@@ -1,7 +1,13 @@
 import { useFormContext } from 'react-hook-form';
 import { QuoteFormValues } from "src/shared/schemas/quoteSchema";
+import { CatalogData } from '../NewQuoteView';
 
-export const TripStep = () => {
+// Recibimos los catálogos como propiedades
+interface TripStepProps {
+  catalogs?: CatalogData;
+}
+
+export const TripStep = ({ catalogs }: TripStepProps) => {
   const { register, watch, formState: { errors } } = useFormContext<QuoteFormValues>();
 
   const roadType = watch('trip.roadType');
@@ -13,11 +19,19 @@ export const TripStep = () => {
         <p className="text-sm text-gray-500">Detalles operativos para la recolección</p>
       </div>
 
+      {/* Datalists ocultos para las sugerencias del catálogo */}
+      <datalist id="warehouse-list">
+        {catalogs?.warehouses.map(w => (
+          <option key={w.id} value={w.name} />
+        ))}
+      </datalist>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="block text-sm font-medium text-gray-700">Punto de Origen</label>
           <input
             type="text"
+            list="warehouse-list"
             {...register('trip.origin')}
             placeholder="Ej. Instalaciones del cliente"
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
@@ -28,6 +42,7 @@ export const TripStep = () => {
           <label className="block text-sm font-medium text-gray-700">Almacén de Llegada</label>
           <input
             type="text"
+            list="warehouse-list"
             {...register('trip.destinationWarehouse')}
             placeholder="Ej. Almacén Central SIMAR"
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"

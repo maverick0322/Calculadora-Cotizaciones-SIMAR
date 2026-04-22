@@ -1,59 +1,21 @@
-import { ElectronAPI } from '@electron-toolkit/preload'
-import { QuoteDraft, QuoteSummary } from '../shared/types/Quote'
-
-declare global {
-  interface Window {
-    electron: ElectronAPI
-    api: {
-      saveDraft: (data: QuoteDraft) => Promise<any>;
-      getDraftById: (id: number | string) => Promise<any>;
-      login: (credentials: Record<string, string>) => Promise<any>;
-      getDrafts: () => Promise<any>;
-      issueQuote: (id: number | string) => Promise<{ success: boolean; error?: string }>;
-      getIssuedQuotes: () => Promise<QuoteSummary[]>;
-      getQuoteById: (id: number | string) => Promise<QuoteDraft | null>;
-      generatePdfPreview: (quoteData: QuoteDraft) => Promise<{ success: boolean; pdfBase64?: string; error?: string }>;
-      savePdf: (pdfBase64: string, defaultFolio: string) => Promise<{ success: boolean; filePath?: string; error?: string }>;
-    }
-  }
-}
-
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
+import { QuoteDraft } from '../shared/types/Quote'
 
 // Custom APIs for renderer
 const api = {
-  saveDraft: (data: QuoteDraft) =>
-    ipcRenderer.invoke('quotes:save-draft', data),
-    
-  getDraftById: (id: number | string) => 
-    ipcRenderer.invoke('quotes:get-draft-by-id', id),
-    
-  login: (credentials: Record<string, string>) => 
-    ipcRenderer.invoke('auth:login', credentials),
-
-  getDrafts: () => 
-    ipcRenderer.invoke('quotes:get-drafts'),
-
-  issueQuote: (id: number | string) => 
-    ipcRenderer.invoke('quotes:issue', id),
-
-  getIssuedQuotes: () => 
-    ipcRenderer.invoke('quotes:get-issued'),
-
-  getQuoteById: (id: number | string) => 
-    ipcRenderer.invoke('quotes:get-quote-by-id', id),
-
-  generatePdfPreview: (quoteData: QuoteDraft) => 
-    ipcRenderer.invoke('pdf:generate-preview', quoteData),
-
-  savePdf: (pdfBase64: string, defaultFolio: string) => 
-    ipcRenderer.invoke('pdf:save', pdfBase64, defaultFolio)
+  saveDraft: (data: QuoteDraft) => ipcRenderer.invoke('quotes:save-draft', data),
+  getDraftById: (id: number | string) => ipcRenderer.invoke('quotes:get-draft-by-id', id),
+  login: (credentials: Record<string, string>) => ipcRenderer.invoke('auth:login', credentials),
+  getDrafts: () => ipcRenderer.invoke('quotes:get-drafts'),
+  issueQuote: (id: number | string) => ipcRenderer.invoke('quotes:issue', id),
+  getIssuedQuotes: () => ipcRenderer.invoke('quotes:get-issued'),
+  getQuoteById: (id: number | string) => ipcRenderer.invoke('quotes:get-quote-by-id', id),
+  generatePdfPreview: (quoteData: QuoteDraft) => ipcRenderer.invoke('pdf:generate-preview', quoteData),
+  savePdf: (pdfBase64: string, defaultFolio: string) => ipcRenderer.invoke('pdf:save', pdfBase64, defaultFolio),
+  getCatalogs: () => ipcRenderer.invoke('catalogs:get-all')
 };
 
-// Use `contextBridge` APIs to expose Electron APIs to
-// renderer only if context isolation is enabled, otherwise
-// just add to the DOM global.
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('electron', electronAPI)

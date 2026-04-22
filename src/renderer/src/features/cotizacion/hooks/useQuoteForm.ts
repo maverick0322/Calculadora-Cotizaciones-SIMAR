@@ -58,7 +58,6 @@ export const useQuoteForm = (editId?: number | null) => {
             frequency: draft.frequency, 
             trip: draft.trip 
           } as unknown as QuoteFormValues);
-          
           toast.success('Borrador listo para editar', { id: toastId });
         } else {
           toast.error('No se pudo cargar el borrador', { id: toastId });

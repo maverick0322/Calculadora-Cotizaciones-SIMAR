@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FormProvider, FieldErrors } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { useQuoteForm } from './hooks/useQuoteForm';
@@ -9,6 +9,13 @@ import { TripStep } from './components/TripStep';
 import { SummaryStep } from './components/SummaryStep';
 import { Save, ArrowLeft, CheckCircle } from 'lucide-react';
 
+// Interfaz local para tipar la respuesta de los catálogos
+export interface CatalogData {
+  warehouses: { id: number; name: string; address: string }[];
+  vehicles: { id: number; name: string; vehicle_type: string; capacity_kg: number; base_price: number }[];
+  supplies: { id: number; name: string; unit: string; suggested_price: number }[];
+}
+
 interface INewQuoteViewProps {
   editId?: number | null;
   onSaveSuccess?: () => void;
@@ -17,6 +24,24 @@ interface INewQuoteViewProps {
 export const NewQuoteView = ({ editId, onSaveSuccess }: INewQuoteViewProps) => {
   const { form, submitDraft } = useQuoteForm(editId);
   const [isReviewMode, setIsReviewMode] = useState(false);
+  
+  // NUEVO ESTADO: Guardará los catálogos provenientes de SQLite
+  const [catalogs, setCatalogs] = useState<CatalogData>({ warehouses: [], vehicles: [], supplies: [] });
+
+  // Efecto para cargar los catálogos al montar el componente
+  useEffect(() => {
+    const fetchCatalogs = async () => {
+      try {
+        const response = await window.api.getCatalogs();
+        if (response.success && response.data) {
+          setCatalogs(response.data);
+        }
+      } catch (error) {
+        console.error("Error al cargar los catálogos:", error);
+      }
+    };
+    fetchCatalogs();
+  }, []);
 
   const handleGoToReview = (data: QuoteFormValues) => {
     setIsReviewMode(true);
@@ -71,7 +96,8 @@ export const NewQuoteView = ({ editId, onSaveSuccess }: INewQuoteViewProps) => {
             <>
               <LocationStep />
               <WasteStep />
-              <TripStep />
+              {/* Le pasamos los catálogos como Props al componente hijo */}
+              <TripStep catalogs={catalogs} />
 
               <div className="flex justify-end pt-6 border-t mt-8">
                 <button
