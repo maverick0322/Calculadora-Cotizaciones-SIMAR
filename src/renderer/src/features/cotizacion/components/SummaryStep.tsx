@@ -80,7 +80,6 @@ export const SummaryStep = ({ data }: SummaryStepProps) => {  const service = da
           </ul>
         </div>
 
-        {/* VEHÍCULOS Y PERSONAL */}
         <div className="border border-gray-200 rounded-lg p-5 bg-white shadow-sm">
           <h4 className="font-semibold text-gray-900 border-b pb-2 mb-4">Operación</h4>
           
@@ -112,6 +111,34 @@ export const SummaryStep = ({ data }: SummaryStepProps) => {  const service = da
             )}
           </div>
         </div>
+
+        <div className="mt-6 pt-4 border-t border-gray-100">
+            <h5 className="text-xs font-bold text-gray-500 uppercase mb-2">Insumos y Materiales</h5>
+            {service.supplies.length === 0 ? <p className="text-sm text-gray-400">Ninguno</p> : (
+              <ul className="space-y-1 text-sm">
+                {service.supplies.map((s, idx) => (
+                  <li key={idx} className="flex justify-between">
+                    <span className="text-gray-700">{s.quantity}x {s.name || 'Insumo'}</span>
+                    <span className="text-gray-500">${s.unitPrice} c/u</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {service.extraCosts.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <h5 className="text-xs font-bold text-gray-500 uppercase mb-2">Costos Adicionales</h5>
+                <ul className="space-y-1 text-sm">
+                  {service.extraCosts.map((e, idx) => (
+                    <li key={idx} className="flex justify-between text-orange-700">
+                      <span>{e.description || 'Cargo Extra'}</span>
+                      <span className="font-medium">${e.amount}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
 
       </div>
     </div>

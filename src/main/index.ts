@@ -23,6 +23,7 @@ import { LogAuditActionUseCase } from './application/useCases/LogAuditActionUseC
 import { GetCatalogsUseCase } from './application/useCases/GetCatalogsUseCase';
 
 import { quoteSchema } from '../shared/schemas/quoteSchema';
+import { UpdateCatalogPriceUseCase } from './application/useCases/UpdateCatalogPriceUseCase';
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -82,6 +83,7 @@ app.whenReady().then(() => {
   const getIssuedQuotesUseCase = new GetIssuedQuotesUseCase(quoteRepo);
   const savePdfUseCase = new SavePdfUseCase();
   const getCatalogsUseCase = new GetCatalogsUseCase(catalogRepo);
+  const updateCatalogUseCase = new UpdateCatalogPriceUseCase(catalogRepo);
 
   ipcMain.handle('quotes:save-draft', (_event, payload) => {
     try {
@@ -159,7 +161,7 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle('quotes:get-issued', () => {
-  console.log("Main received request to get issued quotes");
+    console.log("Main received request to get issued quotes");
   return getIssuedQuotesUseCase.execute(); 
   });
 
@@ -170,6 +172,15 @@ app.whenReady().then(() => {
       return { success: true, data };
     } catch (error) {
       console.error('Error fetching catalogs:', error);
+      return { success: false, error: (error as Error).message };
+    }
+  });
+
+  ipcMain.handle('catalogs:update-price', async (_event, { type, id, price }) => {
+    try {
+      const result = await updateCatalogUseCase.execute(type, id, price);
+      return { success: true, changes: result.changes };
+    } catch (error) {
       return { success: false, error: (error as Error).message };
     }
   });

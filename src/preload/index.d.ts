@@ -15,8 +15,7 @@ declare global {
       generatePdfPreview: (quoteData: QuoteDraft) => Promise<{ success: boolean; pdfBase64?: string; error?: string }>;
       savePdf: (pdfBase64: string, defaultFolio: string) => Promise<{ success: boolean; filePath?: string; error?: string }>;
       
-      // NUEVA FUNCIÓN AÑADIDA
       getCatalogs: () => Promise<{ success: boolean; data?: any; error?: string }>;
-    }
+      updateCatalogPrice: (type: 'vehicle' | 'supply', id: number, price: number) => Promise<any>;    }
   }
 }
