@@ -89,6 +89,9 @@ export interface QuoteDraft {
   frequency: ServiceFrequencyDetail; // Frecuencia global del contrato
   
   services: ServiceItem[]; // REEMPLAZA a las propiedades planas anteriores
+
+  subtotal?: number;
+  total?: number;
   
   createdAt: number;     
   status: QuoteStatus;

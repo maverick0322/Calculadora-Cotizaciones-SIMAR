@@ -5,8 +5,9 @@ import logoImg from './assets/logo.png';
 import { DashboardView } from './features/cotizacion/DashboardView';
 import { IssuedQuotesDashboardView } from './features/cotizacion/IssuedQuotesDashboardView';
 import { LoginView } from './features/auth/LoginView';
+import { CatalogSettingsView } from './features/configuration/CatalogSettingsView';
 
-type View = 'splash' | 'newQuote' | 'dashboard' | 'issuedQuotes';
+type View = 'splash' | 'newQuote' | 'dashboard' | 'issuedQuotes' | 'settings';
 
 function App() {
   const [currentView, setCurrentView] = useState<View>('splash');
@@ -106,9 +107,21 @@ function App() {
                   ✅ Emitidas
                 </button>
 
+                {/* NUEVO BOTÓN DE CONFIGURACIÓN */}
+                <button
+                  onClick={() => setCurrentView('settings')}
+                  className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-colors
+                    ${currentView === 'settings'
+                      ? 'bg-gray-800 text-white shadow-sm'
+                      : 'text-gray-600 hover:text-gray-800'}`
+                  }
+                >
+                  ⚙️ Ajustes
+                </button>
+
                 <button
                   onClick={() => setIsAuthenticated(false)}
-                  className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-full transition-colors ml-2"
+                  className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-full transition-colors ml-2 border-l border-gray-300 rounded-none"
                 >
                   Salir
                 </button>
@@ -125,6 +138,7 @@ function App() {
             )}
             {currentView === 'dashboard' && <DashboardView onEditClick={handleEditDraft} />}
             {currentView === 'issuedQuotes' && <IssuedQuotesDashboardView onCloneRedirect={handleEditDraft} />}
+            {currentView === 'settings' && <CatalogSettingsView />} {/* Renderizamos la vista */}
           </main>
         </div>
       )}

@@ -17,7 +17,6 @@ export const useQuoteForm = (editId?: number | null) => {
         duration: undefined,
         customDescription: ''
       },
-      // AQUÍ ESTÁ LA MAGIA: Todo se agrupa en el primer servicio por defecto
       services: [
         {
           id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
@@ -78,9 +77,8 @@ export const useQuoteForm = (editId?: number | null) => {
     fetchDraftData();
   }, [editId, form]);
 
-  const submitDraft = async (data: QuoteFormValues): Promise<boolean> => {
+  const submitDraft = async (data: QuoteFormValues, subtotal: number = 0, total: number = 0): Promise<boolean> => {
     try {
-      // Limpiamos los roadType vacíos de cada servicio antes de enviar
       const cleanedServices = data.services.map(service => {
         const cleanRoadType = (service.logistics.roadType === '' || service.logistics.roadType === null) 
           ? undefined 
@@ -103,7 +101,11 @@ export const useQuoteForm = (editId?: number | null) => {
         clientRfc: data.clientRfc,
         validityDays: data.validityDays,
         frequency: data.frequency,
-        services: cleanedServices
+        services: cleanedServices,
+        
+        // Inyectamos el dinero en el payload
+        subtotal: subtotal,
+        total: total
       };
 
       const response = await window.api.saveDraft(payload);

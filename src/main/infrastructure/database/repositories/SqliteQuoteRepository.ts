@@ -15,6 +15,8 @@ interface RawQuoteRow {
   validity_days: number;
   frequency_json: string;
   services_json: string;
+  subtotal: number; // <-- Nuevo
+  total: number;
   created_at: number;
   status: string;
   replaces_quote_id: number | null;
@@ -31,6 +33,8 @@ export class SqliteQuoteRepository implements IQuoteRepository {
       validityDays: quote.validityDays,
       frequencyJson: JSON.stringify(quote.frequency),
       servicesJson: JSON.stringify(quote.services),
+      subtotal: quote.subtotal || 0,
+      total: quote.total || 0,
       createdAt: quote.createdAt || Date.now(),
       replacesQuoteId: quote.replacesQuoteId ?? null
     };
@@ -43,6 +47,8 @@ export class SqliteQuoteRepository implements IQuoteRepository {
           validity_days = @validityDays,
           frequency_json = @frequencyJson,
           services_json = @servicesJson,
+          subtotal = @subtotal,
+          total = @total,
           replaces_quote_id = @replacesQuoteId
         WHERE id = @id AND status = 'draft'
       `);
@@ -54,10 +60,10 @@ export class SqliteQuoteRepository implements IQuoteRepository {
     const stmt = this.db.prepare(`
       INSERT INTO quotes (
         client_name, client_rfc, validity_days, frequency_json, 
-        services_json, created_at, status, replaces_quote_id
+        services_json, subtotal, total, created_at, status, replaces_quote_id
       ) VALUES (
         @clientName, @clientRfc, @validityDays, @frequencyJson, 
-        @servicesJson, @createdAt, 'draft', @replacesQuoteId
+        @servicesJson, @subtotal, @total, @createdAt, 'draft', @replacesQuoteId
       )
     `);
 
@@ -74,7 +80,6 @@ export class SqliteQuoteRepository implements IQuoteRepository {
         ? `${loc.street}, ${loc.neighborhood}, ${loc.municipality}, ${loc.state}` 
         : 'Sin dirección';
 
-      // Sumamos todos los residuos de todos los servicios para el resumen
       const allWastes = services.flatMap(s => s.wastes);
       const wastesSummary = allWastes.map((w: any) => `${w.quantity} ${w.unit} de ${w.name}`).join(' | ');
 
@@ -133,25 +138,43 @@ export class SqliteQuoteRepository implements IQuoteRepository {
       validityDays: row.validity_days,
       frequency: JSON.parse(row.frequency_json || '{}'),
       services: JSON.parse(row.services_json || '[]'),
+      subtotal: row.subtotal, // <-- Extraer el dinero
+      total: row.total,
       createdAt: row.created_at,
       status: row.status as QuoteStatus
     };
   }
 
   issueQuote(id: number): boolean {
-    const checkStmt = this.db.prepare(`SELECT replaces_quote_id FROM quotes WHERE id = ?`);
-    const row = checkStmt.get(id) as { replaces_quote_id: number | null };
+    const currentYear = new Date().getFullYear();
+    const folioPrefix = `COT-${currentYear}-`;
 
-    const issueStmt = this.db.prepare(`UPDATE quotes SET status = 'issued' WHERE id = ? AND status = 'draft'`);
+    const checkStmt = this.db.prepare(`SELECT folio, replaces_quote_id FROM quotes WHERE id = ?`);
+    const row = checkStmt.get(id) as { folio: string | null, replaces_quote_id: number | null };
+
+    if (!row) return false;
+
+    let newFolio = row.folio;
+    if (!newFolio) {
+      const countStmt = this.db.prepare(`SELECT COUNT(*) as count FROM quotes WHERE folio LIKE ?`);
+      const { count } = countStmt.get(`${folioPrefix}%`) as { count: number };
+      
+      const nextSequence = String(count + 1).padStart(3, '0');
+      newFolio = `${folioPrefix}${nextSequence}`;
+    }
+
+    const issueStmt = this.db.prepare(`UPDATE quotes SET status = 'issued', folio = ? WHERE id = ? AND status = 'draft'`);
     const replaceStmt = this.db.prepare(`UPDATE quotes SET status = 'replaced' WHERE id = ?`);
 
     const transaction = this.db.transaction(() => {
-      const info = issueStmt.run(id);
-      if (info.changes > 0 && row && row.replaces_quote_id) {
+      const info = issueStmt.run(newFolio, id);
+      
+      if (info.changes > 0 && row.replaces_quote_id) {
         replaceStmt.run(row.replaces_quote_id);
       }
       return info.changes > 0; 
     });
+
     return transaction();
   }
 }

@@ -11,7 +11,8 @@ export class GeneratePdfPreviewUseCase {
       let printWindow: BrowserWindow | null = null;
 
       try {
-        if (!quoteData || !quoteData.location) {
+        // ACTUALIZACIÓN: Validamos que exista el arreglo de servicios en lugar del location plano
+        if (!quoteData || !quoteData.services || quoteData.services.length === 0) {
           throw new Error('Datos de cotización inválidos o incompletos.');
         }
 
@@ -22,6 +23,7 @@ export class GeneratePdfPreviewUseCase {
 
         const logoBase64 = this.getLocalLogoBase64();
 
+        // Aquí es donde ocurre la verdadera magia visual
         const htmlContent = buildQuoteHtml(quoteData, logoBase64);
 
         await printWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(htmlContent)}`);

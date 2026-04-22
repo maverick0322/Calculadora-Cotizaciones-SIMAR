@@ -30,25 +30,30 @@ export const useQuoteCalculator = (control: Control<QuoteFormValues>) => {
     let totalSupplies = 0;
     let totalExtras = 0;
 
+    const safeNum = (val: any) => {
+      const num = Number(val);
+      return isNaN(num) ? 0 : num;
+    };
+
     services.forEach((service) => {
-      const fuelCost = (service.logistics.fuelLiters || 0) * (service.logistics.fuelPricePerLiter || 0);
-      const tollCost = service.logistics.roadType === 'toll' ? (service.logistics.totalTollCost || 0) : 0;
-      totalLogistics += fuelCost + tollCost + (service.logistics.viaticos || 0);
+      const fuelCost = safeNum(service.logistics?.fuelLiters) * safeNum(service.logistics?.fuelPricePerLiter);
+      const tollCost = service.logistics?.roadType === 'toll' ? safeNum(service.logistics?.totalTollCost) : 0;
+      totalLogistics += fuelCost + tollCost + safeNum(service.logistics?.viaticos);
 
       service.vehicles?.forEach(v => {
-        totalVehicles += (v.quantity || 0) * (v.unitPrice || 0);
+        totalVehicles += safeNum(v.quantity) * safeNum(v.unitPrice);
       });
 
       service.crew?.forEach(c => {
-        totalCrew += (c.quantity || 0) * (c.dailySalary || 0);
+        totalCrew += safeNum(c.quantity) * safeNum(c.dailySalary);
       });
 
       service.supplies?.forEach(s => {
-        totalSupplies += (s.quantity || 0) * (s.unitPrice || 0);
+        totalSupplies += safeNum(s.quantity) * safeNum(s.unitPrice);
       });
 
       service.extraCosts?.forEach(e => {
-        totalExtras += (e.amount || 0);
+        totalExtras += safeNum(e.amount);
       });
     });
 

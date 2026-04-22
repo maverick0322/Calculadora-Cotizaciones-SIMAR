@@ -53,7 +53,7 @@ export const NewQuoteView = ({ editId, onSaveSuccess }: INewQuoteViewProps) => {
     const toastId = toast.loading(editId ? 'Actualizando borrador...' : 'Guardando borrador...');
 
     try {
-      const isSuccess = await submitDraft(data);
+      const isSuccess = await submitDraft(data, subtotal, total);
 
       if (!isSuccess) {
         toast.error('Error al guardar el borrador. Revisa tu conexión.', { id: toastId });
