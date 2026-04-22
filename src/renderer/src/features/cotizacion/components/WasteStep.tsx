@@ -3,35 +3,57 @@ import { QuoteFormValues } from "src/shared/schemas/quoteSchema";
 import { Plus, Trash2 } from 'lucide-react';
 
 export const WasteStep = () => {
-  const { register, control, formState: { errors } } = useFormContext<QuoteFormValues>();
+  const { register, control, watch, formState: { errors } } = useFormContext<QuoteFormValues>();
   
   const { fields, append, remove } = useFieldArray({
     control,
-    name: "wastes"
+    name: "services.0.wastes"
   });
+
+  const frequencyType = watch('frequency.type');
 
   return (
     <div>
       <h2 className="text-lg font-semibold text-gray-900 mb-6 pb-2 border-b">Especificaciones del servicio</h2>
       <div className="space-y-6">
+        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de actividad principal</label>
-            <select className="w-full px-3 py-2 border rounded-md" {...register('activity')}>
+            <select className="w-full px-3 py-2 border rounded-md" {...register('services.0.activity')}>
               <option value="collection">Recolección</option>
               <option value="transport">Transporte</option>
               <option value="transfer">Transferencia</option>
               <option value="final_disposal">Disposición Final</option>
             </select>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Frecuencia de servicio</label>
-            <select className="w-full px-3 py-2 border rounded-md" {...register('frequency')}>
-              <option value="daily">Diaria</option>
-              <option value="weekly">Semanal</option>
-              <option value="monthly">Mensual</option>
-              <option value="one_time">Única</option>
-            </select>
+          
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Frecuencia del contrato</label>
+              <select className="w-full px-3 py-2 border rounded-md" {...register('frequency.type')}>
+                <option value="one_time">Evento Único</option>
+                <option value="daily">Diaria</option>
+                <option value="weekly">Semanal</option>
+                <option value="biweekly">Quincenal</option>
+                <option value="monthly">Mensual</option>
+                <option value="custom">Otra (Especificar)</option>
+              </select>
+            </div>
+
+            {frequencyType !== 'one_time' && frequencyType !== 'custom' && (
+              <div className="animate-in fade-in slide-in-from-top-1">
+                <label className="block text-xs font-medium text-gray-500 mb-1">Duración del contrato (ej. cantidad de semanas/meses)</label>
+                <input type="number" placeholder="Ej. 6" className="w-full px-3 py-2 border rounded-md" {...register('frequency.duration')} />
+              </div>
+            )}
+
+            {frequencyType === 'custom' && (
+              <div className="animate-in fade-in slide-in-from-top-1">
+                <label className="block text-xs font-medium text-gray-500 mb-1">Especifique la frecuencia</label>
+                <input type="text" placeholder="Ej. Cada tercer día" className="w-full px-3 py-2 border rounded-md" {...register('frequency.customDescription')} />
+              </div>
+            )}
           </div>
         </div>
 
@@ -68,14 +90,14 @@ export const WasteStep = () => {
                       type="text" 
                       placeholder="Ej. Cartón, Aceite..."
                       className="w-full px-3 py-2 border rounded-md bg-white" 
-                      {...register(`wastes.${index}.name` as const)} 
+                      {...register(`services.0.wastes.${index}.name` as const)} 
                     />
-                    {errors.wastes?.[index]?.name && <p className="text-red-500 text-xs mt-1">{errors.wastes[index]?.name?.message}</p>}
+                    {errors.services?.[0]?.wastes?.[index]?.name && <p className="text-red-500 text-xs mt-1">{errors.services[0].wastes[index]?.name?.message}</p>}
                   </div>
 
                   <div>
                     <label className="block text-xs font-medium text-gray-500 mb-1">Clasificación</label>
-                    <select className="w-full px-3 py-2 border rounded-md bg-white" {...register(`wastes.${index}.type` as const)}>
+                    <select className="w-full px-3 py-2 border rounded-md bg-white" {...register(`services.0.wastes.${index}.type` as const)}>
                       <option value="domestic">Doméstico</option>
                       <option value="organic">Orgánico</option>
                       <option value="recyclable">Reciclable</option>
@@ -90,14 +112,14 @@ export const WasteStep = () => {
                       type="number" 
                       step="0.01" 
                       className="w-full px-3 py-2 border rounded-md bg-white" 
-                      {...register(`wastes.${index}.quantity` as const)} 
+                      {...register(`services.0.wastes.${index}.quantity` as const)} 
                     />
-                    {errors.wastes?.[index]?.quantity && <p className="text-red-500 text-xs mt-1">{errors.wastes[index]?.quantity?.message}</p>}
+                    {errors.services?.[0]?.wastes?.[index]?.quantity && <p className="text-red-500 text-xs mt-1">{errors.services[0].wastes[index]?.quantity?.message}</p>}
                   </div>
 
                   <div>
                     <label className="block text-xs font-medium text-gray-500 mb-1">Unidad</label>
-                    <select className="w-full px-3 py-2 border rounded-md bg-white" {...register(`wastes.${index}.unit` as const)}>
+                    <select className="w-full px-3 py-2 border rounded-md bg-white" {...register(`services.0.wastes.${index}.unit` as const)}>
                       <option value="kg">kg</option>
                       <option value="ton">ton</option>
                       <option value="m3">m³</option>
@@ -108,7 +130,7 @@ export const WasteStep = () => {
                 </div>
               </div>
             ))}
-            {errors.wastes?.root && <p className="text-red-500 text-sm mt-2">{errors.wastes.root.message}</p>}
+            {errors.services?.[0]?.wastes?.root && <p className="text-red-500 text-sm mt-2">{errors.services[0].wastes.root.message}</p>}
           </div>
         </div>
       </div>

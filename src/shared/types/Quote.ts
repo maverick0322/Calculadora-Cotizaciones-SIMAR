@@ -25,6 +25,59 @@ export interface ServiceFrequencyDetail {
   customDescription?: string;
 }
 
+
+export interface VehicleItem {
+  vehicleId: number;
+  name: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+export interface SupplyItem {
+  supplyId: number;
+  name: string;
+  quantity: number;
+  unitPrice: number; // Precio sugerido editable
+}
+
+export interface CrewItem {
+  type: 'driver' | 'technician';
+  quantity: number;
+  dailySalary: number; // Salario editable para cálculo rápido
+}
+
+export interface ExtraCostItem {
+  description: string;
+  amount: number;
+}
+
+export interface ServiceLogistics {
+  origin: string;
+  primaryDestination: string; // Ej. Almacén SIMAR
+  secondaryDestination?: string; // Tercer lugar opcional
+  kilometers: number;
+  fuelLiters: number;
+  fuelPricePerLiter: number; // Costo de combustible editable
+  roadType?: RoadType;
+  tolls?: number;
+  totalTollCost?: number;
+  viaticos: number; // Gastos de viaje ocultos al cliente
+}
+
+export interface ServiceItem {
+  id: string; // UUID local para que React Hook Form iteré correctamente
+  activity: ActivityType;
+  location: Location; // Cada servicio puede tener una dirección distinta
+  wastes: WasteItem[];
+  vehicles: VehicleItem[];
+  crew: CrewItem[];
+  supplies: SupplyItem[];
+  logistics: ServiceLogistics;
+  extraCosts: ExtraCostItem[];
+}
+
+// --- FIN NUEVAS INTERFACES ---
+
 export interface QuoteDraft {
   id?: string | number;  
   folio?: string;        
@@ -32,13 +85,12 @@ export interface QuoteDraft {
   clientName: string;
   clientRfc: string;
   validityDays: number;
-  location: Location;
-  activity: ActivityType;
-  wastes: WasteItem[];
-  frequency: ServiceFrequencyDetail;
+  frequency: ServiceFrequencyDetail; // Frecuencia global del contrato
+  
+  services: ServiceItem[]; // REEMPLAZA a las propiedades planas anteriores
+  
   createdAt: number;     
   status: QuoteStatus;
-  trip?: TripLogistics;  
 }
 
 export interface QuoteSummary {
@@ -48,16 +100,4 @@ export interface QuoteSummary {
   wastesSummary: string;
   createdAt: number;
   status: string;
-}
-
-export interface TripLogistics {
-  kilometers: number;
-  vehicles: number;
-  crewMembers: number;
-  fuelLiters: number;
-  roadType?: RoadType;
-  tolls?: number;
-  totalTollCost?: number;
-  origin: string;
-  destinationWarehouse: string;
 }

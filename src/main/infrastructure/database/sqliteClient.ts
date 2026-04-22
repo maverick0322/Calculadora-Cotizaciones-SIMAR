@@ -30,7 +30,6 @@ export const initDatabase = () => {
             email VARCHAR
         );
 
-        -- NUEVOS CATÁLOGOS
         CREATE TABLE IF NOT EXISTS catalog_vehicles (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name VARCHAR,
@@ -74,28 +73,14 @@ export const initDatabase = () => {
             
             client_name VARCHAR,
             client_rfc VARCHAR,
-
-            street TEXT,
-            neighborhood TEXT,
-            municipality TEXT,
-            
-            activity_type VARCHAR,
             validity_days INTEGER,
             frequency_json TEXT,
-            wastes_json TEXT,
+            
+            -- MAGIA: Aquí guardaremos todos los servicios, direcciones, residuos y vehículos
+            services_json TEXT,
+            
             subtotal DECIMAL,
             total DECIMAL,
-            
-            trip_kilometers DECIMAL,
-            trip_vehicles INTEGER,
-            trip_crew_members INTEGER,
-            trip_fuel_liters DECIMAL,
-            trip_road_type VARCHAR,
-            trip_tolls INTEGER,
-            trip_total_toll_cost DECIMAL,
-            trip_origin VARCHAR,
-            trip_destination_warehouse VARCHAR,
-            
             created_at INTEGER,
             FOREIGN KEY (customer_id) REFERENCES customers(id),
             FOREIGN KEY (seller_id) REFERENCES users(id),

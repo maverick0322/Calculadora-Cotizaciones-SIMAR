@@ -12,25 +12,36 @@ export const useQuoteForm = (editId?: number | null) => {
       clientName: '',
       clientRfc: '',
       validityDays: 15,
-      location: { street: '', municipality: '', neighborhood: '' },
-      activity: 'collection',
-      wastes: [{ name: '', type: 'domestic', quantity: 1, unit: 'kg' }],
       frequency: {
         type: 'one_time',
         duration: undefined,
         customDescription: ''
       },
-      trip: {
-        origin: '',
-        destinationWarehouse: '',
-        kilometers: 0,
-        vehicles: 1,
-        crewMembers: 1,
-        fuelLiters: 0,
-        roadType: undefined,
-        tolls: 0,
-        totalTollCost: 0
-      }
+      // AQUÍ ESTÁ LA MAGIA: Todo se agrupa en el primer servicio por defecto
+      services: [
+        {
+          id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
+          activity: 'collection',
+          location: { street: '', municipality: '', neighborhood: '' },
+          wastes: [{ name: '', type: 'domestic', quantity: 1, unit: 'kg' }],
+          vehicles: [],
+          crew: [],
+          supplies: [],
+          logistics: {
+            origin: '',
+            primaryDestination: '',
+            secondaryDestination: '',
+            kilometers: 0,
+            fuelLiters: 0,
+            fuelPricePerLiter: 0,
+            roadType: undefined,
+            tolls: 0,
+            totalTollCost: 0,
+            viaticos: 0
+          },
+          extraCosts: []
+        }
+      ]
     }
   });
 
@@ -47,17 +58,14 @@ export const useQuoteForm = (editId?: number | null) => {
         if (response.success && response.data) {
           const draft: QuoteDraft = response.data;
           
-          // Le decimos a TypeScript que confíe en que este objeto empata con el formulario
           form.reset({
             clientName: draft.clientName,
             clientRfc: draft.clientRfc,
             validityDays: draft.validityDays,
-            location: draft.location, 
-            activity: draft.activity,
-            wastes: draft.wastes, 
-            frequency: draft.frequency, 
-            trip: draft.trip 
+            frequency: draft.frequency,
+            services: draft.services 
           } as unknown as QuoteFormValues);
+          
           toast.success('Borrador listo para editar', { id: toastId });
         } else {
           toast.error('No se pudo cargar el borrador', { id: toastId });
@@ -72,25 +80,30 @@ export const useQuoteForm = (editId?: number | null) => {
 
   const submitDraft = async (data: QuoteFormValues): Promise<boolean> => {
     try {
-      let cleanTrip = data.trip as QuoteDraft['trip'];
-      
-      if (data.trip) {
-        const cleanRoadType = (data.trip.roadType === '' || data.trip.roadType === null) 
+      // Limpiamos los roadType vacíos de cada servicio antes de enviar
+      const cleanedServices = data.services.map(service => {
+        const cleanRoadType = (service.logistics.roadType === '' || service.logistics.roadType === null) 
           ? undefined 
-          : data.trip.roadType as RoadType;
+          : service.logistics.roadType as RoadType;
 
-        cleanTrip = {
-          ...data.trip,
-          roadType: cleanRoadType,
+        return {
+          ...service,
+          logistics: {
+            ...service.logistics,
+            roadType: cleanRoadType
+          }
         };
-      }
+      });
 
       const payload: QuoteDraft = {
         id: editId || undefined,
         status: 'draft',
         createdAt: Date.now(),
-        ...data,
-        trip: cleanTrip
+        clientName: data.clientName,
+        clientRfc: data.clientRfc,
+        validityDays: data.validityDays,
+        frequency: data.frequency,
+        services: cleanedServices
       };
 
       const response = await window.api.saveDraft(payload);

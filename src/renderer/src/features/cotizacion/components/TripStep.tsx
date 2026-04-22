@@ -2,7 +2,6 @@ import { useFormContext } from 'react-hook-form';
 import { QuoteFormValues } from "src/shared/schemas/quoteSchema";
 import { CatalogData } from '../NewQuoteView';
 
-// Recibimos los catálogos como propiedades
 interface TripStepProps {
   catalogs?: CatalogData;
 }
@@ -10,16 +9,17 @@ interface TripStepProps {
 export const TripStep = ({ catalogs }: TripStepProps) => {
   const { register, watch, formState: { errors } } = useFormContext<QuoteFormValues>();
 
-  const roadType = watch('trip.roadType');
+  const roadType = watch('services.0.logistics.roadType');
+
+  const logisticsErrors = errors.services?.[0]?.logistics;
 
   return (
     <div className="space-y-6">
       <div className="border-b border-gray-200 pb-4">
         <h3 className="text-lg font-medium text-gray-900">Logística del Viaje</h3>
-        <p className="text-sm text-gray-500">Detalles operativos para la recolección</p>
+        <p className="text-sm text-gray-500">Ruta y combustible del servicio</p>
       </div>
 
-      {/* Datalists ocultos para las sugerencias del catálogo */}
       <datalist id="warehouse-list">
         {catalogs?.warehouses.map(w => (
           <option key={w.id} value={w.name} />
@@ -32,41 +32,37 @@ export const TripStep = ({ catalogs }: TripStepProps) => {
           <input
             type="text"
             list="warehouse-list"
-            {...register('trip.origin')}
+            {...register('services.0.logistics.origin')}
             placeholder="Ej. Instalaciones del cliente"
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
           />
-          {errors.trip?.origin && <p className="mt-1 text-sm text-red-600">{errors.trip.origin.message}</p>}
+          {logisticsErrors?.origin && <p className="mt-1 text-sm text-red-600">{logisticsErrors.origin.message}</p>}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">Almacén de Llegada</label>
+          <label className="block text-sm font-medium text-gray-700">Almacén de Llegada Principal</label>
           <input
             type="text"
             list="warehouse-list"
-            {...register('trip.destinationWarehouse')}
+            {...register('services.0.logistics.primaryDestination')}
             placeholder="Ej. Almacén Central SIMAR"
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border"
           />
-          {errors.trip?.destinationWarehouse && <p className="mt-1 text-sm text-red-600">{errors.trip.destinationWarehouse.message}</p>}
+          {logisticsErrors?.primaryDestination && <p className="mt-1 text-sm text-red-600">{logisticsErrors.primaryDestination.message}</p>}
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700">Kilómetros</label>
-          <input type="number" {...register('trip.kilometers')} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" />
+          <label className="block text-sm font-medium text-gray-700">Kilómetros totales</label>
+          <input type="number" {...register('services.0.logistics.kilometers')} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">Vehículos</label>
-          <input type="number" {...register('trip.vehicles')} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" />
+          <label className="block text-sm font-medium text-gray-700">Litros Combustible</label>
+          <input type="number" step="0.1" {...register('services.0.logistics.fuelLiters')} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">Brigadistas</label>
-          <input type="number" {...register('trip.crewMembers')} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Litros Comb.</label>
-          <input type="number" step="0.1" {...register('trip.fuelLiters')} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" />
+          <label className="block text-sm font-medium text-gray-700">Precio Comb. x Litro ($)</label>
+          <input type="number" step="0.1" {...register('services.0.logistics.fuelPricePerLiter')} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" />
         </div>
       </div>
 
@@ -75,11 +71,11 @@ export const TripStep = ({ catalogs }: TripStepProps) => {
           <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de Carretera</label>
           <div className="flex gap-4">
             <label className="inline-flex items-center">
-              <input type="radio" value="free" {...register('trip.roadType')} className="text-blue-600 focus:ring-blue-500" />
+              <input type="radio" value="free" {...register('services.0.logistics.roadType')} className="text-blue-600 focus:ring-blue-500" />
               <span className="ml-2 text-sm text-gray-700">Libre</span>
             </label>
             <label className="inline-flex items-center">
-              <input type="radio" value="toll" {...register('trip.roadType')} className="text-blue-600 focus:ring-blue-500" />
+              <input type="radio" value="toll" {...register('services.0.logistics.roadType')} className="text-blue-600 focus:ring-blue-500" />
               <span className="ml-2 text-sm text-gray-700">Cuota (Peaje)</span>
             </label>
           </div>
@@ -89,11 +85,11 @@ export const TripStep = ({ catalogs }: TripStepProps) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200 animate-in fade-in slide-in-from-top-2">
             <div>
               <label className="block text-sm font-medium text-gray-700">Número de Casetas</label>
-              <input type="number" {...register('trip.tolls')} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" />
+              <input type="number" {...register('services.0.logistics.tolls')} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Costo Total Casetas ($)</label>
-              <input type="number" step="0.01" {...register('trip.totalTollCost')} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" />
+              <input type="number" step="0.01" {...register('services.0.logistics.totalTollCost')} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" />
             </div>
           </div>
         )}

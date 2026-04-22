@@ -7,9 +7,9 @@ import { LocationStep } from './components/LocationStep';
 import { WasteStep } from './components/WasteStep';
 import { TripStep } from './components/TripStep';
 import { SummaryStep } from './components/SummaryStep';
+import { VehiclesAndCrewStep } from './components/VehiclesAndCrewStep';
 import { Save, ArrowLeft, CheckCircle } from 'lucide-react';
 
-// Interfaz local para tipar la respuesta de los catálogos
 export interface CatalogData {
   warehouses: { id: number; name: string; address: string }[];
   vehicles: { id: number; name: string; vehicle_type: string; capacity_kg: number; base_price: number }[];
@@ -96,8 +96,8 @@ export const NewQuoteView = ({ editId, onSaveSuccess }: INewQuoteViewProps) => {
             <>
               <LocationStep />
               <WasteStep />
-              {/* Le pasamos los catálogos como Props al componente hijo */}
               <TripStep catalogs={catalogs} />
+              <VehiclesAndCrewStep catalogs={catalogs} />
 
               <div className="flex justify-end pt-6 border-t mt-8">
                 <button
