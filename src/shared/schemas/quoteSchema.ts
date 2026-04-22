@@ -2,33 +2,36 @@
 import * as z from 'zod';
 
 export const quoteSchema = z.object({
+  clientName: z.string().min(3),
+  clientRfc: z.string().regex(/^[A-Z&Ñ]{3,4}\d{6}[A-Z\d]{3}$/i),
+
   location: z.object({
-    street: z.string().min(5, 'Street must be at least 5 characters'),
-    municipality: z.string().min(2, 'Municipality is required'),
-    neighborhood: z.string().min(2, 'Neighborhood is required'),
+    street: z.string().min(5),
+    municipality: z.string().min(2),
+    neighborhood: z.string().min(2),
   }),
   
   activity: z.enum(['collection', 'transport', 'transfer', 'final_disposal']),
-  waste: z.enum(['domestic', 'organic', 'recyclable', 'hazardous', 'bulky']),
   
-  volumeQuantity: z.coerce.number().positive('Volume must be greater than 0'),
-  volumeUnit: z.enum(['kg', 'ton', 'm3', 'containers', 'trips']),
+  wastes: z.array(z.object({
+    name: z.string().min(2, 'El nombre es requerido'),
+    type: z.enum(['domestic', 'organic', 'recyclable', 'hazardous', 'bulky']),
+    quantity: z.coerce.number().positive(),
+    unit: z.enum(['kg', 'ton', 'm3', 'containers', 'trips']),
+  })).min(1),
   
-  frequency: z.enum(['daily', 'weekly', 'monthly', 'one_time'], {
-    message: 'Frequency is required'
-  }),
+  frequency: z.enum(['daily', 'weekly', 'monthly', 'one_time']),
 
   trip: z.object({
-    kilometers: z.coerce.number().min(0, 'Must be greater than or equal to 0'),
-    vehicles: z.coerce.number().min(1, 'Minimum 1 vehicle'),
-    crewMembers: z.coerce.number().min(1, 'Minimum 1 crew member'),
-    routes: z.coerce.number().min(1, 'Minimum 1 route'),
-    fuelLiters: z.coerce.number().min(0, 'Fuel estimation is required'),
+    kilometers: z.coerce.number().min(0),
+    vehicles: z.coerce.number().min(1),
+    crewMembers: z.coerce.number().min(1),
+    fuelLiters: z.coerce.number().min(0),
     roadType: z.enum(['free', 'toll']).nullable().optional().or(z.literal('')),
     tolls: z.coerce.number().min(0).optional(),
     totalTollCost: z.coerce.number().min(0).optional(),
-    origin: z.string().min(3, 'Origin point is required'),
-    destinationWarehouse: z.string().min(3, 'Destination warehouse is required'),
+    origin: z.string().min(3),
+    destinationWarehouse: z.string().min(3),
   }).optional(),
 });
 

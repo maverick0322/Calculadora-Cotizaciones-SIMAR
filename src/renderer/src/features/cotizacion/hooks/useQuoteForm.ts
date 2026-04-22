@@ -9,12 +9,24 @@ export const useQuoteForm = (editId?: number | null) => {
   const form = useForm<QuoteFormValues>({
     resolver: zodResolver(quoteSchema) as unknown as Resolver<QuoteFormValues>,
     defaultValues: {
+      clientName: '',
+      clientRfc: '',
       location: { street: '', municipality: '', neighborhood: '' },
       activity: 'collection',
-      waste: 'domestic',
-      volumeQuantity: 0,
-      volumeUnit: 'kg',
-    } as Partial<QuoteFormValues>
+      wastes: [{ name: '', type: 'domestic', quantity: 1, unit: 'kg' }],
+      frequency: 'one_time',
+      trip: {
+        origin: '',
+        destinationWarehouse: '',
+        kilometers: 0,
+        vehicles: 1,
+        crewMembers: 1,
+        fuelLiters: 0,
+        roadType: 'free',
+        tolls: 0,
+        totalTollCost: 0
+      }
+    }
   });
 
   useEffect(() => {
@@ -30,9 +42,13 @@ export const useQuoteForm = (editId?: number | null) => {
         if (response.success && response.data) {
           const draft: QuoteDraft = response.data;
           form.reset({
-            location: draft.location, activity: draft.activity,
-            waste: draft.waste, volumeQuantity: draft.volumeQuantity,
-            volumeUnit: draft.volumeUnit, frequency: draft.frequency, trip: draft.trip 
+            clientName: draft.clientName,
+            clientRfc: draft.clientRfc,
+            location: draft.location, 
+            activity: draft.activity,
+            wastes: draft.wastes, 
+            frequency: draft.frequency, 
+            trip: draft.trip 
           });
           toast.success('Borrador listo para editar', { id: toastId });
         } else {
@@ -46,7 +62,6 @@ export const useQuoteForm = (editId?: number | null) => {
     fetchDraftData();
   }, [editId, form]);
 
-  // AHORA EL HOOK RECIBE DATOS CRUDOS Y LOS FORMATEA
   const submitDraft = async (data: QuoteFormValues): Promise<boolean> => {
     try {
       let cleanTrip = data.trip as QuoteDraft['trip'];

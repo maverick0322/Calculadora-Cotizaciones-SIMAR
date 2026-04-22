@@ -4,8 +4,6 @@ import {
   QuoteDraft, 
   QuoteSummary, 
   ActivityType, 
-  WasteType, 
-  VolumeUnit, 
   ServiceFrequency, 
   QuoteStatus, 
   RoadType
@@ -14,13 +12,13 @@ import {
 interface RawQuoteRow {
   id: number;
   folio: string | null;
+  client_name: string;
+  client_rfc: string;
   street: string;
   neighborhood: string;
   municipality: string;
   activity_type: string;
-  waste_type: string;
-  volume_quantity: number;
-  volume_unit: string;
+  wastes_json: string;
   service_frequency: string;
   created_at: number;
   status: string;
@@ -29,7 +27,6 @@ interface RawQuoteRow {
   trip_kilometers: number | null;
   trip_vehicles: number | null;
   trip_crew_members: number | null;
-  trip_routes: number | null;
   trip_fuel_liters: number | null;
   trip_road_type: string | null;
   trip_tolls: number | null;
@@ -44,13 +41,13 @@ export class SqliteQuoteRepository implements IQuoteRepository {
 
   saveDraft(quote: QuoteDraft): number | bigint {
     const params = {
+      clientName: quote.clientName,
+      clientRfc: quote.clientRfc,
       street: quote.location.street,
       neighborhood: quote.location.neighborhood,
       municipality: quote.location.municipality,
       activity: quote.activity,
-      waste: quote.waste,
-      quantity: quote.volumeQuantity,
-      unit: quote.volumeUnit,
+      wastesJson: JSON.stringify(quote.wastes),
       frequency: quote.frequency,
       createdAt: quote.createdAt || Date.now(),
       replacesQuoteId: quote.replacesQuoteId ?? null,
@@ -58,7 +55,6 @@ export class SqliteQuoteRepository implements IQuoteRepository {
       tripKilometers: quote.trip?.kilometers ?? null,
       tripVehicles: quote.trip?.vehicles ?? null,
       tripCrewMembers: quote.trip?.crewMembers ?? null,
-      tripRoutes: quote.trip?.routes ?? null,
       tripFuelLiters: quote.trip?.fuelLiters ?? null,
       tripRoadType: quote.trip?.roadType ?? null,
       tripTolls: quote.trip?.tolls ?? null,
@@ -70,19 +66,18 @@ export class SqliteQuoteRepository implements IQuoteRepository {
     if (quote.id) {
       const stmt = this.db.prepare(`
         UPDATE quotes SET
+          client_name = @clientName,
+          client_rfc = @clientRfc,
           street = @street, 
           neighborhood = @neighborhood, 
           municipality = @municipality,
           activity_type = @activity, 
-          waste_type = @waste, 
-          volume_quantity = @quantity,
-          volume_unit = @unit, 
+          wastes_json = @wastesJson, 
           service_frequency = @frequency, 
           replaces_quote_id = @replacesQuoteId,
           trip_kilometers = @tripKilometers, 
           trip_vehicles = @tripVehicles, 
           trip_crew_members = @tripCrewMembers, 
-          trip_routes = @tripRoutes,
           trip_fuel_liters = @tripFuelLiters, 
           trip_road_type = @tripRoadType, 
           trip_tolls = @tripTolls, 
@@ -99,17 +94,15 @@ export class SqliteQuoteRepository implements IQuoteRepository {
     
     const stmt = this.db.prepare(`
       INSERT INTO quotes (
-        street, neighborhood, municipality, 
-        activity_type, waste_type, volume_quantity, 
-        volume_unit, service_frequency, created_at, status, replaces_quote_id,
-        trip_kilometers, trip_vehicles, trip_crew_members, trip_routes,
+        client_name, client_rfc, street, neighborhood, municipality, 
+        activity_type, wastes_json, service_frequency, created_at, status, replaces_quote_id,
+        trip_kilometers, trip_vehicles, trip_crew_members,
         trip_fuel_liters, trip_road_type, trip_tolls, trip_total_toll_cost,
         trip_origin, trip_destination_warehouse
       ) VALUES (
-        @street, @neighborhood, @municipality, 
-        @activity, @waste, @quantity, 
-        @unit, @frequency, @createdAt, 'draft', @replacesQuoteId,
-        @tripKilometers, @tripVehicles, @tripCrewMembers, @tripRoutes,
+        @clientName, @clientRfc, @street, @neighborhood, @municipality, 
+        @activity, @wastesJson, @frequency, @createdAt, 'draft', @replacesQuoteId,
+        @tripKilometers, @tripVehicles, @tripCrewMembers,
         @tripFuelLiters, @tripRoadType, @tripTolls, @tripTotalTollCost,
         @tripOrigin, @tripDestinationWarehouse
       )
@@ -125,8 +118,7 @@ export class SqliteQuoteRepository implements IQuoteRepository {
         id, 
         folio, 
         (street || ', ' || neighborhood || ', ' || municipality) AS location, 
-        waste_type AS waste, 
-        (volume_quantity || ' ' || volume_unit) AS volume,
+        wastes_json,
         created_at AS createdAt, 
         status
       FROM quotes 
@@ -134,7 +126,19 @@ export class SqliteQuoteRepository implements IQuoteRepository {
       ORDER BY created_at DESC
     `);
 
-    return stmt.all() as QuoteSummary[];
+    const rows = stmt.all() as any[];
+    return rows.map(row => {
+      const wastes = JSON.parse(row.wastes_json || '[]');
+      const wastesSummary = wastes.map((w: any) => `${w.quantity} ${w.unit} de ${w.name}`).join(' | ');
+      return {
+        id: row.id,
+        folio: row.folio,
+        location: row.location,
+        wastesSummary: wastesSummary || 'Sin residuos',
+        createdAt: row.createdAt,
+        status: row.status
+      };
+    });
   }
 
   getDraftById(id: number): QuoteDraft | null {
@@ -152,15 +156,15 @@ export class SqliteQuoteRepository implements IQuoteRepository {
       id: row.id,
       folio: row.folio || undefined,
       replacesQuoteId: row.replaces_quote_id || undefined,
+      clientName: row.client_name,
+      clientRfc: row.client_rfc,
       location: {
         street: row.street,
         neighborhood: row.neighborhood,
         municipality: row.municipality
       },
       activity: row.activity_type as ActivityType,
-      waste: row.waste_type as WasteType,
-      volumeQuantity: row.volume_quantity,
-      volumeUnit: row.volume_unit as VolumeUnit,
+      wastes: JSON.parse(row.wastes_json || '[]'),
       frequency: row.service_frequency as ServiceFrequency,
       createdAt: row.created_at,
       status: row.status as QuoteStatus,
@@ -169,7 +173,6 @@ export class SqliteQuoteRepository implements IQuoteRepository {
         kilometers: row.trip_kilometers as number,
         vehicles: row.trip_vehicles as number,
         crewMembers: row.trip_crew_members as number,
-        routes: row.trip_routes as number,
         fuelLiters: row.trip_fuel_liters as number,
         roadType: row.trip_road_type as RoadType,
         tolls: row.trip_tolls ?? undefined,
@@ -191,13 +194,17 @@ export class SqliteQuoteRepository implements IQuoteRepository {
       id: row.id,
       folio: row.folio || undefined,
       replacesQuoteId: row.replaces_quote_id || undefined,
+      clientName: row.client_name,
+      clientRfc: row.client_rfc,
       location: { street: row.street, neighborhood: row.neighborhood, municipality: row.municipality },
-      activity: row.activity_type, waste: row.waste_type, volumeQuantity: row.volume_quantity,
-      volumeUnit: row.volume_unit, frequency: row.service_frequency, createdAt: row.created_at,
+      activity: row.activity_type, 
+      wastes: JSON.parse(row.wastes_json || '[]'),
+      frequency: row.service_frequency, 
+      createdAt: row.created_at,
       status: row.status,
       trip: hasTrip ? {
         kilometers: row.trip_kilometers, vehicles: row.trip_vehicles, crewMembers: row.trip_crew_members,
-        routes: row.trip_routes, fuelLiters: row.trip_fuel_liters, roadType: row.trip_road_type,
+        fuelLiters: row.trip_fuel_liters, roadType: row.trip_road_type,
         tolls: row.trip_tolls ?? undefined, totalTollCost: row.trip_total_toll_cost ?? undefined,
         origin: row.trip_origin, destinationWarehouse: row.trip_destination_warehouse
       } : undefined
@@ -229,8 +236,7 @@ export class SqliteQuoteRepository implements IQuoteRepository {
         id, 
         folio, 
         (street || ', ' || neighborhood || ', ' || municipality) AS location, 
-        waste_type AS waste, 
-        (volume_quantity || ' ' || volume_unit) AS volume,
+        wastes_json,
         created_at AS createdAt, 
         status
       FROM quotes 
@@ -238,6 +244,18 @@ export class SqliteQuoteRepository implements IQuoteRepository {
       ORDER BY created_at DESC
     `);
 
-    return stmt.all() as QuoteSummary[];
+    const rows = stmt.all() as any[];
+    return rows.map(row => {
+      const wastes = JSON.parse(row.wastes_json || '[]');
+      const wastesSummary = wastes.map((w: any) => `${w.quantity} ${w.unit} de ${w.name}`).join(' | ');
+      return {
+        id: row.id,
+        folio: row.folio,
+        location: row.location,
+        wastesSummary: wastesSummary || 'Sin residuos',
+        createdAt: row.createdAt,
+        status: row.status
+      };
+    });
   }
 }

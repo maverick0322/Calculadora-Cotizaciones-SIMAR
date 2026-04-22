@@ -61,27 +61,29 @@ export const initDatabase = () => {
             seller_id INTEGER,
             replaces_quote_id INTEGER,
             
+            client_name VARCHAR,
+            client_rfc VARCHAR,
+
             street TEXT,
             neighborhood TEXT,
             municipality TEXT,
             
             activity_type VARCHAR,
-            waste_type VARCHAR,
-            volume_quantity DECIMAL,
-            volume_unit VARCHAR,
+            wastes_json TEXT,
             service_frequency VARCHAR,
             subtotal DECIMAL,
             total DECIMAL,
+            
             trip_kilometers DECIMAL,
             trip_vehicles INTEGER,
             trip_crew_members INTEGER,
-            trip_routes INTEGER,
             trip_fuel_liters DECIMAL,
             trip_road_type VARCHAR,
             trip_tolls INTEGER,
             trip_total_toll_cost DECIMAL,
             trip_origin VARCHAR,
             trip_destination_warehouse VARCHAR,
+            
             created_at INTEGER,
             FOREIGN KEY (customer_id) REFERENCES customers(id),
             FOREIGN KEY (seller_id) REFERENCES users(id),

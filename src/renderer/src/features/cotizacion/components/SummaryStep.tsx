@@ -1,5 +1,5 @@
 import { QuoteFormValues } from '../../../../../shared/schemas/quoteSchema';
-import { MapPin, Trash2, Truck } from 'lucide-react';
+import { MapPin, Trash2, Truck, User } from 'lucide-react';
 
 interface SummaryStepProps {
   data: QuoteFormValues;
@@ -19,7 +19,14 @@ export const SummaryStep = ({ data }: SummaryStepProps) => {
     weekly: 'Semanal',
     biweekly: 'Quincenal',
     monthly: 'Mensual',
-    single: 'Evento Único'
+    one_time: 'Evento Único'
+  };
+
+  const activityTranslations: Record<string, string> = {
+    collection: 'Recolección',
+    transport: 'Transporte',
+    transfer: 'Transferencia',
+    final_disposal: 'Disposición Final'
   };
 
   return (
@@ -32,11 +39,13 @@ export const SummaryStep = ({ data }: SummaryStepProps) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-3 text-gray-800 border-b pb-2">
-            <MapPin className="w-5 h-5 text-gray-500" />
-            <h4 className="font-semibold">Ubicación</h4>
+            <User className="w-5 h-5 text-gray-500" />
+            <h4 className="font-semibold">Cliente y Ubicación</h4>
           </div>
           <dl className="space-y-2 text-sm">
-            <div className="flex justify-between"><dt className="text-gray-500">Calle:</dt> <dd className="font-medium text-right">{data.location.street}</dd></div>
+            <div className="flex justify-between"><dt className="text-gray-500">Cliente:</dt> <dd className="font-medium text-right">{data.clientName}</dd></div>
+            <div className="flex justify-between"><dt className="text-gray-500">RFC:</dt> <dd className="font-medium text-right uppercase">{data.clientRfc}</dd></div>
+            <div className="flex justify-between pt-2 border-t mt-2"><dt className="text-gray-500">Calle:</dt> <dd className="font-medium text-right">{data.location.street}</dd></div>
             <div className="flex justify-between"><dt className="text-gray-500">Colonia:</dt> <dd className="font-medium text-right">{data.location.neighborhood}</dd></div>
             <div className="flex justify-between"><dt className="text-gray-500">Municipio:</dt> <dd className="font-medium text-right">{data.location.municipality}</dd></div>
           </dl>
@@ -45,13 +54,24 @@ export const SummaryStep = ({ data }: SummaryStepProps) => {
         <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-3 text-gray-800 border-b pb-2">
             <Trash2 className="w-5 h-5 text-gray-500" />
-            <h4 className="font-semibold">Detalles del Residuo</h4>
+            <h4 className="font-semibold">Detalles del Servicio</h4>
           </div>
-          <dl className="space-y-2 text-sm">
-            <div className="flex justify-between"><dt className="text-gray-500">Tipo:</dt> <dd className="font-medium capitalize text-right">{wasteTranslations[data.waste] || data.waste}</dd></div>
-            <div className="flex justify-between"><dt className="text-gray-500">Volumen:</dt> <dd className="font-medium text-right">{data.volumeQuantity} {data.volumeUnit}</dd></div>
+          <dl className="space-y-2 text-sm mb-4">
+            <div className="flex justify-between"><dt className="text-gray-500">Actividad:</dt> <dd className="font-medium text-right">{activityTranslations[data.activity] || data.activity}</dd></div>
             <div className="flex justify-between"><dt className="text-gray-500">Frecuencia:</dt> <dd className="font-medium capitalize text-right">{frequencyTranslations[data.frequency || ''] || 'No especificada'}</dd></div>
           </dl>
+          
+          <div className="space-y-2 mt-4 border-t pt-3">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Lista de Residuos</p>
+            {data.wastes?.map((w, index) => (
+              <div key={index} className="flex justify-between items-center text-sm bg-gray-50 p-2 rounded">
+                <span className="font-medium text-gray-700">
+                  {w.name} <span className="text-gray-400 font-normal">({wasteTranslations[w.type] || w.type})</span>
+                </span>
+                <span className="text-gray-900 font-semibold">{w.quantity} {w.unit}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
         {data.trip && (
