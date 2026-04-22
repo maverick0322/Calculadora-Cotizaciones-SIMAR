@@ -8,23 +8,26 @@ export class SaveDraftUseCase {
 
   execute(draftData: QuoteDraft): { success: boolean; id?: number | bigint; message?: string; error?: string } {
     try {
-      // 1. NUEVA VALIDACIÓN: Revisamos el arreglo de residuos
-      if (!draftData.wastes || draftData.wastes.length === 0) {
+      if (!draftData.services || draftData.services.length === 0) {
+        throw new Error('La cotización debe tener al menos un servicio.');
+      }
+
+      const hasNoWastes = draftData.services.some(service => !service.wastes || service.wastes.length === 0);
+      if (hasNoWastes) {
         throw new Error('Debe incluir al menos un residuo para guardar la cotización.');
       }
 
-      // 2. Revisamos que ninguna cantidad sea 0 o negativa
-      const hasInvalidWaste = draftData.wastes.some(w => w.quantity <= 0);
+      const hasInvalidWaste = draftData.services.some(service => 
+        service.wastes.some(w => w.quantity <= 0)
+      );
       if (hasInvalidWaste) {
-        throw new Error('Volume must be greater than 0 to save a draft.');
+        throw new Error('La cantidad de los residuos debe ser mayor a 0.');
       }
 
       const isUpdate = !!draftData.id;
       
-      // 3. Guardamos
       const newId = this.repository.saveDraft(draftData);
 
-      // 4. Auditoría silenciosa
       this.auditUseCase.execute({
         action: isUpdate ? 'UPDATE_DRAFT' : 'CREATE_DRAFT',
         entity: 'QUOTE',
