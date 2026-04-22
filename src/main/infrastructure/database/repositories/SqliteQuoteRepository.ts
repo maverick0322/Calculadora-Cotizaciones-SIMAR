@@ -65,14 +65,13 @@ export class SqliteQuoteRepository implements IQuoteRepository {
     return info.lastInsertRowid;
   }
 
-  // Helper interno para armar el resumen para los tableros
   private mapRowsToSummaries(rows: any[]): QuoteSummary[] {
     return rows.map(row => {
       const services: ServiceItem[] = JSON.parse(row.services_json || '[]');
       
-      // Tomamos la dirección del primer servicio
+      const loc = services[0].location;
       const firstLocation = services.length > 0 
-        ? `${services[0].location.street}, ${services[0].location.municipality}` 
+        ? `${loc.street}, ${loc.neighborhood}, ${loc.municipality}, ${loc.state}` 
         : 'Sin dirección';
 
       // Sumamos todos los residuos de todos los servicios para el resumen

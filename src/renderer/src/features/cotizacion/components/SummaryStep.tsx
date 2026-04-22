@@ -4,9 +4,7 @@ interface SummaryStepProps {
   data: QuoteFormValues;
 }
 
-export const SummaryStep = ({ data }: SummaryStepProps) => {
-  // Por ahora, como el formulario solo llena 1 servicio, extraemos el primero
-  const service = data.services[0];
+export const SummaryStep = ({ data }: SummaryStepProps) => {  const service = data.services[0];
 
   const getFrequencyString = () => {
     const f = data.frequency;
@@ -38,7 +36,6 @@ export const SummaryStep = ({ data }: SummaryStepProps) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         
-        {/* CLIENTE Y CONTRATO */}
         <div className="border border-gray-200 rounded-lg p-5 bg-white shadow-sm">
           <h4 className="font-semibold text-gray-900 border-b pb-2 mb-4">Datos Generales</h4>
           <dl className="space-y-2 text-sm">
@@ -49,11 +46,16 @@ export const SummaryStep = ({ data }: SummaryStepProps) => {
           </dl>
         </div>
 
-        {/* LOGÍSTICA DEL SERVICIO 1 */}
         <div className="border border-gray-200 rounded-lg p-5 bg-white shadow-sm">
           <h4 className="font-semibold text-gray-900 border-b pb-2 mb-4">Logística (Servicio 1)</h4>
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between"><dt className="text-gray-500">Actividad:</dt> <dd className="font-medium text-gray-900 text-right">{activityTranslates[service.activity]}</dd></div>
+            <div className="flex justify-between">
+                <dt className="text-gray-500">Ubicación:</dt> 
+                <dd className="font-medium text-gray-900 text-right">
+                    {service.location.municipality}, {service.location.state}
+                </dd>
+            </div>
             <div className="flex justify-between"><dt className="text-gray-500">Origen:</dt> <dd className="font-medium text-gray-900 text-right">{service.logistics.origin || '-'}</dd></div>
             <div className="flex justify-between"><dt className="text-gray-500">Destino:</dt> <dd className="font-medium text-gray-900 text-right">{service.logistics.primaryDestination || '-'}</dd></div>
             <div className="flex justify-between"><dt className="text-gray-500">Trayecto:</dt> <dd className="font-medium text-gray-900 text-right">{service.logistics.kilometers} km ({getRoadTypeString()})</dd></div>
@@ -63,7 +65,6 @@ export const SummaryStep = ({ data }: SummaryStepProps) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         
-        {/* RESIDUOS */}
         <div className="border border-gray-200 rounded-lg p-5 bg-white shadow-sm">
           <h4 className="font-semibold text-gray-900 border-b pb-2 mb-4">Residuos a Recolectar</h4>
           <ul className="space-y-3">

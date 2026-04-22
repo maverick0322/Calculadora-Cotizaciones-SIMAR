@@ -59,18 +59,23 @@ export const LocationStep = () => {
             />
             {errors.services?.[0]?.location?.street && <p className="text-red-500 text-xs mt-1">{errors.services[0].location.street.message}</p>}
           </div>
-          <div className="grid grid-cols-2 gap-4 mt-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Ciudad / Municipio</label>
-              <input type="text" className="w-full px-3 py-2 border rounded-md" {...register('services.0.location.municipality')} />
-              {errors.services?.[0]?.location?.municipality && <p className="text-red-500 text-xs mt-1">{errors.services[0].location.municipality.message}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Colonia</label>
-              <input type="text" className="w-full px-3 py-2 border rounded-md" {...register('services.0.location.neighborhood')} />
-              {errors.services?.[0]?.location?.neighborhood && <p className="text-red-500 text-xs mt-1">{errors.services[0].location.neighborhood.message}</p>}
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Ciudad / Municipio</label>
+            <input type="text" className="w-full px-3 py-2 border rounded-md" {...register('services.0.location.municipality')} />
+            {errors.services?.[0]?.location?.municipality && <p className="text-red-500 text-xs mt-1">{errors.services[0].location.municipality.message}</p>}
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Colonia</label>
+            <input type="text" className="w-full px-3 py-2 border rounded-md" {...register('services.0.location.neighborhood')} />
+            {errors.services?.[0]?.location?.neighborhood && <p className="text-red-500 text-xs mt-1">{errors.services[0].location.neighborhood.message}</p>}
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+            <input type="text" className="w-full px-3 py-2 border rounded-md" {...register('services.0.location.state')} />
+            {errors.services?.[0]?.location?.state && <p className="text-red-500 text-xs mt-1">{errors.services[0].location.state.message}</p>}
+          </div>
+        </div>
         </div>
 
       </div>

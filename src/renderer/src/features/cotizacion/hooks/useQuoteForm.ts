@@ -22,7 +22,7 @@ export const useQuoteForm = (editId?: number | null) => {
         {
           id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
           activity: 'collection',
-          location: { street: '', municipality: '', neighborhood: '' },
+          location: { street: '', municipality: '', neighborhood: '', state: '' },
           wastes: [{ name: '', type: 'domestic', quantity: 1, unit: 'kg' }],
           vehicles: [],
           crew: [],

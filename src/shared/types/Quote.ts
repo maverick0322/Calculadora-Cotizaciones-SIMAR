@@ -9,6 +9,7 @@ export interface Location {
   street: string;
   municipality: string;
   neighborhood: string;
+  state: string;
   coordinates?: string; 
 }
 

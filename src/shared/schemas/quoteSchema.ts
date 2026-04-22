@@ -23,6 +23,7 @@ export const quoteSchema = z.object({
       street: z.string().min(5, 'Dirección requerida'),
       municipality: z.string().min(2, 'Requerido'),
       neighborhood: z.string().min(2, 'Requerido'),
+      state: z.string().min(2, 'Requerido'),
     }),
 
     wastes: z.array(z.object({
