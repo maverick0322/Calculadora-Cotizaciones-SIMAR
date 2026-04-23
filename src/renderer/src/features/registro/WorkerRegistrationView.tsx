@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { UserPlus, Eye, EyeOff } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 
 interface WorkerRegistrationProps {
@@ -60,40 +61,35 @@ export default function WorkerRegistrationView({ onBack }: WorkerRegistrationPro
     return Object.keys(newErrors).length === 0;
   };
 
-  /**
-   * Envía los datos al proceso principal de Electron a través del Bridge (preload).
-   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (validateForm()) {
+      const toastId = toast.loading('Registrando empleado...');
       try {
-        // MAPEAMOS los datos del formulario (snake_case) al contrato de WorkerData (camelCase)
+        const cleanEmail = formData.email.trim().toLowerCase();
+
         const response = await window.api.registerWorker({
-          fullName: formData.full_name,
-          employeeId: formData.central_id,
-          email: formData.email,
-          password: formData.password, // El Main Process se encargará del hash con bcrypt
+          fullName: formData.full_name.trim(),
+          employeeId: formData.central_id.trim(),
+          email: cleanEmail,
+          password: formData.password, 
           role: 'sales'
         });
 
         if (response.success) {
-          alert('Empleado registrado exitosamente en el sistema.');
-          handleCancel(); // Limpia y regresa
+          toast.success('Empleado registrado exitosamente', { id: toastId });
+          handleCancel();
         } else {
-          // Muestra errores de la base de datos (como duplicados)
-          alert('Error: ' + response.error);
+          toast.error(response.error || 'Error al registrar', { id: toastId });
         }
       } catch (error) {
         console.error('Error de comunicación con el sistema:', error);
-        alert('Hubo un fallo crítico al intentar registrar al empleado.');
+        toast.error('Hubo un fallo crítico al intentar registrar al empleado.', { id: toastId });
       }
     }
   };
 
-  /**
-   * Limpia el formulario y ejecuta la función para volver a la pantalla anterior.
-   */
   const handleCancel = () => {
     setFormData({
       central_id: '',

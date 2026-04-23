@@ -5,14 +5,14 @@ import { IAuthRepository } from '../../../domain/repositories/IAuthRepository';
 export class SqliteAuthRepository implements IAuthRepository {
   constructor(private readonly db: Database) {}
 
-  getUserByCredentials(email: string, passwordHash: string): User | null {
+  getUserByEmail(email: string): any | null {
     const stmt = this.db.prepare(`
-      SELECT id, central_id, full_name, email, role, is_active
+      SELECT id, central_id, full_name, email, role, is_active, password_hash
       FROM users
-      WHERE email = ? AND password_hash = ?
+      WHERE email = ?
     `);
     
-    const user = stmt.get(email, passwordHash) as User | undefined;
+    const user = stmt.get(email);
     return user || null;
   }
 }

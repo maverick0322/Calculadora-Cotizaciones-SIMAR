@@ -1,4 +1,3 @@
-// src/main/application/useCases/RegisterWorkerUseCase.ts
 import bcrypt from 'bcryptjs';
 import { SqliteWorkerRepository } from '../../infrastructure/database/repositories/SqliteWorkerRepository';
 import { WorkerData } from '../../../shared/types/Worker';
@@ -8,18 +7,25 @@ export class RegisterWorkerUseCase {
 
   async execute(worker: WorkerData) {
     try {
-      // 1. Validamos que la contraseña exista antes de procesarla
       if (!worker.password) {
         throw new Error('La contraseña es obligatoria para el registro.');
       }
 
-      // 2. Generamos el Hash (Seguridad en el lado del servidor/main)
+      // 1. Encriptación segura de la contraseña
       const salt = bcrypt.genSaltSync(10);
       const hashedPassword = bcrypt.hashSync(worker.password, salt);
 
-      // 3. Guardamos en la DB reemplazando la contraseña plana por la encriptada
+      // 2. Limpieza absoluta de los datos para evitar "El Enemigo Invisible"
+      const cleanEmail = worker.email.trim().toLowerCase();
+      const cleanEmployeeId = worker.employeeId.trim();
+      const cleanFullName = worker.fullName.trim();
+
+      // 3. Guardado en base de datos
       const result = this.workerRepo.save({
         ...worker,
+        email: cleanEmail,
+        employeeId: cleanEmployeeId,
+        fullName: cleanFullName,
         password: hashedPassword
       });
 
@@ -27,7 +33,6 @@ export class RegisterWorkerUseCase {
     } catch (error: any) {
       console.error('Error en RegisterWorkerUseCase:', error.message);
 
-      // Manejo amigable de errores (ej. si el ID ya existe)
       if (error.message.includes('UNIQUE constraint failed')) {
         return {
           success: false,
