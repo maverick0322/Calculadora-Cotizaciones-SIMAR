@@ -15,7 +15,6 @@ export class RegisterWorkerUseCase {
       const salt = bcrypt.genSaltSync(10);
       const hashedPassword = bcrypt.hashSync(worker.password, salt);
 
-      // 2. Limpieza absoluta de los datos para evitar "El Enemigo Invisible"
       const cleanEmail = worker.email.trim().toLowerCase();
       const cleanEmployeeId = worker.employeeId.trim();
       const cleanFullName = worker.fullName.trim();
