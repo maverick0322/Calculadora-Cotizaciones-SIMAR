@@ -1,37 +1,36 @@
 import { useFormContext, useFieldArray } from 'react-hook-form';
-import { QuoteFormValues } from "src/shared/schemas/quoteSchema";
+import { QuoteFormValues } from "../../../../../shared/schemas/quoteSchema";
 import { Plus, Trash2 } from 'lucide-react';
 import { CatalogData } from '../NewQuoteView';
 
 interface SuppliesStepProps {
+  serviceIndex: number;
   catalogs?: CatalogData;
 }
 
-export const SuppliesStep = ({ catalogs }: SuppliesStepProps) => {
+export const SuppliesStep = ({ serviceIndex, catalogs }: SuppliesStepProps) => {
   const { register, control, setValue, formState: { errors } } = useFormContext<QuoteFormValues>();
 
-  // FieldArray para los Insumos
   const { fields: supplyFields, append: appendSupply, remove: removeSupply } = useFieldArray({
     control,
-    name: "services.0.supplies"
+    name: `services.${serviceIndex}.supplies` as const
   });
 
   const { fields: extraCostFields, append: appendExtraCost, remove: removeExtraCost } = useFieldArray({
     control,
-    name: "services.0.extraCosts"
+    name: `services.${serviceIndex}.extraCosts` as const
   });
 
   const handleSupplySelection = (index: number, supplyId: string) => {
     const selectedSupply = catalogs?.supplies.find(s => s.id.toString() === supplyId);
     if (selectedSupply) {
-      setValue(`services.0.supplies.${index}.name`, selectedSupply.name, { shouldValidate: true });
-      setValue(`services.0.supplies.${index}.unitPrice`, selectedSupply.suggested_price, { shouldValidate: true });
+      setValue(`services.${serviceIndex}.supplies.${index}.name` as const, selectedSupply.name, { shouldValidate: true });
+      setValue(`services.${serviceIndex}.supplies.${index}.unitPrice` as const, selectedSupply.suggested_price, { shouldValidate: true });
     }
   };
 
   return (
-    <div className="space-y-10">
-      
+    <div className="space-y-10 mb-8">
       <div>
         <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-4">
           <div>
@@ -60,9 +59,9 @@ export const SuppliesStep = ({ catalogs }: SuppliesStepProps) => {
                 <label className="block text-xs font-medium text-gray-500 mb-1">Tipo de Insumo</label>
                 <select 
                   className="w-full px-3 py-2 border rounded-md bg-white"
-                  {...register(`services.0.supplies.${index}.supplyId`)}
+                  {...register(`services.${serviceIndex}.supplies.${index}.supplyId` as const, { valueAsNumber: true })}
                   onChange={(e) => {
-                    register(`services.0.supplies.${index}.supplyId`).onChange(e); 
+                    register(`services.${serviceIndex}.supplies.${index}.supplyId` as const).onChange(e); 
                     handleSupplySelection(index, e.target.value); 
                   }}
                 >
@@ -71,17 +70,17 @@ export const SuppliesStep = ({ catalogs }: SuppliesStepProps) => {
                     <option key={s.id} value={s.id}>{s.name} ({s.unit})</option>
                   ))}
                 </select>
-                {errors.services?.[0]?.supplies?.[index]?.supplyId && <p className="text-red-500 text-xs mt-1">Requerido</p>}
+                {errors.services?.[serviceIndex]?.supplies?.[index]?.supplyId && <p className="text-red-500 text-xs mt-1">Requerido</p>}
               </div>
 
-              <input type="hidden" {...register(`services.0.supplies.${index}.name`)} />
+              <input type="hidden" {...register(`services.${serviceIndex}.supplies.${index}.name` as const)} />
 
               <div className="w-24">
                 <label className="block text-xs font-medium text-gray-500 mb-1">Cantidad</label>
                 <input 
                   type="number" min="1"
                   className="w-full px-3 py-2 border rounded-md bg-white"
-                  {...register(`services.0.supplies.${index}.quantity`)}
+                  {...register(`services.${serviceIndex}.supplies.${index}.quantity` as const, { valueAsNumber: true })}
                 />
               </div>
 
@@ -90,7 +89,7 @@ export const SuppliesStep = ({ catalogs }: SuppliesStepProps) => {
                 <input 
                   type="number" step="0.01" min="0"
                   className="w-full px-3 py-2 border rounded-md bg-white"
-                  {...register(`services.0.supplies.${index}.unitPrice`)}
+                  {...register(`services.${serviceIndex}.supplies.${index}.unitPrice` as const, { valueAsNumber: true })}
                 />
               </div>
 
@@ -137,9 +136,9 @@ export const SuppliesStep = ({ catalogs }: SuppliesStepProps) => {
                   type="text" 
                   placeholder="Ej. Maniobra de carga con montacargas"
                   className="w-full px-3 py-2 border rounded-md bg-white"
-                  {...register(`services.0.extraCosts.${index}.description`)}
+                  {...register(`services.${serviceIndex}.extraCosts.${index}.description` as const)}
                 />
-                {errors.services?.[0]?.extraCosts?.[index]?.description && <p className="text-red-500 text-xs mt-1">Requerido</p>}
+                {errors.services?.[serviceIndex]?.extraCosts?.[index]?.description && <p className="text-red-500 text-xs mt-1">Requerido</p>}
               </div>
 
               <div className="w-40">
@@ -147,9 +146,9 @@ export const SuppliesStep = ({ catalogs }: SuppliesStepProps) => {
                 <input 
                   type="number" step="0.01" min="0"
                   className="w-full px-3 py-2 border rounded-md bg-white"
-                  {...register(`services.0.extraCosts.${index}.amount`)}
+                  {...register(`services.${serviceIndex}.extraCosts.${index}.amount` as const, { valueAsNumber: true })}
                 />
-                {errors.services?.[0]?.extraCosts?.[index]?.amount && <p className="text-red-500 text-xs mt-1">Inválido</p>}
+                {errors.services?.[serviceIndex]?.extraCosts?.[index]?.amount && <p className="text-red-500 text-xs mt-1">Inválido</p>}
               </div>
 
               <button
@@ -164,7 +163,6 @@ export const SuppliesStep = ({ catalogs }: SuppliesStepProps) => {
           ))}
         </div>
       </div>
-
     </div>
   );
 };

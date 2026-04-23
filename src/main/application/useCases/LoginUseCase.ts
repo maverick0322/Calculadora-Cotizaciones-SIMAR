@@ -1,5 +1,6 @@
 import { IAuthRepository } from '../../domain/repositories/IAuthRepository';
 import { User } from '../../../shared/types/Auth';
+import bcrypt from 'bcryptjs'; 
 
 export class LoginUseCase {
   constructor(private readonly authRepository: IAuthRepository) {}
@@ -12,20 +13,41 @@ export class LoginUseCase {
     }
 
     try {
-      const user = this.authRepository.getUserByCredentials(email, password);
+      const cleanEmail = email.trim().toLowerCase();
+      console.log(`[LOGIN] Intentando ingresar con: '${cleanEmail}'`);
 
-      if (!user) {
-        return { success: false, error: 'Invalid email or password.' };
+      const userRecord = this.authRepository.getUserByEmail(cleanEmail);
+
+      if (!userRecord) {
+        console.warn(`[LOGIN] Usuario no encontrado en BD: '${cleanEmail}'`);
+        return { success: false, error: 'Correo o contraseña inválidos.' };
       }
 
-      if (user.is_active === 0 || user.is_active === false) {
-        return { success: false, error: 'Account disabled. Contact administrator.' };
+      let isPasswordValid = false;
+      
+      if (userRecord.password_hash.startsWith('$2a$') || userRecord.password_hash.startsWith('$2b$')) {
+        isPasswordValid = bcrypt.compareSync(password, userRecord.password_hash);
+      } else {
+        isPasswordValid = (password === userRecord.password_hash);
       }
 
-      return { success: true, data: user };
+      if (!isPasswordValid) {
+        console.warn(`[LOGIN] Contraseña incorrecta para: '${cleanEmail}'`);
+        return { success: false, error: 'Correo o contraseña inválidos.' };
+      }
+
+      if (userRecord.is_active === 0 || userRecord.is_active === false) {
+        console.warn(`[LOGIN] Cuenta deshabilitada para: '${cleanEmail}'`);
+        return { success: false, error: 'Cuenta deshabilitada. Contacte al administrador.' };
+      }
+
+      console.log(`[LOGIN] Acceso concedido a: '${cleanEmail}'`);
+      const { password_hash, ...safeUser } = userRecord;
+
+      return { success: true, data: safeUser as User };
     } catch (error) {
       console.error('Login Error in UseCase:', error);
-      return { success: false, error: 'Internal database error.' };
+      return { success: false, error: 'Error interno de la base de datos.' };
     }
   }
 }

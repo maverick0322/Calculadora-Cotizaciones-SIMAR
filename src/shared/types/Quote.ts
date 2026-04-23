@@ -75,6 +75,7 @@ export interface ServiceItem {
   supplies: SupplyItem[];
   logistics: ServiceLogistics;
   extraCosts: ExtraCostItem[];
+  trip?: any;
 }
 
 // --- FIN NUEVAS INTERFACES ---

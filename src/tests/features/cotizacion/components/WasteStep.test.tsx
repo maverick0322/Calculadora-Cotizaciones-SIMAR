@@ -8,11 +8,13 @@ vi.mock('react-hook-form', async () => {
   return {
     ...actual,
     useFormContext: vi.fn(),
+    useFieldArray: vi.fn(),
   };
 });
 
 describe('WasteStep Component', () => {
   const mockRegister = vi.fn();
+  const mockWatch = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -20,40 +22,54 @@ describe('WasteStep Component', () => {
 
   // --- AC 1: BASIC RENDERING ---
   it('should render all labels and register the fields correctly', () => {
-    // [ ARRANGE ]
     vi.mocked(RHF.useFormContext).mockReturnValue({
       register: mockRegister,
+      control: {},
+      watch: mockWatch,
+      formState: { errors: {} }
     } as any);
 
-    // [ ACT ]
-    render(<WasteStep />);
+    vi.mocked(RHF.useFieldArray).mockReturnValue({
+      fields: [{ id: 'fake-uuid-1' }],
+      append: vi.fn(),
+      remove: vi.fn()
+    } as any);
 
-    // [ ASSERT ]
-    expect(screen.getByText('Especificaciones del residuo')).toBeDefined();
+    mockWatch.mockReturnValue('weekly');
+
+    render(<WasteStep serviceIndex={0} />);
+
+    expect(screen.getByText('Especificaciones Operativas')).toBeDefined();
     expect(screen.getByText('Tipo de actividad')).toBeDefined();
-    expect(screen.getByText('Tipo de residuo')).toBeDefined();
-    expect(screen.getByText('Cantidad')).toBeDefined();
-    expect(screen.getByText('Unidad')).toBeDefined();
-    expect(screen.getByText('Frecuencia de servicio')).toBeDefined();
+    expect(screen.getByText('Frecuencia Global del Contrato')).toBeDefined();
+    expect(screen.getByText('Residuos a recolectar en esta sucursal')).toBeDefined();
+    expect(screen.getByText('Nombre del residuo')).toBeDefined();
+    expect(screen.getByText('Clasificación')).toBeDefined(); // Cambiado de "Tipo de residuo"
 
-    expect(mockRegister).toHaveBeenCalledWith('activity');
-    expect(mockRegister).toHaveBeenCalledWith('waste');
-    expect(mockRegister).toHaveBeenCalledWith('volumeQuantity');
-    expect(mockRegister).toHaveBeenCalledWith('volumeUnit');
-    expect(mockRegister).toHaveBeenCalledWith('frequency');
+    expect(mockRegister).toHaveBeenCalledWith('services.0.activity');
+    expect(mockRegister).toHaveBeenCalledWith('services.0.wastes.0.name');
+    expect(mockRegister).toHaveBeenCalledWith('services.0.wastes.0.type');
+    expect(mockRegister).toHaveBeenCalledWith('services.0.wastes.0.quantity', { valueAsNumber: true }); // Agregado { valueAsNumber: true }
+    expect(mockRegister).toHaveBeenCalledWith('services.0.wastes.0.unit');
   });
 
   // --- AC 2: SELECT OPTIONS VALIDATION ---
   it('should render the correct options in the select dropdowns', () => {
-    // [ ARRANGE ]
     vi.mocked(RHF.useFormContext).mockReturnValue({
       register: mockRegister,
+      control: {},
+      watch: mockWatch,
+      formState: { errors: {} }
     } as any);
 
-    // [ ACT ]
-    render(<WasteStep />);
+    vi.mocked(RHF.useFieldArray).mockReturnValue({
+      fields: [{ id: 'fake-uuid-1' }],
+      append: vi.fn(),
+      remove: vi.fn()
+    } as any);
 
-    // [ ASSERT ]
+    render(<WasteStep serviceIndex={0} />);
+
     expect(screen.getByRole('option', { name: 'Recolección' })).toBeDefined();
     expect(screen.getByRole('option', { name: 'Disposición Final' })).toBeDefined();
     
@@ -64,6 +80,6 @@ describe('WasteStep Component', () => {
     expect(screen.getByRole('option', { name: 'm³' })).toBeDefined();
     
     expect(screen.getByRole('option', { name: 'Diaria' })).toBeDefined();
-    expect(screen.getByRole('option', { name: 'Única' })).toBeDefined();
+    expect(screen.getByRole('option', { name: 'Evento Único' })).toBeDefined();
   });
 });

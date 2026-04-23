@@ -1,41 +1,36 @@
 import { useFormContext, useFieldArray } from 'react-hook-form';
-import { QuoteFormValues } from "src/shared/schemas/quoteSchema";
+import { QuoteFormValues } from "../../../../../shared/schemas/quoteSchema";
 import { Plus, Trash2 } from 'lucide-react';
 import { CatalogData } from '../NewQuoteView';
 
 interface VehiclesAndCrewStepProps {
+  serviceIndex: number;
   catalogs?: CatalogData;
 }
 
-export const VehiclesAndCrewStep = ({ catalogs }: VehiclesAndCrewStepProps) => {
+export const VehiclesAndCrewStep = ({ serviceIndex, catalogs }: VehiclesAndCrewStepProps) => {
   const { register, control, setValue, formState: { errors } } = useFormContext<QuoteFormValues>();
 
-  // FieldArray para los Vehículos
   const { fields: vehicleFields, append: appendVehicle, remove: removeVehicle } = useFieldArray({
     control,
-    name: "services.0.vehicles"
+    name: `services.${serviceIndex}.vehicles` as const
   });
 
-  // FieldArray para el Personal (Crew)
   const { fields: crewFields, append: appendCrew, remove: removeCrew } = useFieldArray({
     control,
-    name: "services.0.crew"
+    name: `services.${serviceIndex}.crew` as const
   });
 
-  // Función mágica para autocompletar nombre y precio cuando seleccionan un vehículo
   const handleVehicleSelection = (index: number, vehicleId: string) => {
     const selectedVehicle = catalogs?.vehicles.find(v => v.id.toString() === vehicleId);
     if (selectedVehicle) {
-      // Guardamos el nombre en el formulario (aunque no se vea un input)
-      setValue(`services.0.vehicles.${index}.name`, selectedVehicle.name, { shouldValidate: true });
-      // Sugerimos el precio base (el usuario lo puede editar después)
-      setValue(`services.0.vehicles.${index}.unitPrice`, selectedVehicle.base_price, { shouldValidate: true });
+      setValue(`services.${serviceIndex}.vehicles.${index}.name` as const, selectedVehicle.name, { shouldValidate: true });
+      setValue(`services.${serviceIndex}.vehicles.${index}.unitPrice` as const, selectedVehicle.base_price, { shouldValidate: true });
     }
   };
 
   return (
-    <div className="space-y-10">
-      
+    <div className="space-y-10 mb-8">
       {/* SECCIÓN DE VEHÍCULOS */}
       <div>
         <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-4">
@@ -65,10 +60,10 @@ export const VehiclesAndCrewStep = ({ catalogs }: VehiclesAndCrewStepProps) => {
                 <label className="block text-xs font-medium text-gray-500 mb-1">Tipo de Vehículo</label>
                 <select 
                   className="w-full px-3 py-2 border rounded-md bg-white"
-                  {...register(`services.0.vehicles.${index}.vehicleId`)}
+                  {...register(`services.${serviceIndex}.vehicles.${index}.vehicleId` as const, { valueAsNumber: true })}
                   onChange={(e) => {
-                    register(`services.0.vehicles.${index}.vehicleId`).onChange(e); // Mantenemos react-hook-form feliz
-                    handleVehicleSelection(index, e.target.value); // Ejecutamos nuestra magia
+                    register(`services.${serviceIndex}.vehicles.${index}.vehicleId` as const).onChange(e);
+                    handleVehicleSelection(index, e.target.value); 
                   }}
                 >
                   <option value="0">Seleccione un vehículo...</option>
@@ -76,18 +71,17 @@ export const VehiclesAndCrewStep = ({ catalogs }: VehiclesAndCrewStepProps) => {
                     <option key={v.id} value={v.id}>{v.name} ({v.capacity_kg}kg)</option>
                   ))}
                 </select>
-                {errors.services?.[0]?.vehicles?.[index]?.vehicleId && <p className="text-red-500 text-xs mt-1">Requerido</p>}
+                {errors.services?.[serviceIndex]?.vehicles?.[index]?.vehicleId && <p className="text-red-500 text-xs mt-1">Requerido</p>}
               </div>
 
-              {/* Input oculto para guardar el nombre en el JSON */}
-              <input type="hidden" {...register(`services.0.vehicles.${index}.name`)} />
+              <input type="hidden" {...register(`services.${serviceIndex}.vehicles.${index}.name` as const)} />
 
               <div className="w-24">
                 <label className="block text-xs font-medium text-gray-500 mb-1">Cantidad</label>
                 <input 
                   type="number" min="1"
                   className="w-full px-3 py-2 border rounded-md bg-white"
-                  {...register(`services.0.vehicles.${index}.quantity`)}
+                  {...register(`services.${serviceIndex}.vehicles.${index}.quantity` as const, { valueAsNumber: true })}
                 />
               </div>
 
@@ -96,7 +90,7 @@ export const VehiclesAndCrewStep = ({ catalogs }: VehiclesAndCrewStepProps) => {
                 <input 
                   type="number" step="0.01" min="0"
                   className="w-full px-3 py-2 border rounded-md bg-white"
-                  {...register(`services.0.vehicles.${index}.unitPrice`)}
+                  {...register(`services.${serviceIndex}.vehicles.${index}.unitPrice` as const, { valueAsNumber: true })}
                 />
               </div>
 
@@ -122,7 +116,7 @@ export const VehiclesAndCrewStep = ({ catalogs }: VehiclesAndCrewStepProps) => {
           </div>
           <button
             type="button"
-            onClick={() => appendCrew({ type: 'driver', quantity: 1, dailySalary: 400 })} // Salario por defecto de ejemplo
+            onClick={() => appendCrew({ type: 'driver', quantity: 1, dailySalary: 400 })}
             className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100 transition-colors"
           >
             <Plus className="w-4 h-4" /> Agregar Personal
@@ -142,7 +136,7 @@ export const VehiclesAndCrewStep = ({ catalogs }: VehiclesAndCrewStepProps) => {
                 <label className="block text-xs font-medium text-gray-500 mb-1">Puesto Operativo</label>
                 <select 
                   className="w-full px-3 py-2 border rounded-md bg-white"
-                  {...register(`services.0.crew.${index}.type`)}
+                  {...register(`services.${serviceIndex}.crew.${index}.type` as const)}
                 >
                   <option value="driver">Chofer</option>
                   <option value="technician">Técnico / Auxiliar</option>
@@ -154,7 +148,7 @@ export const VehiclesAndCrewStep = ({ catalogs }: VehiclesAndCrewStepProps) => {
                 <input 
                   type="number" min="1"
                   className="w-full px-3 py-2 border rounded-md bg-white"
-                  {...register(`services.0.crew.${index}.quantity`)}
+                  {...register(`services.${serviceIndex}.crew.${index}.quantity` as const, { valueAsNumber: true })}
                 />
               </div>
 
@@ -163,7 +157,7 @@ export const VehiclesAndCrewStep = ({ catalogs }: VehiclesAndCrewStepProps) => {
                 <input 
                   type="number" step="0.01" min="0"
                   className="w-full px-3 py-2 border rounded-md bg-white"
-                  {...register(`services.0.crew.${index}.dailySalary`)}
+                  {...register(`services.${serviceIndex}.crew.${index}.dailySalary` as const, { valueAsNumber: true })}
                 />
               </div>
 
@@ -179,7 +173,6 @@ export const VehiclesAndCrewStep = ({ catalogs }: VehiclesAndCrewStepProps) => {
           ))}
         </div>
       </div>
-
     </div>
   );
 };

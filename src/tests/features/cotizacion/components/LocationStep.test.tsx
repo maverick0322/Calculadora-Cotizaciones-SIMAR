@@ -27,19 +27,19 @@ describe('LocationStep Component', () => {
     } as any);
 
     // [ ACT ]
-    render(<LocationStep />);
+    // Ahora inyectamos el serviceIndex
+    render(<LocationStep serviceIndex={0} />);
 
     // [ ASSERT ]
-    expect(screen.getByText('Detalles de Ubicación')).toBeDefined();
-    expect(screen.getByText('Dirección')).toBeDefined();
-    expect(screen.getByText('Ciudad')).toBeDefined();
+    expect(screen.getByText('Ubicación de Recolección')).toBeDefined();
+    expect(screen.getByText('Dirección de la sucursal / origen')).toBeDefined();
+    expect(screen.getByText('Ciudad / Municipio')).toBeDefined();
     expect(screen.getByText('Colonia')).toBeDefined();
 
-    expect(mockRegister).toHaveBeenCalledWith('location.street');
-    expect(mockRegister).toHaveBeenCalledWith('location.municipality');
-    expect(mockRegister).toHaveBeenCalledWith('location.neighborhood');
-    
-    expect(screen.queryByText('La calle es obligatoria')).toBeNull();
+    // Ahora busca la ruta multiservicio
+    expect(mockRegister).toHaveBeenCalledWith('services.0.location.street');
+    expect(mockRegister).toHaveBeenCalledWith('services.0.location.municipality');
+    expect(mockRegister).toHaveBeenCalledWith('services.0.location.neighborhood');
   });
 
   // --- AC 2: VALIDATION ERROR HANDLING ---
@@ -50,15 +50,15 @@ describe('LocationStep Component', () => {
       register: mockRegister,
       formState: { 
         errors: { 
-          location: { 
-            street: { message: errorMessage } 
-          } 
+          services: [
+            { location: { street: { message: errorMessage } } }
+          ]
         } 
       }
     } as any);
 
     // [ ACT ]
-    render(<LocationStep />);
+    render(<LocationStep serviceIndex={0} />);
 
     // [ ASSERT ]
     const errorElement = screen.getByText(errorMessage);

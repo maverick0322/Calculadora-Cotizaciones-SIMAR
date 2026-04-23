@@ -45,13 +45,13 @@ describe('IssuedQuotesDashboardView Component', () => {
 
   // --- AC 3: RENDERING BOARD ---
   it('should render the table with correctly mapped data and translated waste types', async () => {
+    // ACTUALIZADO: Usamos wastesSummary
     const mockQuotes = [
       {
         id: 1,
         folio: 'SIMAR-001',
         location: 'Calle Falsa 123',
-        waste: 'hazardous',
-        volume: '500 kg',
+        wastesSummary: '500 kg de Residuos Peligrosos',
         createdAt: 1712534400000,
         status: 'issued'
       }
@@ -63,16 +63,16 @@ describe('IssuedQuotesDashboardView Component', () => {
 
     expect(await screen.findByText('SIMAR-001')).toBeDefined();
     expect(screen.getByText('Calle Falsa 123')).toBeDefined();
-    expect(screen.getByText('Peligroso')).toBeDefined(); 
-    expect(screen.getByText('500 kg')).toBeDefined();
+    expect(screen.getByText('500 kg de Residuos Peligrosos')).toBeDefined(); 
   });
 
   // --- AC 4: PDF VISUALIZATION BUTTON ---
   it('should trigger PDF workflow when PDF button is clicked', async () => {
-    const mockQuotes = [{ id: 99, folio: 'SIMAR-099', status: 'issued', waste: 'domestic' }];
+    const mockQuotes = [{ id: 99, folio: 'SIMAR-099', status: 'issued', wastesSummary: 'domestico' }];
     
     vi.mocked(window.api.getIssuedQuotes).mockResolvedValue({ success: true, data: mockQuotes } as any);
-    vi.mocked(window.api.getQuoteById).mockResolvedValue(mockQuotes[0] as any);
+    // IMPORTANTE: Le pasamos clientName para que el generador de PDF (y su replace) no exploten
+    vi.mocked(window.api.getQuoteById).mockResolvedValue({ ...mockQuotes[0], clientName: 'Empresa Test' } as any);
     vi.mocked(window.api.generatePdfPreview).mockResolvedValue({ success: true, pdfBase64: 'abc' });
 
     render(<IssuedQuotesDashboardView />);

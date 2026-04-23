@@ -31,16 +31,16 @@ describe('SqliteAuthRepository', () => {
     
     db.prepare(`
       INSERT INTO users (central_id, full_name, email, password_hash, role, is_active)
-      VALUES ('C-123', 'John Doe', 'admin@simar.com', 'hashed_pass_123', 'admin', 1)
+      VALUES ('C-123', 'John Doe', 'admin@simar.com', '$2a$10$hashed_pass_123', 'admin', 1)
     `).run();
 
     repository = new SqliteAuthRepository(db);
   });
 
   // --- AC 1: HAPPY PATH ---
-  it('should return the user object when email and password match perfectly', () => {
+  it('should return the full user row including hash when email exists', () => {
     // [ ACT ]
-    const user = repository.getUserByCredentials('admin@simar.com', 'hashed_pass_123');
+    const user = repository.getUserByEmail('admin@simar.com');
 
     // [ ASSERT ]
     expect(user).not.toBeNull();
@@ -48,28 +48,23 @@ describe('SqliteAuthRepository', () => {
     expect(user?.email).toBe('admin@simar.com');
     expect(user?.role).toBe('admin');
     expect(user?.is_active).toBe(1);
+    expect(user?.password_hash).toBe('$2a$10$hashed_pass_123'); 
   });
 
   // --- AC 2: UNEXISTING EMAIL ---
   it('should return null when the email does not exist in the database', () => {
-    const user = repository.getUserByCredentials('wrong@simar.com', 'hashed_pass_123');
+    const user = repository.getUserByEmail('wrong@simar.com');
     expect(user).toBeNull();
   });
 
-  // --- AC 3: INCORRECT PASSWORD ---
-  it('should return null when the email exists but the password hash is incorrect', () => {
-    const user = repository.getUserByCredentials('admin@simar.com', 'wrong_hash');
-    expect(user).toBeNull();
-  });
-
-  // --- AC 4: INACTIVE USER ---
-  it('should return the user data even if is_active is 0 (UseCase handles the lock)', () => {
+  // --- AC 3: INACTIVE USER ---
+  it('should return the user data even if is_active is 0', () => {
     db.prepare(`
       INSERT INTO users (central_id, full_name, email, password_hash, role, is_active)
       VALUES ('C-999', 'Inactive User', 'inactive@simar.com', 'hash_456', 'viewer', 0)
     `).run();
 
-    const user = repository.getUserByCredentials('inactive@simar.com', 'hash_456');
+    const user = repository.getUserByEmail('inactive@simar.com');
 
     expect(user).not.toBeNull();
     expect(user?.is_active).toBe(0);
