@@ -13,7 +13,8 @@ const api = {
   getQuoteById: (id: number | string) => ipcRenderer.invoke('quotes:get-quote-by-id', id),
   generatePdfPreview: (quoteData: QuoteDraft) => ipcRenderer.invoke('pdf:generate-preview', quoteData),
   savePdf: (pdfBase64: string, defaultFolio: string) => ipcRenderer.invoke('pdf:save', pdfBase64, defaultFolio),
-  getCatalogs: () => ipcRenderer.invoke('catalogs:get-all')
+  getCatalogs: () => ipcRenderer.invoke('catalogs:get-all'),
+  manageCatalog: (action, type, payload) => ipcRenderer.invoke('catalogs:manage', { action, type, payload }),
 };
 
 if (process.contextIsolated) {

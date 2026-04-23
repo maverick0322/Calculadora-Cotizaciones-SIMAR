@@ -107,7 +107,6 @@ function App() {
                   ✅ Emitidas
                 </button>
 
-                {/* NUEVO BOTÓN DE CONFIGURACIÓN */}
                 <button
                   onClick={() => setCurrentView('settings')}
                   className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-colors
@@ -137,7 +136,9 @@ function App() {
               />
             )}
             {currentView === 'dashboard' && <DashboardView onEditClick={handleEditDraft} />}
-            {currentView === 'issuedQuotes' && <IssuedQuotesDashboardView onCloneRedirect={handleEditDraft} />}
+            {currentView === 'issuedQuotes' && (
+              <IssuedQuotesDashboardView onCloneRedirect={() => setCurrentView('dashboard')} />
+            )}
             {currentView === 'settings' && <CatalogSettingsView />} {/* Renderizamos la vista */}
           </main>
         </div>

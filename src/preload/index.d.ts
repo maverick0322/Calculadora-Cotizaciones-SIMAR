@@ -17,5 +17,6 @@ declare global {
       
       getCatalogs: () => Promise<{ success: boolean; data?: any; error?: string }>;
       updateCatalogPrice: (type: 'vehicle' | 'supply', id: number, price: number) => Promise<any>;    }
+      manageCatalog: (action: 'add' | 'delete', type: 'vehicle' | 'supply' | 'warehouse', payload: any) => Promise<any>;
   }
 }

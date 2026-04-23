@@ -46,7 +46,7 @@ export const IssuedQuotesDashboardView = ({ onCloneRedirect }: { onCloneRedirect
       if (response.success) {
         toast.success('Borrador de reemplazo creado', { id: loadingId });
         
-        const newDraftId = typeof response.data === 'object' ? response.data?.id : response.data;
+        const newDraftId = response.id || response.data?.id || response.data;
 
         if (onCloneRedirect && newDraftId) {
            onCloneRedirect(Number(newDraftId));

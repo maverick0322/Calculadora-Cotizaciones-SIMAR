@@ -21,9 +21,11 @@ import { SavePdfUseCase } from './application/useCases/SavePdfUseCase';
 import { SqliteAuditRepository } from './infrastructure/database/repositories/SqliteAuditRepository';
 import { LogAuditActionUseCase } from './application/useCases/LogAuditActionUseCase';
 import { GetCatalogsUseCase } from './application/useCases/GetCatalogsUseCase';
+import { UpdateCatalogPriceUseCase } from './application/useCases/UpdateCatalogPriceUseCase';
+import { ManageCatalogUseCase } from './application/useCases/ManageCatalogUseCase';
 
 import { quoteSchema } from '../shared/schemas/quoteSchema';
-import { UpdateCatalogPriceUseCase } from './application/useCases/UpdateCatalogPriceUseCase';
+
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -84,6 +86,7 @@ app.whenReady().then(() => {
   const savePdfUseCase = new SavePdfUseCase();
   const getCatalogsUseCase = new GetCatalogsUseCase(catalogRepo);
   const updateCatalogUseCase = new UpdateCatalogPriceUseCase(catalogRepo);
+  const manageCatalogUseCase = new ManageCatalogUseCase(catalogRepo);
 
   ipcMain.handle('quotes:save-draft', (_event, payload) => {
     try {
@@ -184,6 +187,15 @@ app.whenReady().then(() => {
       return { success: false, error: (error as Error).message };
     }
   });
+
+  ipcMain.handle('catalogs:manage', async (_event, { action, type, payload }) => {
+  try {
+    const result = await manageCatalogUseCase.execute(action, type, payload);
+    return { success: true, changes: result.changes, lastInsertRowid: result.lastInsertRowid };
+  } catch (error) {
+    return { success: false, error: (error as Error).message };
+  }
+});
 
   createWindow()
 

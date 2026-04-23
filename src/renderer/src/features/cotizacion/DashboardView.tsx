@@ -1,8 +1,9 @@
-import { Pencil, FileText } from 'lucide-react';
+import { Pencil, FileText, AlertTriangle } from 'lucide-react';
 import { QuoteSummary } from '../../../../shared/types/Quote';
 import { useDrafts } from './hooks/useDrafts';
 import { usePdfWorkflow } from './hooks/usePdfWorkflow';
 import { PdfPreviewModal } from './components/PdfPreviewModal';
+import { useState } from 'react';
 
 const statusTranslations: Record<string, string> = {
   draft: 'Borrador',
@@ -12,6 +13,7 @@ const statusTranslations: Record<string, string> = {
 
 export const DashboardView = ({ onEditClick }: { onEditClick: (id: number) => void }) => {  
   const { drafts, loading, fetchDrafts } = useDrafts();
+  const [quoteToEmit, setQuoteToEmit] = useState<number | null>(null);
 
   const { 
     isModalOpen, 
@@ -30,11 +32,9 @@ export const DashboardView = ({ onEditClick }: { onEditClick: (id: number) => vo
     });
   };
 
-  const handleEmitPdf = (id: number) => {
-    if (window.confirm('¿Quieres convertir este archivo en PDF definitivamente?')) {
-      openPdfPreview(id, true);
-    }
-  };
+  const handleEmitRequest = (id: number) => {
+  setQuoteToEmit(id); // Solo abre el modal, no dispara la acción aún
+};
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -73,7 +73,6 @@ export const DashboardView = ({ onEditClick }: { onEditClick: (id: number) => vo
                 const dateToShow = draft.createdAt ? formatDate(Number(draft.createdAt)) : 'Fecha desconocida';
                 const locationToShow = draft.location || 'Sin dirección';
                 
-                // Usamos el string que ya viene armado desde SQLite
                 const wastesToShow = draft.wastesSummary || 'No especificado';
                 const statusToShow = statusTranslations[draft.status] || draft.status || 'Borrador';
 
@@ -110,7 +109,7 @@ export const DashboardView = ({ onEditClick }: { onEditClick: (id: number) => vo
                         </button>
 
                         <button 
-                          onClick={() => handleEmitPdf(Number(draft.id))}
+                          onClick={() => handleEmitRequest(Number(draft.id))}
                           disabled={isPdfLoading}
                           className="inline-flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 text-gray-600 hover:text-red-600 transition-colors disabled:opacity-50" 
                           title="Emitir y Generar PDF Oficial"
@@ -126,6 +125,43 @@ export const DashboardView = ({ onEditClick }: { onEditClick: (id: number) => vo
           </table>
         </div>
       </div>
+
+      {quoteToEmit && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-gray-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4 animate-in zoom-in-95 duration-200">
+            <div className="flex items-start gap-4 mb-5">
+              <div className="bg-blue-50 p-3 rounded-full text-blue-600 shrink-0">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">¿Emitir Cotización Oficial?</h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  Al emitir este documento, se generará el PDF final, se le asignará un folio oficial y <strong>el borrador quedará bloqueado</strong>.
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setQuoteToEmit(null)}
+                className="px-5 py-2.5 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  openPdfPreview(quoteToEmit, true);
+                  setQuoteToEmit(null); // Cerramos el modal
+                }}
+                className="px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center gap-2 shadow-sm"
+              >
+                <FileText className="w-4 h-4" />
+                Sí, Emitir PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <PdfPreviewModal 
         isOpen={isModalOpen}
