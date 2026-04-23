@@ -9,6 +9,14 @@ declare global {
       getDraftById: (id: number | string) => Promise<any>;
       login: (credentials: Record<string, string>) => Promise<any>;
       getDrafts: () => Promise<any>;
-    }
+      issueQuote: (id: number | string) => Promise<{ success: boolean; error?: string }>;
+      getIssuedQuotes: () => Promise<QuoteSummary[]>;
+      getQuoteById: (id: number | string) => Promise<QuoteDraft | null>;
+      generatePdfPreview: (quoteData: QuoteDraft) => Promise<{ success: boolean; pdfBase64?: string; error?: string }>;
+      savePdf: (pdfBase64: string, defaultFolio: string) => Promise<{ success: boolean; filePath?: string; error?: string }>;
+      
+      getCatalogs: () => Promise<{ success: boolean; data?: any; error?: string }>;
+      updateCatalogPrice: (type: 'vehicle' | 'supply', id: number, price: number) => Promise<any>;    }
+      manageCatalog: (action: 'add' | 'delete', type: 'vehicle' | 'supply' | 'warehouse', payload: any) => Promise<any>;
   }
 }

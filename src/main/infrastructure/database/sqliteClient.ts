@@ -1,4 +1,3 @@
-// src/main/infrastructure/database/sqliteClient.ts
 import Database from 'better-sqlite3';
 import type { Database as DatabaseType } from 'better-sqlite3';
 import { app } from 'electron';
@@ -31,17 +30,28 @@ export const initDatabase = () => {
             email VARCHAR
         );
 
-        CREATE TABLE IF NOT EXISTS vehicles (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            fuel_type VARCHAR,
-            weight_capacity_kg DECIMAL,
-            vehicle_type VARCHAR
-        );
-
-        CREATE TABLE IF NOT EXISTS supplies (
+        CREATE TABLE IF NOT EXISTS catalog_vehicles (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name VARCHAR,
-            unit_cost DECIMAL
+            vehicle_type VARCHAR,
+            capacity_kg DECIMAL,
+            base_price DECIMAL,
+            is_active BOOLEAN DEFAULT 1
+        );
+
+        CREATE TABLE IF NOT EXISTS catalog_supplies (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name VARCHAR,
+            unit VARCHAR,
+            suggested_price DECIMAL,
+            is_active BOOLEAN DEFAULT 1
+        );
+
+        CREATE TABLE IF NOT EXISTS catalog_warehouses (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name VARCHAR,
+            address TEXT,
+            is_active BOOLEAN DEFAULT 1
         );
 
         CREATE TABLE IF NOT EXISTS routes (
@@ -60,28 +70,17 @@ export const initDatabase = () => {
             customer_id INTEGER,
             seller_id INTEGER,
             replaces_quote_id INTEGER,
-
-            street TEXT,
-            neighborhood TEXT,
-            municipality TEXT,
-
-            activity_type VARCHAR,
-            waste_type VARCHAR,
-            volume_quantity DECIMAL,
-            volume_unit VARCHAR,
-            service_frequency VARCHAR,
+            
+            client_name VARCHAR,
+            client_rfc VARCHAR,
+            validity_days INTEGER,
+            frequency_json TEXT,
+            
+            -- MAGIA: Aquí guardaremos todos los servicios, direcciones, residuos y vehículos
+            services_json TEXT,
+            
             subtotal DECIMAL,
             total DECIMAL,
-            trip_kilometers DECIMAL,
-            trip_vehicles INTEGER,
-            trip_crew_members INTEGER,
-            trip_routes INTEGER,
-            trip_fuel_liters DECIMAL,
-            trip_road_type VARCHAR,
-            trip_tolls INTEGER,
-            trip_total_toll_cost DECIMAL,
-            trip_origin VARCHAR,
-            trip_destination_warehouse VARCHAR,
             created_at INTEGER,
             FOREIGN KEY (customer_id) REFERENCES customers(id),
             FOREIGN KEY (seller_id) REFERENCES users(id),
@@ -95,7 +94,7 @@ export const initDatabase = () => {
             historical_unit_cost DECIMAL,
             PRIMARY KEY (quote_id, supply_id),
             FOREIGN KEY (quote_id) REFERENCES quotes(id),
-            FOREIGN KEY (supply_id) REFERENCES supplies(id)
+            FOREIGN KEY (supply_id) REFERENCES catalog_supplies(id)
         );
 
         CREATE TABLE IF NOT EXISTS quote_vehicles (
@@ -104,7 +103,7 @@ export const initDatabase = () => {
             quantity INTEGER,
             PRIMARY KEY (quote_id, vehicle_id),
             FOREIGN KEY (quote_id) REFERENCES quotes(id),
-            FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)
+            FOREIGN KEY (vehicle_id) REFERENCES catalog_vehicles(id)
         );
 
         CREATE TABLE IF NOT EXISTS quote_extra_costs (
@@ -130,21 +129,44 @@ export const initDatabase = () => {
     db.exec(schema);
 
     try {
-        const stmt = db.prepare('SELECT COUNT(*) as count FROM users');
-        const result = stmt.get() as { count: number };
+        const seedTransaction = db.transaction(() => {
+            const userCount = (db.prepare('SELECT COUNT(*) as count FROM users').get() as any).count;
+            if (userCount === 0) {
+                console.log('🌱 Sembrando usuario administrador por defecto...');
+                const insertUser = db.prepare(`INSERT INTO users (email, password_hash, full_name, role) VALUES (?, ?, ?, ?)`);
+                insertUser.run('admin@simar.com', '123456', 'Administrador SIMAR', 'admin');
+            }
 
-        if (result.count === 0) {
-            console.log('🌱 Sembrando usuario administrador por defecto...');
-            const insertUser = db.prepare(`
-                INSERT INTO users (email, password_hash, full_name, role)
-                VALUES (?, ?, ?, ?)
-            `);
+            const vehicleCount = (db.prepare('SELECT COUNT(*) as count FROM catalog_vehicles').get() as any).count;
+            if (vehicleCount === 0) {
+                console.log('🌱 Sembrando catálogo de vehículos...');
+                const insertVehicle = db.prepare(`INSERT INTO catalog_vehicles (name, vehicle_type, capacity_kg, base_price) VALUES (?, ?, ?, ?)`);
+                insertVehicle.run('Camioneta 3.5 Toneladas', 'Ligero', 3500, 1500.00);
+                insertVehicle.run('Tractocamión con Tolva', 'Pesado', 30000, 8500.00);
+                insertVehicle.run('Camión Recolector Compactador', 'Mediano', 8000, 4200.00);
+            }
 
-            insertUser.run('admin@simar.com', '123456', 'Administrador SIMAR', 'admin');
-            console.log('✅ Administrador creado: admin@simar.com / 123456');
-        }
+            const supplyCount = (db.prepare('SELECT COUNT(*) as count FROM catalog_supplies').get() as any).count;
+            if (supplyCount === 0) {
+                console.log('🌱 Sembrando catálogo de insumos...');
+                const insertSupply = db.prepare(`INSERT INTO catalog_supplies (name, unit, suggested_price) VALUES (?, ?, ?)`);
+                insertSupply.run('Bolsas de plástico grueso (Paquete 100)', 'Paquete', 250.00);
+                insertSupply.run('Contenedor de 200L (Préstamo)', 'Unidad', 50.00);
+                insertSupply.run('Equipo de Protección Personal (Desechable)', 'Kit', 120.00);
+            }
+
+            const warehouseCount = (db.prepare('SELECT COUNT(*) as count FROM catalog_warehouses').get() as any).count;
+            if (warehouseCount === 0) {
+                console.log('🌱 Sembrando catálogo de almacenes...');
+                const insertWarehouse = db.prepare(`INSERT INTO catalog_warehouses (name, address) VALUES (?, ?)`);
+                insertWarehouse.run('Almacén Central SIMAR', 'Av. de las Industrias S/N, Zona Industrial');
+                insertWarehouse.run('Planta de Tratamiento Norte', 'Carretera Federal Km 15');
+            }
+        });
+
+        seedTransaction();
     } catch (error) {
-        console.error('❌ Error al inyectar el usuario semilla:', error);
+        console.error('❌ Error al inyectar datos semilla:', error);
     }
 
     console.log('Base de datos SQLite inicializada correctamente en:', dbPath);

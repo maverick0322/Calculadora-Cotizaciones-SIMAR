@@ -9,12 +9,39 @@ export const useQuoteForm = (editId?: number | null) => {
   const form = useForm<QuoteFormValues>({
     resolver: zodResolver(quoteSchema) as unknown as Resolver<QuoteFormValues>,
     defaultValues: {
-      location: { street: '', municipality: '', neighborhood: '' },
-      activity: 'collection',
-      waste: 'domestic',
-      volumeQuantity: 0,
-      volumeUnit: 'kg',
-    } as Partial<QuoteFormValues>
+      clientName: '',
+      clientRfc: '',
+      validityDays: 15,
+      frequency: {
+        type: 'one_time',
+        duration: undefined,
+        customDescription: ''
+      },
+      services: [
+        {
+          id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
+          activity: 'collection',
+          location: { street: '', municipality: '', neighborhood: '', state: '' },
+          wastes: [{ name: '', type: 'domestic', quantity: 1, unit: 'kg' }],
+          vehicles: [],
+          crew: [],
+          supplies: [],
+          logistics: {
+            origin: '',
+            primaryDestination: '',
+            secondaryDestination: '',
+            kilometers: 0,
+            fuelLiters: 0,
+            fuelPricePerLiter: 0,
+            roadType: undefined,
+            tolls: 0,
+            totalTollCost: 0,
+            viaticos: 0
+          },
+          extraCosts: []
+        }
+      ]
+    }
   });
 
   useEffect(() => {
@@ -29,11 +56,15 @@ export const useQuoteForm = (editId?: number | null) => {
         const response = await window.api.getDraftById(editId);
         if (response.success && response.data) {
           const draft: QuoteDraft = response.data;
+          
           form.reset({
-            location: draft.location, activity: draft.activity,
-            waste: draft.waste, volumeQuantity: draft.volumeQuantity,
-            volumeUnit: draft.volumeUnit, frequency: draft.frequency, trip: draft.trip 
-          });
+            clientName: draft.clientName,
+            clientRfc: draft.clientRfc,
+            validityDays: draft.validityDays,
+            frequency: draft.frequency,
+            services: draft.services 
+          } as unknown as QuoteFormValues);
+          
           toast.success('Borrador listo para editar', { id: toastId });
         } else {
           toast.error('No se pudo cargar el borrador', { id: toastId });
@@ -46,28 +77,35 @@ export const useQuoteForm = (editId?: number | null) => {
     fetchDraftData();
   }, [editId, form]);
 
-  // AHORA EL HOOK RECIBE DATOS CRUDOS Y LOS FORMATEA
-  const submitDraft = async (data: QuoteFormValues): Promise<boolean> => {
+  const submitDraft = async (data: QuoteFormValues, subtotal: number = 0, total: number = 0): Promise<boolean> => {
     try {
-      let cleanTrip = data.trip as QuoteDraft['trip'];
-      
-      if (data.trip) {
-        const cleanRoadType = (data.trip.roadType === '' || data.trip.roadType === null) 
+      const cleanedServices = data.services.map(service => {
+        const cleanRoadType = (service.logistics.roadType === '' || service.logistics.roadType === null) 
           ? undefined 
-          : data.trip.roadType as RoadType;
+          : service.logistics.roadType as RoadType;
 
-        cleanTrip = {
-          ...data.trip,
-          roadType: cleanRoadType,
+        return {
+          ...service,
+          logistics: {
+            ...service.logistics,
+            roadType: cleanRoadType
+          }
         };
-      }
+      });
 
       const payload: QuoteDraft = {
         id: editId || undefined,
         status: 'draft',
         createdAt: Date.now(),
-        ...data,
-        trip: cleanTrip
+        clientName: data.clientName,
+        clientRfc: data.clientRfc,
+        validityDays: data.validityDays,
+        frequency: data.frequency,
+        services: cleanedServices,
+        
+        // Inyectamos el dinero en el payload
+        subtotal: subtotal,
+        total: total
       };
 
       const response = await window.api.saveDraft(payload);

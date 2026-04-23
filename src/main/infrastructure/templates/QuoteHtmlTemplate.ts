@@ -5,11 +5,41 @@ export const buildQuoteHtml = (quoteData: QuoteDraft, logoBase64: string): strin
   const dateStr = createdAt.toLocaleDateString('es-MX', { 
     year: 'numeric', month: 'long', day: 'numeric' 
   });
-  const fullLocation = `${quoteData.location.street}, ${quoteData.location.neighborhood}, ${quoteData.location.municipality}`;
+  
+  // Extraemos el primer servicio (nuestro "carrito" actual)
+  const service = quoteData.services[0];
+  const loc = service.location;
+  const fullLocation = `${loc.street}, ${loc.neighborhood}, ${loc.municipality}, ${loc.state}`;
+
+  const activityMap: Record<string, string> = {
+    collection: 'Recolección',
+    transport: 'Transporte',
+    transfer: 'Transferencia',
+    final_disposal: 'Disposición Final'
+  };
+  const activityName = activityMap[service.activity] || service.activity;
 
   const logoHtml = logoBase64 
     ? `<img src="${logoBase64}" alt="Logo SIMAR" style="max-height: 70px;">`
     : `<h1 style="color: #1e3a5f; margin: 0;">SIMAR</h1>`;
+
+  // Generamos dinámicamente las filas de los residuos
+  const wasteRows = service.wastes.map((waste, index) => `
+    <tr>
+        <td style="text-align: center;">${index + 1}</td>
+        <td>Servicio de ${activityName}, transporte y disposición de residuo: <strong>${waste.name}</strong> (Clasificación: ${waste.type}).</td>
+        <td style="text-align: center;">${waste.quantity}</td>
+        <td style="text-align: center;">${waste.unit}</td>
+    </tr>
+  `).join('');
+
+  // Cálculos financieros para pintar en la tabla
+  const subtotal = quoteData.subtotal || 0;
+  const iva = subtotal * 0.16;
+  const total = quoteData.total || 0;
+
+  const formatCurrency = (amount: number) => 
+    `$${amount.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   return `
     <!DOCTYPE html>
@@ -25,7 +55,8 @@ export const buildQuoteHtml = (quoteData: QuoteDraft, logoBase64: string): strin
             h2 { border-bottom: 2px solid #ccc; padding-bottom: 5px; color: #1e3a5f; font-size: 1.1em; margin-top: 25px; }
             table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.85em; }
             th, td { border: 1px solid #aaa; padding: 8px 10px; text-align: left; }
-            th { background-color: #eef4fc; }
+            th { background-color: #eef4fc; text-align: center; }
+            .totals-row td { padding: 6px 10px; border-top: none; }
             .list { margin: 15px 0; padding-left: 25px; font-size: 0.85em; }
             .list li { margin-bottom: 8px; text-align: justify; }
             .signature { margin-top: 40px; font-weight: bold; color: #1e3a5f; }
@@ -37,29 +68,40 @@ export const buildQuoteHtml = (quoteData: QuoteDraft, logoBase64: string): strin
           <div>
               ${logoHtml}
               <div class="address">
-                  <strong>${quoteData.location.neighborhood || 'Cliente'}</strong><br>
+                  <strong>${quoteData.clientName}</strong><br>
                   ${fullLocation}
               </div>
           </div>
           <div style="text-align: right;">
-              <div class="ref">REF: ${quoteData.folio || `#00${quoteData.id}`}</div>
-              <div class="date-line">${dateStr} &nbsp;|&nbsp; Vigencia: 15 días</div>
+              <div class="ref">REF: ${quoteData.folio || `Borrador #${quoteData.id}`}</div>
+              <div class="date-line">${dateStr} &nbsp;|&nbsp; Vigencia: ${quoteData.validityDays} días</div>
           </div>
       </div>
 
-      <p style="font-size: 0.9em;">Por medio del presente envío propuesta económica referente al servicio de <strong>${quoteData.activity} de Residuos</strong>. Dicho servicio consiste en la Recolección, Transporte y Disposición Final de los residuos, en sitios autorizados por La Secretaría de Medio Ambiente del Estado de Veracruz.</p>
+      <p style="font-size: 0.9em;">Por medio del presente envío propuesta económica referente al servicio de <strong>${activityName} de Residuos</strong>. Dicho servicio consiste en la Recolección, Transporte y Disposición Final de los residuos, en sitios autorizados por La Secretaría de Medio Ambiente del Estado de Veracruz.</p>
 
       <h2>I. Precios</h2>
       <table>
           <thead>
-              <tr><th>No.</th><th>DESCRIPCIÓN</th><th>CANTIDAD</th><th>UNIDAD</th></tr>
+              <tr><th style="width: 5%;">No.</th><th>DESCRIPCIÓN</th><th style="width: 15%;">CANTIDAD</th><th style="width: 15%;">UNIDAD</th></tr>
           </thead>
           <tbody>
-              <tr>
-                  <td>1</td>
-                  <td>Servicio de ${quoteData.activity}, transporte y disposición final de residuos ${quoteData.waste}.</td>
-                  <td>${quoteData.volumeQuantity}</td>
-                  <td>${quoteData.volumeUnit}</td>
+              ${wasteRows}
+              
+              <tr class="totals-row">
+                  <td colspan="2" style="border: none;"></td>
+                  <td style="text-align: right; font-weight: bold; border-left: 1px solid #aaa;">Subtotal:</td>
+                  <td style="text-align: right;">${formatCurrency(subtotal)}</td>
+              </tr>
+              <tr class="totals-row">
+                  <td colspan="2" style="border: none;"></td>
+                  <td style="text-align: right; font-weight: bold; border-left: 1px solid #aaa;">IVA (16%):</td>
+                  <td style="text-align: right;">${formatCurrency(iva)}</td>
+              </tr>
+              <tr class="totals-row">
+                  <td colspan="2" style="border: none;"></td>
+                  <td style="text-align: right; font-weight: bold; color: #1e3a5f; font-size: 1.1em; border-left: 1px solid #aaa; border-bottom: 1px solid #aaa;">Total:</td>
+                  <td style="text-align: right; font-weight: bold; color: #1e3a5f; font-size: 1.1em; border-bottom: 1px solid #aaa;">${formatCurrency(total)}</td>
               </tr>
           </tbody>
       </table>
@@ -68,7 +110,7 @@ export const buildQuoteHtml = (quoteData: QuoteDraft, logoBase64: string): strin
       <ol class="list">
           <li><strong>Impuestos:</strong> Los precios indicados son más 16% de IVA.</li>
           <li><strong>Términos de pago:</strong> Pago por adelantado del concepto de transporte al 100% para la programación del servicio.</li>
-          <li><strong>Vigencia:</strong> La presente cotización tiene una vigencia de quince días y no cuenta con financiamiento.</li>
+          <li><strong>Vigencia:</strong> La presente cotización tiene una vigencia de ${quoteData.validityDays} días y no cuenta con financiamiento.</li>
           <li><strong>Aceptación del servicio:</strong> Se requiere sea confirmada la aceptación de la presente cotización, con firma de recibido.</li>
           <li><strong>Programación del servicio:</strong> Solicitar por escrito al área comercial en un lapso de 8 días hábiles.</li>
           <li><strong>Procedimientos de seguridad:</strong> En caso de demora imputable al cliente, se realizará cargo de <strong>$1,850.00 + IVA</strong> por hora ajustada.</li>
@@ -104,7 +146,7 @@ export const buildQuoteHtml = (quoteData: QuoteDraft, logoBase64: string): strin
 
       <footer>
           Todos los precios están expresados en moneda nacional más IVA.<br>
-          Vigencia: 15 días naturales a partir del ${dateStr}.
+          Vigencia: ${quoteData.validityDays} días naturales a partir del ${dateStr}.
       </footer>
     </body>
     </html>

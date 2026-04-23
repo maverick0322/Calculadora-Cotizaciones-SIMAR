@@ -6,6 +6,8 @@ import icon from '../../resources/icon.png?asset'
 import db, { initDatabase } from './infrastructure/database/sqliteClient';
 import { SqliteQuoteRepository } from './infrastructure/database/repositories/SqliteQuoteRepository';
 import { SqliteAuthRepository } from './infrastructure/database/repositories/SqliteAuthRepository';
+import { SqliteCatalogRepository } from './infrastructure/database/repositories/SqliteCatalogRepository';
+import { SqliteWorkerRepository } from './infrastructure/database/repositories/SqliteWorkerRepository';
 
 import { SaveDraftUseCase } from './application/useCases/SaveDraftUseCase';
 import { GetDraftsUseCase } from './application/useCases/GetDraftsUseCase';
@@ -19,7 +21,9 @@ import { GetIssuedQuotesUseCase } from './application/useCases/GetIssuedQuotesUs
 import { SavePdfUseCase } from './application/useCases/SavePdfUseCase';
 import { SqliteAuditRepository } from './infrastructure/database/repositories/SqliteAuditRepository';
 import { LogAuditActionUseCase } from './application/useCases/LogAuditActionUseCase';
-import { SqliteWorkerRepository } from './infrastructure/database/repositories/SqliteWorkerRepository';
+import { GetCatalogsUseCase } from './application/useCases/GetCatalogsUseCase';
+import { UpdateCatalogPriceUseCase } from './application/useCases/UpdateCatalogPriceUseCase';
+import { ManageCatalogUseCase } from './application/useCases/ManageCatalogUseCase';
 import { RegisterWorkerUseCase } from './application/useCases/RegisterWorkerUseCase';
 
 import { quoteSchema } from '../shared/schemas/quoteSchema';
@@ -70,8 +74,9 @@ app.whenReady().then(() => {
   const workerRepo = new SqliteWorkerRepository(db);
   const registerWorkerUseCase = new RegisterWorkerUseCase(workerRepo);
   const auditRepo = new SqliteAuditRepository(db);
-  const logAuditUseCase = new LogAuditActionUseCase(auditRepo);
+  const catalogRepo = new SqliteCatalogRepository(db);
 
+  const logAuditUseCase = new LogAuditActionUseCase(auditRepo);
   const saveDraftUseCase = new SaveDraftUseCase(quoteRepo, logAuditUseCase);
   const getDraftsUseCase = new GetDraftsUseCase(quoteRepo);
   const getDraftByIdUseCase = new GetDraftByIdUseCase(quoteRepo);
@@ -82,6 +87,9 @@ app.whenReady().then(() => {
   const generatePdfPreviewUseCase = new GeneratePdfPreviewUseCase();
   const getIssuedQuotesUseCase = new GetIssuedQuotesUseCase(quoteRepo);
   const savePdfUseCase = new SavePdfUseCase();
+  const getCatalogsUseCase = new GetCatalogsUseCase(catalogRepo);
+  const updateCatalogUseCase = new UpdateCatalogPriceUseCase(catalogRepo);
+  const manageCatalogUseCase = new ManageCatalogUseCase(catalogRepo);
 
   ipcMain.handle('quotes:save-draft', (_event, payload) => {
     try {
@@ -163,9 +171,38 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle('quotes:get-issued', () => {
-  console.log("Main received request to get issued quotes");
-  return getIssuedQuotesUseCase.execute();
-});
+    console.log("Main received request to get issued quotes");
+    return getIssuedQuotesUseCase.execute(); 
+  });
+
+  ipcMain.handle('catalogs:get-all', () => {
+    try {
+      console.log('Main received request to fetch catalogs');
+      const data = getCatalogsUseCase.execute();
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error fetching catalogs:', error);
+      return { success: false, error: (error as Error).message };
+    }
+  });
+
+  ipcMain.handle('catalogs:update-price', async (_event, { type, id, price }) => {
+    try {
+      const result = await updateCatalogUseCase.execute(type, id, price);
+      return { success: true, changes: result.changes };
+    } catch (error) {
+      return { success: false, error: (error as Error).message };
+    }
+  });
+
+  ipcMain.handle('catalogs:manage', async (_event, { action, type, payload }) => {
+    try {
+      const result = await manageCatalogUseCase.execute(action, type, payload);
+      return { success: true, changes: result.changes, lastInsertRowid: result.lastInsertRowid };
+    } catch (error) {
+      return { success: false, error: (error as Error).message };
+    }
+  });
 
   createWindow()
 
