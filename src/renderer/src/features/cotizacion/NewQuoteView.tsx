@@ -152,16 +152,22 @@ export const NewQuoteView = ({ editId, onSaveSuccess }: INewQuoteViewProps) => {
 
                 {/* CONTENIDO DE LA PESTAÑA ACTIVA */}
                 <div className="border border-t-0 border-gray-200 p-6 rounded-b-lg shadow-sm bg-white min-h-[500px]">
-                  <h2 className="text-xl font-semibold text-gray-800 mb-6 border-b pb-2">
-                    Configuración del Servicio {activeTab + 1}
-                  </h2>
-                  
-                  {/* Pasamos el índice activo a cada componente para que sepa en qué parte del arreglo escribir */}
-                  <LocationStep serviceIndex={activeTab} />
-                  <WasteStep serviceIndex={activeTab} />
-                  <TripStep serviceIndex={activeTab} catalogs={catalogs} />
-                  <VehiclesAndCrewStep serviceIndex={activeTab} catalogs={catalogs} />
-                  <SuppliesStep serviceIndex={activeTab} catalogs={catalogs} />
+                  {serviceFields.map((field, index) => (
+                    <div 
+                      key={field.id} 
+                      className={activeTab === index ? 'block animate-in fade-in' : 'hidden'}
+                    >
+                      <h2 className="text-xl font-semibold text-gray-800 mb-6 border-b pb-2">
+                        Configuración del Servicio {index + 1}
+                      </h2>
+                      
+                      <LocationStep serviceIndex={index} />
+                      <WasteStep serviceIndex={index} />
+                      <TripStep serviceIndex={index} catalogs={catalogs} />
+                      <VehiclesAndCrewStep serviceIndex={index} catalogs={catalogs} />
+                      <SuppliesStep serviceIndex={index} catalogs={catalogs} />
+                    </div>
+                  ))}
                 </div>
               </div>
 
