@@ -6,8 +6,9 @@ import { DashboardView } from './features/cotizacion/DashboardView';
 import { IssuedQuotesDashboardView } from './features/cotizacion/IssuedQuotesDashboardView';
 import { LoginView } from './features/auth/LoginView';
 import { CatalogSettingsView } from './features/configuration/CatalogSettingsView';
+import WorkerRegistrationView from './features/registro/WorkerRegistrationView';
 
-type View = 'splash' | 'newQuote' | 'dashboard' | 'issuedQuotes' | 'settings';
+type View = 'splash' | 'newQuote' | 'dashboard' | 'issuedQuotes' | 'settings' | 'registerWorker';
 
 function App() {
   const [currentView, setCurrentView] = useState<View>('splash');
@@ -42,6 +43,7 @@ function App() {
     setCurrentView('newQuote');
   };
 
+  // --- 1. Pantalla de Bienvenida (Splash) ---
   if (currentView === 'splash') {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -62,8 +64,16 @@ function App() {
     <>
       <Toaster position="top-right" />
 
+      {/* --- 2. Lógica cuando NO hay sesión iniciada --- */}
       {!isAuthenticated ? (
-        <LoginView onLoginSuccess={() => setIsAuthenticated(true)} />
+        currentView === 'registerWorker' ? (
+          <WorkerRegistrationView onBack={() => setCurrentView('dashboard')} />
+        ) : (
+          <LoginView
+            onLoginSuccess={() => setIsAuthenticated(true)}
+            onGoToRegister={() => setCurrentView('registerWorker')}
+          />
+        )
       ) : (
         <div className="min-h-screen bg-gray-50">
           <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -107,6 +117,7 @@ function App() {
                   ✅ Emitidas
                 </button>
 
+                {/* Botón de Ajustes (Tu Rama) */}
                 <button
                   onClick={() => setCurrentView('settings')}
                   className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-colors
@@ -116,6 +127,18 @@ function App() {
                   }
                 >
                   ⚙️ Ajustes
+                </button>
+
+                {/* Botón de Empleados (Rama de Lizeth) */}
+                <button
+                  onClick={() => setCurrentView('registerWorker')}
+                  className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-colors
+                    ${currentView === 'registerWorker'
+                      ? 'bg-purple-600 text-white shadow-sm'
+                      : 'text-gray-600 hover:text-purple-600'}`
+                  }
+                >
+                  👥 Empleados
                 </button>
 
                 <button
@@ -129,17 +152,24 @@ function App() {
           </header>
 
           <main className="py-8">
+            {/* Vistas principales del dashboard */}
             {currentView === 'newQuote' && (
-              <NewQuoteView 
-                editId={editDraftId} 
-                onSaveSuccess={() => setCurrentView('dashboard')} 
+              <NewQuoteView
+                editId={editDraftId}
+                onSaveSuccess={() => setCurrentView('dashboard')}
               />
             )}
             {currentView === 'dashboard' && <DashboardView onEditClick={handleEditDraft} />}
             {currentView === 'issuedQuotes' && (
+              // Conservamos la corrección de UX que hicimos hace un momento
               <IssuedQuotesDashboardView onCloneRedirect={() => setCurrentView('dashboard')} />
             )}
-            {currentView === 'settings' && <CatalogSettingsView />} {/* Renderizamos la vista */}
+            {currentView === 'settings' && <CatalogSettingsView />}
+
+            {/* Vista de registro (dentro de sesión) */}
+            {currentView === 'registerWorker' && (
+              <WorkerRegistrationView onBack={() => setCurrentView('dashboard')} />
+            )}
           </main>
         </div>
       )}
