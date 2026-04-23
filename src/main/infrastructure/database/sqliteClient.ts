@@ -13,13 +13,13 @@ db.pragma('foreign_keys = ON');
 export const initDatabase = () => {
     const schema = `
         CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            central_id VARCHAR,
-            full_name VARCHAR,
-            email VARCHAR,
-            password_hash VARCHAR,
-            role VARCHAR,
-            is_active BOOLEAN DEFAULT 1
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          central_id VARCHAR UNIQUE,
+          full_name VARCHAR,
+          email VARCHAR UNIQUE,
+          password_hash VARCHAR,
+          role VARCHAR,
+          is_active BOOLEAN DEFAULT 1
         );
 
         CREATE TABLE IF NOT EXISTS customers (
@@ -60,11 +60,11 @@ export const initDatabase = () => {
             customer_id INTEGER,
             seller_id INTEGER,
             replaces_quote_id INTEGER,
-            
+
             street TEXT,
             neighborhood TEXT,
             municipality TEXT,
-            
+
             activity_type VARCHAR,
             waste_type VARCHAR,
             volume_quantity DECIMAL,
