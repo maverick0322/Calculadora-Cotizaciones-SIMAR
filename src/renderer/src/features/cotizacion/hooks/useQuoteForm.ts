@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
-import { useForm, Resolver } from 'react-hook-form';
+import { useForm, useFieldArray, Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import toast from 'react-hot-toast';
 import { quoteSchema, QuoteFormValues } from '../../../../../shared/schemas/quoteSchema';
-import { QuoteDraft, RoadType } from '../../../../../shared/types/Quote';
+import { QuoteDraft, RoadType, ServiceItem } from '../../../../../shared/types/Quote';
 
 export const useQuoteForm = (editId?: number | null) => {
   const form = useForm<QuoteFormValues>({
@@ -43,6 +43,38 @@ export const useQuoteForm = (editId?: number | null) => {
       ]
     }
   });
+
+  // MAGIA MULTISERVICIO: Controlamos el arreglo de servicios dinámicamente
+  const { fields: serviceFields, append: appendService, remove: removeService } = useFieldArray({
+    control: form.control,
+    name: 'services'
+  });
+
+  const addNewService = () => {
+    appendService({
+      id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
+      activity: 'collection',
+      location: { street: '', municipality: '', neighborhood: '', state: '' },
+      wastes: [{ name: '', type: 'domestic', quantity: 1, unit: 'kg' }],
+      vehicles: [],
+      crew: [],
+      supplies: [],
+      logistics: {
+        origin: '',
+        primaryDestination: '',
+        secondaryDestination: '',
+        kilometers: 0,
+        fuelLiters: 0,
+        fuelPricePerLiter: 0,
+        roadType: undefined,
+        tolls: 0,
+        totalTollCost: 0,
+        viaticos: 0
+      },
+      extraCosts: []
+    } as ServiceItem);
+    toast.success('Nueva pestaña de servicio agregada');
+  };
 
   useEffect(() => {
     if (!editId) {
@@ -103,7 +135,6 @@ export const useQuoteForm = (editId?: number | null) => {
         frequency: data.frequency,
         services: cleanedServices,
         
-        // Inyectamos el dinero en el payload
         subtotal: subtotal,
         total: total
       };
@@ -115,5 +146,5 @@ export const useQuoteForm = (editId?: number | null) => {
     }
   };
 
-  return { form, submitDraft };
+  return { form, serviceFields, addNewService, removeService, submitDraft };
 };

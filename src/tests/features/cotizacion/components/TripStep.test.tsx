@@ -21,7 +21,6 @@ describe('TripStep Component', () => {
 
   // --- AC 1: BASIC RENDERING ---
   it('should render main inputs and register them without errors', () => {
-    // [ ARRANGE ]
     vi.mocked(RHF.useFormContext).mockReturnValue({
       register: mockRegister,
       watch: mockWatch,
@@ -30,23 +29,21 @@ describe('TripStep Component', () => {
 
     mockWatch.mockReturnValue('free');
 
-    // [ ACT ]
-    render(<TripStep />);
+    render(<TripStep serviceIndex={0} />);
 
-    // [ ASSERT ]
     expect(screen.getByText('Logística del Viaje')).toBeDefined();
     
-    expect(mockRegister).toHaveBeenCalledWith('trip.origin');
-    expect(mockRegister).toHaveBeenCalledWith('trip.destinationWarehouse');
-    expect(mockRegister).toHaveBeenCalledWith('trip.kilometers');
-    expect(mockRegister).toHaveBeenCalledWith('trip.roadType');
+    expect(mockRegister).toHaveBeenCalledWith('services.0.logistics.origin');
+    expect(mockRegister).toHaveBeenCalledWith('services.0.logistics.primaryDestination');
+    // Ahora esperamos el objeto extra para los numéricos
+    expect(mockRegister).toHaveBeenCalledWith('services.0.logistics.kilometers', { valueAsNumber: true });
+    expect(mockRegister).toHaveBeenCalledWith('services.0.logistics.roadType');
     
     expect(screen.queryByText('Número de Casetas')).toBeNull();
   });
 
   // --- AC 2: CONDITIONAL RENDERING (TOLL) ---
   it('should render toll inputs ONLY when roadType is "toll"', () => {
-    // [ ARRANGE ]
     vi.mocked(RHF.useFormContext).mockReturnValue({
       register: mockRegister,
       watch: mockWatch,
@@ -55,20 +52,17 @@ describe('TripStep Component', () => {
 
     mockWatch.mockReturnValue('toll');
 
-    // [ ACT ]
-    render(<TripStep />);
+    render(<TripStep serviceIndex={0} />);
 
-    // [ ASSERT ]
     expect(screen.getByText('Número de Casetas')).toBeDefined();
     expect(screen.getByText('Costo Total Casetas ($)')).toBeDefined();
 
-    expect(mockRegister).toHaveBeenCalledWith('trip.tolls');
-    expect(mockRegister).toHaveBeenCalledWith('trip.totalTollCost');
+    expect(mockRegister).toHaveBeenCalledWith('services.0.logistics.tolls', { valueAsNumber: true });
+    expect(mockRegister).toHaveBeenCalledWith('services.0.logistics.totalTollCost', { valueAsNumber: true });
   });
 
   // --- AC 3: VISUAL ERROR HANDLING ---
   it('should display error messages when origin or destination have validation errors', () => {
-    // [ ARRANGE ]
     const originError = 'El origen no puede estar vacío';
     const destError = 'El destino es muy corto';
 
@@ -77,20 +71,22 @@ describe('TripStep Component', () => {
       watch: mockWatch,
       formState: { 
         errors: { 
-          trip: {
-            origin: { message: originError },
-            destinationWarehouse: { message: destError }
-          }
+          services: [
+            {
+              logistics: {
+                origin: { message: originError },
+                primaryDestination: { message: destError }
+              }
+            }
+          ]
         } 
       },
     } as any);
 
     mockWatch.mockReturnValue('free');
 
-    // [ ACT ]
-    render(<TripStep />);
+    render(<TripStep serviceIndex={0} />);
 
-    // [ ASSERT ]
     expect(screen.getByText(originError)).toBeDefined();
     expect(screen.getByText(destError)).toBeDefined();
   });

@@ -25,26 +25,33 @@ describe('SaveDraftUseCase', () => {
     saveDraftUseCase = new SaveDraftUseCase(mockRepository, mockAuditUseCase);
   });
 
+  // Helper para generar payloads válidos con la nueva estructura
+  const getValidDraftPayload = (overrides = {}): QuoteDraft => ({
+    clientName: 'Cliente Prueba',
+    clientRfc: 'XAXX010101000',
+    validityDays: 15,
+    frequency: { type: 'weekly' },
+    services: [
+      {
+        location: { street: 'Test St', municipality: 'Test City', neighborhood: 'Test Area' },
+        wastes: [
+          { name: 'domestic', quantity: 10, unit: 'kg' }
+        ]
+      }
+    ],
+    status: 'draft',
+    createdAt: 1234567890,
+    ...overrides
+  } as any);
+
   // --- AC 1: HAPPY PATH (CREATE) ---
   it('should save a new draft and return success with generated ID when valid data is provided', () => {
-    // [ ARRANGE ]
-    const newDraftPayload: QuoteDraft = {
-      location: { street: 'Test St', municipality: 'Test City', neighborhood: 'Test Area' },
-      activity: 'collection',
-      waste: 'domestic',
-      volumeQuantity: 10,
-      volumeUnit: 'kg',
-      frequency: 'weekly',
-      status: 'draft',
-      createdAt: 1234567890
-    };
+    const newDraftPayload = getValidDraftPayload();
     const expectedGeneratedId = 100;
     vi.mocked(mockRepository.saveDraft).mockReturnValue(expectedGeneratedId);
 
-    // [ ACT ]
     const result = saveDraftUseCase.execute(newDraftPayload);
 
-    // [ ASSERT ]
     expect(mockRepository.saveDraft).toHaveBeenCalledTimes(1);
     expect(mockRepository.saveDraft).toHaveBeenCalledWith(newDraftPayload);
     expect(mockAuditUseCase.execute).toHaveBeenCalledTimes(1);
@@ -57,24 +64,11 @@ describe('SaveDraftUseCase', () => {
 
   // --- AC 2: HAPPY PATH (UPDATE) ---
   it('should update an existing draft when payload contains an ID', () => {
-    // [ ARRANGE ]
-    const existingDraftPayload: QuoteDraft = {
-      id: 5,
-      location: { street: 'Updated St', municipality: 'Test City', neighborhood: 'Test Area' },
-      activity: 'collection',
-      waste: 'domestic',
-      volumeQuantity: 10,
-      volumeUnit: 'kg',
-      frequency: 'weekly',
-      status: 'draft',
-      createdAt: 1234567890
-    };
+    const existingDraftPayload = getValidDraftPayload({ id: 5 });
     vi.mocked(mockRepository.saveDraft).mockReturnValue(5);
 
-    // [ ACT ]
     const result = saveDraftUseCase.execute(existingDraftPayload);
 
-    // [ ASSERT ]
     expect(mockRepository.saveDraft).toHaveBeenCalledTimes(1);
     expect(mockRepository.saveDraft).toHaveBeenCalledWith(existingDraftPayload);
     expect(mockAuditUseCase.execute).toHaveBeenCalledTimes(1);
@@ -87,23 +81,12 @@ describe('SaveDraftUseCase', () => {
 
   // --- AC 3: EXCEPTION HANDLING ---
   it('should throw an error when repository fails', () => {
-    // [ ARRANGE ]
-    const validPayload: QuoteDraft = {
-      location: { street: 'Test St', municipality: 'City', neighborhood: 'Area' },
-      activity: 'collection',
-      waste: 'domestic',
-      volumeQuantity: 10,
-      volumeUnit: 'kg',
-      frequency: 'weekly',
-      status: 'draft',
-      createdAt: 1234567890
-    };
+    const validPayload = getValidDraftPayload();
     const dbError = new Error('Database locked');
     vi.mocked(mockRepository.saveDraft).mockImplementation(() => {
       throw dbError;
     });
 
-    // [ ACT & ASSERT ]
     expect(() => saveDraftUseCase.execute(validPayload)).toThrowError('Database locked');
     expect(mockRepository.saveDraft).toHaveBeenCalledTimes(1);
     expect(mockAuditUseCase.execute).not.toHaveBeenCalled();

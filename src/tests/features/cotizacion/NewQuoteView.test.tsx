@@ -1,20 +1,31 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { NewQuoteView } from '../../../renderer/src/features/cotizacion/NewQuoteView';
-
-// 1. Importamos todo el módulo como un namespace en lugar de solo el hook
-import * as useQuoteFormModule from '../../../renderer/src/features/cotizacion/hooks/useQuoteForm';
+// Usamos los alias seguros @renderer
+import { NewQuoteView } from '@renderer/features/cotizacion/NewQuoteView';
+import * as useQuoteFormModule from '@renderer/features/cotizacion/hooks/useQuoteForm';
 import toast from 'react-hot-toast';
 
 vi.mock('react-hot-toast', () => ({
   default: { loading: vi.fn(), success: vi.fn(), error: vi.fn() }
 }));
 
-// Burlamos los steps para que no compliquen la prueba
-vi.mock('../../../../renderer/src/features/cotizacion/components/LocationStep', () => ({ LocationStep: () => <div>LocationStep</div> }));
-vi.mock('../../../../renderer/src/features/cotizacion/components/WasteStep', () => ({ WasteStep: () => <div>WasteStep</div> }));
-vi.mock('../../../../renderer/src/features/cotizacion/components/TripStep', () => ({ TripStep: () => <div>TripStep</div> }));
-vi.mock('../../../../renderer/src/features/cotizacion/components/SummaryStep', () => ({ SummaryStep: () => <div>SummaryStep</div> }));
+// ¡RUTAS CORREGIDAS! Usamos el alias para que los mocks enganchen perfecto
+vi.mock('@renderer/features/cotizacion/components/LocationStep', () => ({ LocationStep: () => <div>LocationStep</div> }));
+vi.mock('@renderer/features/cotizacion/components/WasteStep', () => ({ WasteStep: () => <div>WasteStep</div> }));
+vi.mock('@renderer/features/cotizacion/components/TripStep', () => ({ TripStep: () => <div>TripStep</div> }));
+vi.mock('@renderer/features/cotizacion/components/SummaryStep', () => ({ SummaryStep: () => <div>SummaryStep</div> }));
+vi.mock('@renderer/features/cotizacion/components/VehiclesAndCrewStep', () => ({ VehiclesAndCrewStep: () => <div>VehiclesAndCrewStep</div> }));
+vi.mock('@renderer/features/cotizacion/components/SuppliesStep', () => ({ SuppliesStep: () => <div>SuppliesStep</div> }));
+
+// ESTE ES EL CAUSANTE DEL ERROR: Ahora sí se va a interceptar correctamente
+vi.mock('@renderer/features/cotizacion/hooks/useQuoteCalculator', () => ({
+  useQuoteCalculator: vi.fn(() => ({
+    total: 1160,
+    subtotal: 1000,
+    iva: 160,
+    breakdown: { logistics: 0, vehicles: 0, crew: 0, supplies: 0, extras: 0 }
+  }))
+}));
 
 describe('NewQuoteView Component', () => {
   const mockSubmitDraft = vi.fn();
@@ -28,15 +39,13 @@ describe('NewQuoteView Component', () => {
     isFormValid = true;
 
     mockGetValues.mockReturnValue({
-      location: { street: 'Calle Falsa', neighborhood: 'Centro', municipality: 'Xalapa' },
-      activity: 'collection',
-      waste: 'domestic',
-      volumeQuantity: 10,
-      volumeUnit: 'kg',
-      frequency: 'weekly'
+      clientName: 'Empresa Test',
+      clientRfc: 'TEST010203',
+      validityDays: 15,
+      frequency: { type: 'one_time' },
+      services: [{ id: 'fake-id-1' }]
     });
 
-    // Burlamos la validación de React Hook Form
     mockHandleSubmit = vi.fn((onValid, onInvalid) => (e: any) => {
       e?.preventDefault();
       if (isFormValid) {
@@ -46,20 +55,22 @@ describe('NewQuoteView Component', () => {
       }
     });
 
-    // 2. SOLUCIÓN: Usamos spyOn para interceptar el hook directamente de su módulo
     vi.spyOn(useQuoteFormModule, 'useQuoteForm').mockReturnValue({
       form: { 
         handleSubmit: mockHandleSubmit, 
         reset: mockReset, 
         getValues: mockGetValues,
-        formState: { errors: {} }, // <--- AGREGAMOS ESTO
-        register: vi.fn(),         // <--- AGREGAMOS ESTO
-        watch: vi.fn(),            // <--- AGREGAMOS ESTO por si acaso
+        formState: { errors: {} },
+        register: vi.fn(),        
+        watch: vi.fn(),            
         setValue: vi.fn(),
-        control: {}
+        control: {} // La calculadora mockeada ya no intentará leer esto
       } as any,
+      serviceFields: [{ id: 'fake-id-1' }],
+      addNewService: vi.fn(),
+      removeService: vi.fn(),
       submitDraft: mockSubmitDraft,
-    });
+    } as any);
   });
 
   it('should render correct texts based on editId presence', () => {
@@ -74,9 +85,9 @@ describe('NewQuoteView Component', () => {
     isFormValid = false;
     render(<NewQuoteView />);
     
-    fireEvent.click(screen.getByRole('button', { name: 'Revisar Cotización' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Revisar' }));
     
-    expect(toast.error).toHaveBeenCalledWith('Hay campos inválidos o incompletos. Revisa la consola.');
+    expect(toast.error).toHaveBeenCalledWith('Hay campos inválidos o incompletos. Revisa las pestañas en rojo.');
     expect(mockSubmitDraft).not.toHaveBeenCalled();
   });
 
@@ -84,10 +95,8 @@ describe('NewQuoteView Component', () => {
     mockSubmitDraft.mockResolvedValue(true);
     render(<NewQuoteView />);
     
-    // 1. Fase de captura
-    fireEvent.click(screen.getByRole('button', { name: 'Revisar Cotización' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Revisar' }));
     
-    // 2. Fase de revisión
     const confirmButton = await screen.findByRole('button', { name: 'Confirmar y Guardar' });
     fireEvent.click(confirmButton);
 
@@ -100,10 +109,8 @@ describe('NewQuoteView Component', () => {
     mockSubmitDraft.mockResolvedValue(true);
     render(<NewQuoteView editId={5} />);
     
-    // 1. Fase de captura
-    fireEvent.click(screen.getByRole('button', { name: 'Revisar Cotización' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Revisar' }));
     
-    // 2. Fase de revisión
     const confirmButton = await screen.findByRole('button', { name: 'Confirmar Actualización' });
     fireEvent.click(confirmButton);
 
@@ -116,10 +123,8 @@ describe('NewQuoteView Component', () => {
     mockSubmitDraft.mockResolvedValue(false);
     render(<NewQuoteView />);
     
-    // 1. Fase de captura
-    fireEvent.click(screen.getByRole('button', { name: 'Revisar Cotización' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Revisar' }));
     
-    // 2. Fase de revisión
     const confirmButton = await screen.findByRole('button', { name: 'Confirmar y Guardar' });
     fireEvent.click(confirmButton);
 

@@ -1,26 +1,27 @@
 import { useFormContext, useFieldArray } from 'react-hook-form';
-import { QuoteFormValues } from "src/shared/schemas/quoteSchema"; 
+import { QuoteFormValues } from "../../../../../shared/schemas/quoteSchema"; 
 import { Plus, Trash2 } from 'lucide-react';
 
-export const WasteStep = () => {
+export const WasteStep = ({ serviceIndex }: { serviceIndex: number }) => {
   const { register, control, watch, formState: { errors } } = useFormContext<QuoteFormValues>();
   
+  // Ahora el arreglo de residuos busca dentro del servicio dinámico
   const { fields, append, remove } = useFieldArray({
     control,
-    name: "services.0.wastes"
+    name: `services.${serviceIndex}.wastes` as const
   });
 
   const frequencyType = watch('frequency.type');
 
   return (
-    <div>
-      <h2 className="text-lg font-semibold text-gray-900 mb-6 pb-2 border-b">Especificaciones del servicio</h2>
+    <div className="mb-8">
+      <h3 className="text-lg font-medium text-gray-800 mb-4 border-b pb-2">Especificaciones Operativas</h3>
       <div className="space-y-6">
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de actividad principal</label>
-            <select className="w-full px-3 py-2 border rounded-md" {...register('services.0.activity')}>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de actividad</label>
+            <select className="w-full px-3 py-2 border rounded-md bg-white" {...register(`services.${serviceIndex}.activity` as const)}>
               <option value="collection">Recolección</option>
               <option value="transport">Transporte</option>
               <option value="transfer">Transferencia</option>
@@ -30,8 +31,8 @@ export const WasteStep = () => {
           
           <div className="space-y-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Frecuencia del contrato</label>
-              <select className="w-full px-3 py-2 border rounded-md" {...register('frequency.type')}>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Frecuencia Global del Contrato</label>
+              <select className="w-full px-3 py-2 border rounded-md bg-white" {...register('frequency.type')}>
                 <option value="one_time">Evento Único</option>
                 <option value="daily">Diaria</option>
                 <option value="weekly">Semanal</option>
@@ -59,7 +60,7 @@ export const WasteStep = () => {
 
         <div className="mt-8">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-md font-medium text-gray-800">Residuos a recolectar</h3>
+            <h3 className="text-md font-medium text-gray-800">Residuos a recolectar en esta sucursal</h3>
             <button
               type="button"
               onClick={() => append({ name: '', type: 'domestic', quantity: 1, unit: 'kg' })}
@@ -90,14 +91,16 @@ export const WasteStep = () => {
                       type="text" 
                       placeholder="Ej. Cartón, Aceite..."
                       className="w-full px-3 py-2 border rounded-md bg-white" 
-                      {...register(`services.0.wastes.${index}.name` as const)} 
+                      {...register(`services.${serviceIndex}.wastes.${index}.name` as const)} 
                     />
-                    {errors.services?.[0]?.wastes?.[index]?.name && <p className="text-red-500 text-xs mt-1">{errors.services[0].wastes[index]?.name?.message}</p>}
+                    {errors.services?.[serviceIndex]?.wastes?.[index]?.name && (
+                      <p className="text-red-500 text-xs mt-1">{errors.services[serviceIndex].wastes[index]?.name?.message}</p>
+                    )}
                   </div>
 
                   <div>
                     <label className="block text-xs font-medium text-gray-500 mb-1">Clasificación</label>
-                    <select className="w-full px-3 py-2 border rounded-md bg-white" {...register(`services.0.wastes.${index}.type` as const)}>
+                    <select className="w-full px-3 py-2 border rounded-md bg-white" {...register(`services.${serviceIndex}.wastes.${index}.type` as const)}>
                       <option value="domestic">Doméstico</option>
                       <option value="organic">Orgánico</option>
                       <option value="recyclable">Reciclable</option>
@@ -112,14 +115,16 @@ export const WasteStep = () => {
                       type="number" 
                       step="0.01" 
                       className="w-full px-3 py-2 border rounded-md bg-white" 
-                      {...register(`services.0.wastes.${index}.quantity` as const)} 
+                      {...register(`services.${serviceIndex}.wastes.${index}.quantity` as const, { valueAsNumber: true })} 
                     />
-                    {errors.services?.[0]?.wastes?.[index]?.quantity && <p className="text-red-500 text-xs mt-1">{errors.services[0].wastes[index]?.quantity?.message}</p>}
+                    {errors.services?.[serviceIndex]?.wastes?.[index]?.quantity && (
+                      <p className="text-red-500 text-xs mt-1">{errors.services[serviceIndex].wastes[index]?.quantity?.message}</p>
+                    )}
                   </div>
 
                   <div>
                     <label className="block text-xs font-medium text-gray-500 mb-1">Unidad</label>
-                    <select className="w-full px-3 py-2 border rounded-md bg-white" {...register(`services.0.wastes.${index}.unit` as const)}>
+                    <select className="w-full px-3 py-2 border rounded-md bg-white" {...register(`services.${serviceIndex}.wastes.${index}.unit` as const)}>
                       <option value="kg">kg</option>
                       <option value="ton">ton</option>
                       <option value="m3">m³</option>
@@ -130,7 +135,9 @@ export const WasteStep = () => {
                 </div>
               </div>
             ))}
-            {errors.services?.[0]?.wastes?.root && <p className="text-red-500 text-sm mt-2">{errors.services[0].wastes.root.message}</p>}
+            {errors.services?.[serviceIndex]?.wastes?.root && (
+              <p className="text-red-500 text-sm mt-2">{errors.services[serviceIndex].wastes.root.message}</p>
+            )}
           </div>
         </div>
       </div>

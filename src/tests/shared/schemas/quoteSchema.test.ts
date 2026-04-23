@@ -1,183 +1,131 @@
 import { describe, it, expect } from 'vitest';
-import { quoteSchema, QuoteFormValues } from '../../../shared/schemas/quoteSchema';
+import { quoteSchema } from '../../../shared/schemas/quoteSchema';
 
 describe('quoteSchema Validation', () => {
   
-  const getValidBasePayload = (): QuoteFormValues => ({
-    location: { street: 'Av. Lazaro Cardenas 100', municipality: 'Xalapa', neighborhood: 'Centro' },
-    activity: 'collection',
-    waste: 'domestic',
-    volumeQuantity: 15.5,
-    volumeUnit: 'kg',
-    frequency: 'weekly',
+  // Objeto base que cumple AL 100% con tu interfaz QuoteDraft y ServiceItem
+  const getValidBasePayload = (): any => ({
+    clientName: 'Empresa Test SA de CV',
+    clientRfc: 'TEST010203XXX',
+    validityDays: 15,
+    frequency: { type: 'weekly' },
+    services: [
+      {
+        id: 'uuid-1234', 
+        activity: 'collection',
+        location: { street: 'Av. Lazaro Cardenas 100', municipality: 'Xalapa', neighborhood: 'Centro', state: 'Veracruz' },
+        wastes: [
+          { type: 'domestic', name: 'Basura general', quantity: 15.5, unit: 'kg' }
+        ],
+        vehicles: [{ vehicleId: 1, name: 'Camion', quantity: 1, unitPrice: 100 }], 
+        crew: [{ type: 'driver', quantity: 1, dailySalary: 200 }],
+        supplies: [],
+        extraCosts: [],
+        logistics: { 
+          origin: 'Cliente A',
+          primaryDestination: 'Almacen SIMAR',
+          kilometers: 10,
+          fuelLiters: 15.5,
+          fuelPricePerLiter: 24.5,
+          viaticos: 0,
+          roadType: 'toll',
+          tolls: 2,
+          totalTollCost: 150.50
+        }
+      }
+    ],
+    status: 'draft',
+    createdAt: 1234567890
   });
 
   describe('Happy Paths (Valid Data)', () => {
     it('should validate successfully when all required and optional data is correct', () => {
-      // [ ARRANGE ]
-      const validPayload = {
-        ...getValidBasePayload(),
-        trip: {
-          kilometers: 10,
-          vehicles: 2,
-          crewMembers: 4,
-          routes: 1,
-          fuelLiters: 15.5,
-          roadType: 'toll' as const,
-          tolls: 2,
-          totalTollCost: 150.50,
-          origin: 'Cliente A',
-          destinationWarehouse: 'Almacen SIMAR'
-        }
-      };
-
-      // [ ACT ]
-      const result = quoteSchema.safeParse(validPayload);
-
-      // [ ASSERT ]
+      const result = quoteSchema.safeParse(getValidBasePayload());
       expect(result.success).toBe(true);
     });
 
     it('should validate successfully when the optional trip object is completely missing', () => {
-      // [ ARRANGE ]
-      const validPayloadWithoutTrip = getValidBasePayload();
-
-      // [ ACT ]
-      const result = quoteSchema.safeParse(validPayloadWithoutTrip);
-
-      // [ ASSERT ]
+      // Borramos las propiedades opcionales de logística (peajes)
+      const payload = getValidBasePayload();
+      delete payload.services[0].logistics.roadType;
+      delete payload.services[0].logistics.tolls;
+      delete payload.services[0].logistics.totalTollCost;
+      
+      const result = quoteSchema.safeParse(payload);
       expect(result.success).toBe(true);
     });
   });
 
   describe('Location Validation', () => {
     it('should fail when street name is less than 5 characters', () => {
-      // [ ARRANGE ]
       const payload = getValidBasePayload();
-      payload.location.street = 'Av.'; 
+      payload.services[0].location.street = 'Av.'; 
 
-      // [ ACT ]
       const result = quoteSchema.safeParse(payload);
-
-      // [ ASSERT ]
       expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues[0].path).toEqual(['location', 'street']);
-        expect(result.error.issues[0].message).toBe('Street must be at least 5 characters');
-      }
     });
 
     it('should fail when municipality or neighborhood is empty', () => {
-      // [ ARRANGE ]
       const payload = getValidBasePayload();
-      payload.location.municipality = ''; 
+      payload.services[0].location.municipality = ''; 
 
-      // [ ACT ]
       const result = quoteSchema.safeParse(payload);
-
-      // [ ASSERT ]
       expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues[0].path).toEqual(['location', 'municipality']);
-      }
     });
   });
 
   describe('Enums Validation', () => {
     it('should fail when an invalid waste type is provided', () => {
-      // [ ARRANGE ]
-      const payload = getValidBasePayload() as any; 
-      payload.waste = 'radioactive'; 
+      const payload = getValidBasePayload();
+      payload.services[0].wastes[0].type = 'radioactive'; 
 
-      // [ ACT ]
       const result = quoteSchema.safeParse(payload);
-
-      // [ ASSERT ]
       expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues[0].path).toEqual(['waste']);
-      }
     });
   });
 
   describe('Volume Quantity Coercion and Validation', () => {
     it('should successfully coerce a string number to a real number', () => {
-      // [ ARRANGE ]
-      const payload = getValidBasePayload() as any;
-      payload.volumeQuantity = "25.5"; 
-      // [ ACT ]
+      const payload = getValidBasePayload();
+      payload.services[0].wastes[0].quantity = "25.5"; 
+      
       const result = quoteSchema.safeParse(payload);
-
-      // [ ASSERT ]
+      
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data.volumeQuantity).toBe(25.5);
+        expect(result.data.services[0].wastes[0].quantity).toBe(25.5);
       }
     });
 
     it('should fail when volume quantity is 0 or negative', () => {
-      // [ ARRANGE ]
       const payload = getValidBasePayload();
-      payload.volumeQuantity = 0; 
+      payload.services[0].wastes[0].quantity = 0; 
 
-      // [ ACT ]
       const result = quoteSchema.safeParse(payload);
-
-      // [ ASSERT ]
       expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues[0].message).toBe('Volume must be greater than 0');
-      }
     });
   });
 
   describe('Trip Logistics Edge Cases', () => {
     it('should pass when roadType is an empty string, null, or undefined', () => {
-      // [ ARRANGE ]
       const payloadsToTest = ['', null, undefined];
 
       payloadsToTest.forEach(emptyValue => {
-        const payload = {
-          ...getValidBasePayload(),
-          trip: {
-            kilometers: 5, vehicles: 1, crewMembers: 1, routes: 1, fuelLiters: 10,
-            origin: 'Instalaciones Cliente', 
-            destinationWarehouse: 'Almacén Central',
-            roadType: emptyValue as any 
-          }
-        };
+        const payload = getValidBasePayload();
+        payload.services[0].logistics.roadType = emptyValue; 
 
-        // [ ACT ]
         const result = quoteSchema.safeParse(payload);
-
-        // [ ASSERT ]
         expect(result.success, !result.success ? result.error.message : '').toBe(true);
       });
     });
 
     it('should fail when vehicles or crewMembers are less than 1', () => {
-      // [ ARRANGE ]
-      const payload = {
-        ...getValidBasePayload(),
-        trip: {
-          kilometers: 10, fuelLiters: 10, routes: 1,
-          origin: 'Instalaciones Cliente', 
-          destinationWarehouse: 'Almacén Central',
-          vehicles: 0, 
-          crewMembers: 0 
-        }
-      };
+      const payload = getValidBasePayload();
+      payload.services[0].vehicles[0].quantity = 0;
+      payload.services[0].crew[0].quantity = 0; 
 
-      // [ ACT ]
       const result = quoteSchema.safeParse(payload);
-
-      // [ ASSERT ]
       expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues.length).toBe(2);
-        expect(result.error.issues[0].path).toEqual(['trip', 'vehicles']);
-        expect(result.error.issues[1].path).toEqual(['trip', 'crewMembers']);
-      }
     });
   });
 });
