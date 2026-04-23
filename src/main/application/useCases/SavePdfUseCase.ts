@@ -6,7 +6,7 @@ export class SavePdfUseCase {
     try {
       const { canceled, filePath } = await dialog.showSaveDialog({
         title: 'Guardar Cotización PDF',
-        defaultPath: `Cotizacion_SIMAR_${defaultFolio}.pdf`,
+        defaultPath: `${defaultFolio}.pdf`,
         filters: [{ name: 'Documentos PDF', extensions: ['pdf'] }]
       });
 

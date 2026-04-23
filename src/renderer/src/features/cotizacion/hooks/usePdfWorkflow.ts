@@ -25,7 +25,14 @@ export const usePdfWorkflow = (onWorkflowComplete?: () => void) => {
         throw new Error('No se encontraron los datos de la cotización en la base de datos');
       }
 
-      setCurrentFolio(quoteData.folio || `#00${quoteData.id}`);
+      const folioStr = quoteData.folio || `Borrador_${quoteData.id}`;
+
+      const cleanClientName = quoteData.clientName
+        .replace(/[^a-zA-Z0-9_ -]/g, '')
+        .trim()
+        .replace(/\s+/g, '_');
+
+      setCurrentFolio(`${folioStr}_${cleanClientName}`);
 
       const pdfResult = await window.api.generatePdfPreview(quoteData);
       if (!pdfResult.success || !pdfResult.pdfBase64) {
