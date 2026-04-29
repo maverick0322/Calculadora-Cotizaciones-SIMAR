@@ -20,6 +20,7 @@ import { GeneratePdfPreviewUseCase } from './application/useCases/GeneratePdfPre
 import { GetIssuedQuotesUseCase } from './application/useCases/GetIssuedQuotesUseCase';
 import { SavePdfUseCase } from './application/useCases/SavePdfUseCase';
 import { SqliteAuditRepository } from './infrastructure/database/repositories/SqliteAuditRepository';
+import { registerLocationHandlers } from './ipc/locationHandlers';
 import { LogAuditActionUseCase } from './application/useCases/LogAuditActionUseCase';
 import { GetCatalogsUseCase } from './application/useCases/GetCatalogsUseCase';
 import { UpdateCatalogPriceUseCase } from './application/useCases/UpdateCatalogPriceUseCase';
@@ -203,6 +204,8 @@ app.whenReady().then(() => {
       return { success: false, error: (error as Error).message };
     }
   });
+  
+  registerLocationHandlers();
 
   createWindow()
 

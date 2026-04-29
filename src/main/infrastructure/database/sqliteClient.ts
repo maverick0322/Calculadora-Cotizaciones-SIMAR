@@ -124,6 +124,40 @@ export const initDatabase = () => {
             created_at INTEGER,
             FOREIGN KEY (user_id) REFERENCES users(id)
         );
+
+        CREATE TABLE IF NOT EXISTS catalog_states (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS catalog_municipalities (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            state_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            FOREIGN KEY (state_id) REFERENCES catalog_states(id),
+            UNIQUE(state_id, name)
+        );
+
+        CREATE TABLE IF NOT EXISTS catalog_locations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            municipality_id INTEGER NOT NULL,
+            cp TEXT NOT NULL,
+            colony TEXT NOT NULL,
+            is_active INTEGER DEFAULT 1,
+            FOREIGN KEY (municipality_id) REFERENCES catalog_municipalities(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS user_custom_locations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            cp TEXT,
+            state TEXT NOT NULL,
+            municipality TEXT NOT NULL,
+            colony TEXT NOT NULL,
+            created_at INTEGER NOT NULL
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_locations_cp ON catalog_locations(cp);
+        CREATE INDEX IF NOT EXISTS idx_municipalities_state ON catalog_municipalities(state_id);
     `;
 
     db.exec(schema);

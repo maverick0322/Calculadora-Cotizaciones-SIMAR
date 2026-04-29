@@ -99,15 +99,55 @@ export const NewQuoteView = ({ editId, onSaveSuccess }: INewQuoteViewProps) => {
           {!isReviewMode && (
              <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
                <h2 className="text-lg font-semibold text-gray-800 mb-4">1. Datos Generales del Contrato</h2>
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 <div>
-                   <label className="block text-sm font-medium text-gray-700 mb-2">Nombre del Cliente</label>
-                   <input {...form.register('clientName')} className="w-full px-3 py-2 border rounded-md" placeholder="Empresa SA de CV" />
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 
+                 {/* Columna Izquierda: Datos del Cliente */}
+                 <div className="space-y-4">
+                   <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-2">Nombre del Cliente</label>
+                     <input {...form.register('clientName')} className="w-full px-3 py-2 border rounded-md" placeholder="Empresa SA de CV" />
+                     {form.formState.errors.clientName && <p className="text-red-500 text-xs mt-1">{form.formState.errors.clientName.message}</p>}
+                   </div>
+                   <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-2">RFC</label>
+                     <input {...form.register('clientRfc')} className="w-full px-3 py-2 border rounded-md uppercase" placeholder="XAXX010101000" />
+                     {form.formState.errors.clientRfc && <p className="text-red-500 text-xs mt-1">{form.formState.errors.clientRfc.message}</p>}
+                   </div>
                  </div>
+
+                 {/* Columna Derecha: Vigencia (¡La que se había perdido!) */}
                  <div>
-                   <label className="block text-sm font-medium text-gray-700 mb-2">RFC</label>
-                   <input {...form.register('clientRfc')} className="w-full px-3 py-2 border rounded-md uppercase" placeholder="XAXX010101000" />
+                   <div className="bg-blue-50/50 p-4 rounded-lg border border-blue-100 h-full">
+                     <label className="block text-sm font-medium text-gray-800 mb-3">Vigencia de la Cotización</label>
+                     <div className="flex gap-6">
+                       <label className="inline-flex items-center cursor-pointer">
+                         <input 
+                           type="radio" 
+                           value={15} 
+                           {...form.register('validityDays', { valueAsNumber: true })} 
+                           className="text-blue-600 focus:ring-blue-500 w-4 h-4" 
+                         />
+                         <span className="ml-2 text-sm text-gray-700 font-medium">15 Días</span>
+                       </label>
+                       <label className="inline-flex items-center cursor-pointer">
+                         <input 
+                           type="radio" 
+                           value={30} 
+                           {...form.register('validityDays', { valueAsNumber: true })} 
+                           className="text-blue-600 focus:ring-blue-500 w-4 h-4" 
+                         />
+                         <span className="ml-2 text-sm text-gray-700 font-medium">30 Días</span>
+                       </label>
+                     </div>
+                     <p className="text-xs text-gray-500 mt-4">
+                       Los días comienzan a contar a partir de la fecha de emisión del documento oficial.
+                     </p>
+                     {form.formState.errors.validityDays && (
+                       <p className="text-red-500 text-xs mt-2">{form.formState.errors.validityDays.message}</p>
+                     )}
+                   </div>
                  </div>
+
                </div>
              </div>
           )}
