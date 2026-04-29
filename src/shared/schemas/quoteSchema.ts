@@ -27,10 +27,11 @@ export const quoteSchema = z.object({
     }),
 
     wastes: z.array(z.object({
-      name: z.string().min(2, 'Requerido'),
-      type: z.enum(['domestic', 'organic', 'recyclable', 'hazardous', 'bulky']),
-      quantity: z.coerce.number().positive('Debe ser > 0'),
-      unit: z.enum(['kg', 'ton', 'm3', 'containers', 'trips']),
+      name: z.string().min(1, 'El nombre del residuo es obligatorio'),
+      type: z.string().min(1, 'El tipo es obligatorio'),
+      quantity: z.number().min(0.01, 'La cantidad debe ser mayor a 0'),
+      unit: z.string().min(1, 'La unidad es obligatoria'),
+      pricePerUnit: z.number().min(0, 'El precio no puede ser negativo').default(0),
     })).min(1, 'Debes agregar al menos un residuo al servicio'),
 
     vehicles: z.array(z.object({

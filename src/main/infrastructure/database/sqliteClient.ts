@@ -125,6 +125,15 @@ export const initDatabase = () => {
             FOREIGN KEY (user_id) REFERENCES users(id)
         );
 
+        CREATE TABLE IF NOT EXISTS catalog_residues (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            residue_type TEXT NOT NULL, -- Reciclable, Doméstico, Peligroso, etc.
+            unit TEXT NOT NULL,         -- Kilo, Contenedor, Metro, etc.
+            base_price DECIMAL NOT NULL DEFAULT 0,
+            is_active INTEGER DEFAULT 1
+        );
+
         CREATE TABLE IF NOT EXISTS catalog_states (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT UNIQUE NOT NULL

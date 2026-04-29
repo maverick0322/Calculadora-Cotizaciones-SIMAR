@@ -28,6 +28,7 @@ import { ManageCatalogUseCase } from './application/useCases/ManageCatalogUseCas
 import { RegisterWorkerUseCase } from './application/useCases/RegisterWorkerUseCase';
 
 import { quoteSchema } from '../shared/schemas/quoteSchema';
+import { registerResidueHandlers } from './ipc/residueHandlers';
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -206,6 +207,7 @@ app.whenReady().then(() => {
   });
   
   registerLocationHandlers();
+  registerResidueHandlers();
 
   createWindow()
 

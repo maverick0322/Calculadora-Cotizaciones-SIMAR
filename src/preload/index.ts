@@ -20,6 +20,7 @@ declare global {
       manageCatalog: (action: 'add' | 'delete', type: 'vehicle' | 'supply' | 'warehouse', payload: any) => Promise<any>;
       getLocations: (action: 'states' | 'municipalities' | 'colonies' | 'byCP', payload?: any) => Promise<{ success: boolean, data?: any, error?: string }>;
       addCustomLocation: (data: any) => Promise<{ success: boolean, id?: number, error?: string }>;
+      manageResidues: (action: 'add' | 'delete' | 'updatePrice' | 'get', payload?: any) => Promise<any>;
     }
   }
 }
@@ -39,7 +40,8 @@ const api = {
   getCatalogs: () => ipcRenderer.invoke('catalogs:get-all'),
   manageCatalog: (action, type, payload) => ipcRenderer.invoke('catalogs:manage', { action, type, payload }),
   getLocations: (action: string, payload?: any) => ipcRenderer.invoke('get-locations', { action, payload }),
-  addCustomLocation: (data: any) => ipcRenderer.invoke('add-custom-location', data)
+  addCustomLocation: (data: any) => ipcRenderer.invoke('add-custom-location', data),
+  manageResidues: (action, payload) => ipcRenderer.invoke('residues:manage', { action, payload }),
 };
 
 if (process.contextIsolated) {
