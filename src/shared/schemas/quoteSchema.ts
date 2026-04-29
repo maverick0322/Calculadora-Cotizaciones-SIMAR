@@ -14,12 +14,12 @@ export const quoteSchema = z.object({
     customDescription: z.string().optional()
   }),
 
-  // EL ARREGLO DE SERVICIOS
   services: z.array(z.object({
-    id: z.string(), // UUID de control interno
+    id: z.string(),
     activity: z.enum(['collection', 'transport', 'transfer', 'final_disposal']),
     
     location: z.object({
+      cp: z.string().optional(),
       street: z.string().min(5, 'Dirección requerida'),
       municipality: z.string().min(2, 'Requerido'),
       neighborhood: z.string().min(2, 'Requerido'),

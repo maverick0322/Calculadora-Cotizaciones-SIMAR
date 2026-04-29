@@ -1,7 +1,24 @@
+# --- Dependencias y Caché ---
 node_modules
+.eslintcache
+.DS_Store
+
+# --- Builds y Logs ---
 dist
 out
-.DS_Store
-.eslintcache
-*.log*
 coverage/
+*.log*
+
+# --- Bases de Datos Locales (¡CRÍTICO!) ---
+# Nunca subir bases de datos SQLite para evitar conflictos y fuga de datos
+*.sqlite
+*.sqlite-journal
+*.db
+
+# --- Archivos Masivos del Sprint 4 ---
+# El JSON pesa demasiado y se autogenera con el script de Python
+scripts/sepomex.json
+
+# --- Entornos de Python (Opcional, por si usas venv) ---
+venv/
+__pycache__/

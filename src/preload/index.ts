@@ -18,6 +18,8 @@ declare global {
       savePdf: (pdfBase64: string, defaultFolio: string) => Promise<{ success: boolean; filePath?: string; error?: string }>;
       getCatalogs: () => Promise<any>;
       manageCatalog: (action: 'add' | 'delete', type: 'vehicle' | 'supply' | 'warehouse', payload: any) => Promise<any>;
+      getLocations: (action: 'states' | 'municipalities' | 'colonies' | 'byCP', payload?: any) => Promise<{ success: boolean, data?: any, error?: string }>;
+      addCustomLocation: (data: any) => Promise<{ success: boolean, id?: number, error?: string }>;
     }
   }
 }
@@ -35,7 +37,9 @@ const api = {
   generatePdfPreview: (quoteData: QuoteDraft) => ipcRenderer.invoke('pdf:generate-preview', quoteData),
   savePdf: (pdfBase64: string, defaultFolio: string) => ipcRenderer.invoke('pdf:save', pdfBase64, defaultFolio),
   getCatalogs: () => ipcRenderer.invoke('catalogs:get-all'),
-  manageCatalog: (action, type, payload) => ipcRenderer.invoke('catalogs:manage', { action, type, payload })
+  manageCatalog: (action, type, payload) => ipcRenderer.invoke('catalogs:manage', { action, type, payload }),
+  getLocations: (action: string, payload?: any) => ipcRenderer.invoke('get-locations', { action, payload }),
+  addCustomLocation: (data: any) => ipcRenderer.invoke('add-custom-location', data)
 };
 
 if (process.contextIsolated) {
