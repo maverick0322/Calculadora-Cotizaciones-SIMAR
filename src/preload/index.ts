@@ -14,7 +14,7 @@ declare global {
       issueQuote: (id: number | string) => Promise<{ success: boolean; error?: string }>;
       getIssuedQuotes: () => Promise<QuoteSummary[]>;
       getQuoteById: (id: number | string) => Promise<QuoteDraft | null>;
-      generatePdfPreview: (quoteData: QuoteDraft) => Promise<{ success: boolean; pdfBase64?: string; error?: string }>;
+      generatePdfPreview: (payload: { quoteData: any, isDetailed: boolean }) => Promise<{ success: boolean; pdfBase64?: string; error?: string }>;
       savePdf: (pdfBase64: string, defaultFolio: string) => Promise<{ success: boolean; filePath?: string; error?: string }>;
       getCatalogs: () => Promise<any>;
       manageCatalog: (action: 'add' | 'delete', type: 'vehicle' | 'supply' | 'warehouse', payload: any) => Promise<any>;
@@ -35,7 +35,7 @@ const api = {
   issueQuote: (id: number | string) => ipcRenderer.invoke('quotes:issue', id),
   getIssuedQuotes: () => ipcRenderer.invoke('quotes:get-issued'),
   getQuoteById: (id: number | string) => ipcRenderer.invoke('quotes:get-quote-by-id', id),
-  generatePdfPreview: (quoteData: QuoteDraft) => ipcRenderer.invoke('pdf:generate-preview', quoteData),
+  generatePdfPreview: (payload: { quoteData: any, isDetailed: boolean }) => ipcRenderer.invoke('pdf:generate-preview', payload),
   savePdf: (pdfBase64: string, defaultFolio: string) => ipcRenderer.invoke('pdf:save', pdfBase64, defaultFolio),
   getCatalogs: () => ipcRenderer.invoke('catalogs:get-all'),
   manageCatalog: (action, type, payload) => ipcRenderer.invoke('catalogs:manage', { action, type, payload }),

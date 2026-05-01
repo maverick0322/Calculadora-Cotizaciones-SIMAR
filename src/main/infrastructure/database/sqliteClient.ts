@@ -70,15 +70,14 @@ export const initDatabase = () => {
             customer_id INTEGER,
             seller_id INTEGER,
             replaces_quote_id INTEGER,
-            
             client_name VARCHAR,
             client_rfc VARCHAR,
+            contact_name VARCHAR,
+            contact_phone VARCHAR,
+            contact_email VARCHAR,
             validity_days INTEGER,
             frequency_json TEXT,
-            
-            -- MAGIA: Aquí guardaremos todos los servicios, direcciones, residuos y vehículos
             services_json TEXT,
-            
             subtotal DECIMAL,
             total DECIMAL,
             created_at INTEGER,
@@ -128,8 +127,8 @@ export const initDatabase = () => {
         CREATE TABLE IF NOT EXISTS catalog_residues (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
-            residue_type TEXT NOT NULL, -- Reciclable, Doméstico, Peligroso, etc.
-            unit TEXT NOT NULL,         -- Kilo, Contenedor, Metro, etc.
+            residue_type TEXT NOT NULL,
+            unit TEXT NOT NULL,
             base_price DECIMAL NOT NULL DEFAULT 0,
             is_active INTEGER DEFAULT 1
         );

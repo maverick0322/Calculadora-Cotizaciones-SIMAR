@@ -162,7 +162,6 @@ export const NewQuoteView = ({ editId, onSaveSuccess }: INewQuoteViewProps) => {
                    </div>
                  </div>
 
-                 {/* Columna Derecha: Vigencia */}
                  <div className="lg:col-span-1">
                    <div className="bg-blue-50/50 p-5 rounded-lg border border-blue-100 h-full flex flex-col justify-center">
                      <label className="block text-sm font-medium text-gray-800 mb-4">Vigencia de la Cotización</label>

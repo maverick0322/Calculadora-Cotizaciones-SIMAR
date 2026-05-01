@@ -11,13 +11,11 @@ const ResidueAutocomplete = ({
   const [isOpen, setIsOpen] = useState(false);
   const currentValue = (useWatch({ name: registerName.name }) as string) || '';
 
-  // Filtramos residuos por nombre
   const filteredResidues = residues.filter((r: any) => 
     r.name.toLowerCase().includes(currentValue.toLowerCase())
   );
 
   const handleSelect = (residue: any) => {
-    // ¡LA MAGIA! Autocompletamos 4 campos con un solo clic
     setValue(`services.${serviceIndex}.wastes.${index}.name`, residue.name, { shouldValidate: true, shouldDirty: true });
     setValue(`services.${serviceIndex}.wastes.${index}.type`, residue.residue_type, { shouldValidate: true, shouldDirty: true });
     setValue(`services.${serviceIndex}.wastes.${index}.unit`, residue.unit, { shouldValidate: true, shouldDirty: true });

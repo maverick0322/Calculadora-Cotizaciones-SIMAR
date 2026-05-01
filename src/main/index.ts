@@ -162,9 +162,13 @@ app.whenReady().then(() => {
     return fetchQuoteByIdUseCase.execute(id);
   });
 
-  ipcMain.handle('pdf:generate-preview', async (_event, quoteData) => {
+  ipcMain.handle('pdf:generate-preview', async (_event, payload) => {
     console.log('Main received request to generate PDF preview');
-    return await generatePdfPreviewUseCase.execute(quoteData);
+    
+    const data = payload.quoteData ? payload.quoteData : payload;
+    const isDetailed = payload.isDetailed || false;
+    
+    return await generatePdfPreviewUseCase.execute(data, isDetailed);
   });
 
   ipcMain.handle('pdf:save', async (_event, pdfBase64, defaultFolio) => {
