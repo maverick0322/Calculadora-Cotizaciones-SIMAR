@@ -2,12 +2,11 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
 
-// Detectamos automáticamente la carpeta AppData de Windows y el nombre de tu app
-// (Asegúrate de que 'calculadora-cotizaciones-simar' sea el "name" exacto de tu package.json)
+
 const appName = 'calculadora-cotizaciones-simar'; 
 const userDataPath = process.env.APPDATA 
   ? path.join(process.env.APPDATA, appName) 
-  : path.join(__dirname, '../'); // Fallback por si acaso
+  : path.join(__dirname, '../'); 
 
 const dbPath = path.join(userDataPath, 'gestor_residuos.sqlite');
 

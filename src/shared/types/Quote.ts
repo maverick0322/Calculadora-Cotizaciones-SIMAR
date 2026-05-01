@@ -1,6 +1,5 @@
 export type ActivityType = 'collection' | 'transport' | 'transfer' | 'final_disposal';
 export type WasteType = 'domestic' | 'organic' | 'recyclable' | 'hazardous' | 'bulky';
-export type VolumeUnit = 'kg' | 'ton' | 'm3' | 'containers' | 'trips';
 export type ServiceFrequencyType = 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'one_time' | 'custom';
 export type QuoteStatus = 'draft' | 'issued' | 'cancelled' | 'replaced';
 export type RoadType = 'free' | 'toll';
@@ -15,9 +14,10 @@ export interface Location {
 
 export interface WasteItem {
   name: string;
-  type: WasteType;
+  type: string;
   quantity: number;
-  unit: VolumeUnit;
+  unit: string;
+  pricePerUnit: number;
 }
 
 export interface ServiceFrequencyDetail {
@@ -86,10 +86,13 @@ export interface QuoteDraft {
   replacesQuoteId?: number | string;
   clientName: string;
   clientRfc: string;
+  contactName?: string;  
+  contactPhone?: string;
+  contactEmail?: string;
   validityDays: number;
-  frequency: ServiceFrequencyDetail; // Frecuencia global del contrato
+  frequency: ServiceFrequencyDetail; 
   
-  services: ServiceItem[]; // REEMPLAZA a las propiedades planas anteriores
+  services: ServiceItem[];
 
   subtotal?: number;
   total?: number;

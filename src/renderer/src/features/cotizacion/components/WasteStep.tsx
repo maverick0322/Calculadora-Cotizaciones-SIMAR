@@ -60,7 +60,6 @@ const ResidueAutocomplete = ({
   );
 };
 
-
 // --- COMPONENTE PRINCIPAL ---
 export const WasteStep = ({ serviceIndex }: { serviceIndex: number }) => {
   const { register, control, watch, setValue, formState: { errors } } = useFormContext<QuoteFormValues>();
@@ -108,7 +107,7 @@ export const WasteStep = ({ serviceIndex }: { serviceIndex: number }) => {
               </select>
             </div>
 
-            {frequencyType !== 'one_time' && frequencyType !== 'custom' && (
+            {frequencyType !== 'one_time' && (
               <div className="animate-in fade-in slide-in-from-top-1">
                 <label className="block text-xs font-medium text-gray-500 mb-1">Duración del contrato (ej. cantidad de semanas/meses)</label>
                 <input type="number" placeholder="Ej. 6" className="w-full px-3 py-2 border rounded-md" {...register('frequency.duration')} />
@@ -129,7 +128,6 @@ export const WasteStep = ({ serviceIndex }: { serviceIndex: number }) => {
             <h3 className="text-md font-medium text-gray-800">Residuos a recolectar en esta sucursal</h3>
             <button
               type="button"
-              // Ajustamos el append para incluir el pricePerUnit en 0 por defecto y los nuevos tipos en español
               onClick={() => append({ name: '', type: 'Sólido Urbano (RSU)', quantity: 1, unit: 'Kilogramo', pricePerUnit: 0 })}
               className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors"
             >
@@ -151,9 +149,9 @@ export const WasteStep = ({ serviceIndex }: { serviceIndex: number }) => {
                   </button>
                 )}
                 
-                {/* Ampliamos el grid a 5 columnas para acomodar el precio */}
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 pr-8">
                   
+                  {/* 1. NOMBRE */}
                   <ResidueAutocomplete
                     residues={residues}
                     serviceIndex={serviceIndex}
@@ -163,6 +161,7 @@ export const WasteStep = ({ serviceIndex }: { serviceIndex: number }) => {
                     error={errors.services?.[serviceIndex]?.wastes?.[index]?.name}
                   />
 
+                  {/* 2. CLASIFICACIÓN (TIPO) */}
                   <div>
                     <label className="block text-xs font-medium text-gray-500 mb-1">Clasificación</label>
                     <select className="w-full px-3 py-2 border rounded-md bg-white" {...register(`services.${serviceIndex}.wastes.${index}.type` as const)}>
@@ -170,6 +169,15 @@ export const WasteStep = ({ serviceIndex }: { serviceIndex: number }) => {
                     </select>
                   </div>
 
+                  {/* 3. UNIDAD (MOVIDO AQUÍ) */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Unidad</label>
+                    <select className="w-full px-3 py-2 border rounded-md bg-white" {...register(`services.${serviceIndex}.wastes.${index}.unit` as const)}>
+                      {UNIT_TYPES.map(u => <option key={u} value={u}>{u}</option>)}
+                    </select>
+                  </div>
+
+                  {/* 4. CANTIDAD (MOVIDO AQUÍ) */}
                   <div>
                     <label className="block text-xs font-medium text-gray-500 mb-1">Cantidad</label>
                     <input 
@@ -183,13 +191,7 @@ export const WasteStep = ({ serviceIndex }: { serviceIndex: number }) => {
                     )}
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Unidad</label>
-                    <select className="w-full px-3 py-2 border rounded-md bg-white" {...register(`services.${serviceIndex}.wastes.${index}.unit` as const)}>
-                      {UNIT_TYPES.map(u => <option key={u} value={u}>{u}</option>)}
-                    </select>
-                  </div>
-
+                  {/* 5. PRECIO UNITARIO */}
                   <div>
                     <label className="block text-xs font-medium text-gray-500 mb-1">Precio Unitario ($)</label>
                     <input 
