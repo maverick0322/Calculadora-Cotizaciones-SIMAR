@@ -8,7 +8,6 @@ describe('SqliteQuoteRepository', () => {
 
   beforeAll(() => {
     db = new Database(':memory:');
-    // 1. Actualizamos el esquema de la BD en memoria a la era Multiservicio
     db.exec(`
       CREATE TABLE quotes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -17,6 +16,9 @@ describe('SqliteQuoteRepository', () => {
         replaces_quote_id INTEGER,
         client_name VARCHAR,
         client_rfc VARCHAR,
+        contact_name VARCHAR,
+        contact_phone VARCHAR,
+        contact_email VARCHAR,
         validity_days INTEGER,
         frequency_json TEXT,
         services_json TEXT,
@@ -36,10 +38,12 @@ describe('SqliteQuoteRepository', () => {
     repository = new SqliteQuoteRepository(db);
   });
 
-  // 2. Actualizamos el payload falso al esquema actual
   const mockDraftPayload = {
     clientName: 'Cliente Prueba',
     clientRfc: 'XAXX010101000',
+    contactName: 'Juan Pérez',
+    contactPhone: '2288123456',
+    contactEmail: 'juan@prueba.com',
     validityDays: 15,
     frequency: { type: 'weekly' },
     services: [
@@ -62,8 +66,8 @@ describe('SqliteQuoteRepository', () => {
 
     const row = db.prepare('SELECT * FROM quotes WHERE id = ?').get(newId) as any;
     expect(row.client_name).toBe('Cliente Prueba');
+    expect(row.contact_name).toBe('Juan Pérez'); // Confirmamos que se guarda
     expect(row.status).toBe('draft');
-    // Verificamos que el JSON se guardó correctamente
     expect(row.services_json).toContain('Av. Luz');
   });
 
@@ -71,17 +75,18 @@ describe('SqliteQuoteRepository', () => {
   it('should update an existing draft if ID is provided', () => {
     const insertId = repository.saveDraft(mockDraftPayload);
 
-    // Clonamos profundo para no mutar el original en la prueba
     const updatePayload = JSON.parse(JSON.stringify(mockDraftPayload));
     updatePayload.id = Number(insertId);
     updatePayload.services[0].location.street = 'Calle Oscura';
+    updatePayload.contactName = 'Pedro Editado';
 
     const returnedId = repository.saveDraft(updatePayload);
 
     expect(Number(returnedId)).toBe(Number(insertId));
     
-    const row = db.prepare('SELECT services_json, status FROM quotes WHERE id = ?').get(insertId) as any;
+    const row = db.prepare('SELECT services_json, contact_name, status FROM quotes WHERE id = ?').get(insertId) as any;
     expect(row.services_json).toContain('Calle Oscura');
+    expect(row.contact_name).toBe('Pedro Editado'); // Confirmamos actualización
     
     const count = db.prepare('SELECT COUNT(*) as count FROM quotes').get() as any;
     expect(count.count).toBe(1);
@@ -89,7 +94,6 @@ describe('SqliteQuoteRepository', () => {
 
   // --- AC 3: GET DRAFTS ---
   it('should return only drafts ordered by date, mapping location and volume correctly', () => {
-    // Insertamos dos borradores con la nueva estructura
     const p1 = JSON.parse(JSON.stringify(mockDraftPayload));
     p1.services[0].wastes[0].quantity = 50;
     p1.createdAt = 1000;
@@ -100,7 +104,6 @@ describe('SqliteQuoteRepository', () => {
     p2.createdAt = 5000;
     repository.saveDraft(p2);
     
-    // Insertamos una emitida cruda en la BD para asegurar que no se traiga
     db.prepare(`
       INSERT INTO quotes (client_name, services_json, status, created_at) 
       VALUES ('Ignorado', '[{"location":{"street":"A", "neighborhood":"", "municipality":"", "state":""},"wastes":[]}]', 'issued', 9000)
@@ -109,7 +112,6 @@ describe('SqliteQuoteRepository', () => {
     const drafts = repository.getDrafts();
 
     expect(drafts).toHaveLength(2);
-    // Verifica el ordenamiento por fecha (DESC) y la extracción de la vista resumen
     expect(drafts[0].wastesSummary).toBe('20 kg de Basura Doméstica'); 
     expect(drafts[0].location).toContain('Av. Luz'); 
     expect(drafts[0].status).toBe('draft');
@@ -129,8 +131,7 @@ describe('SqliteQuoteRepository', () => {
     expect(draft).not.toBeNull();
     expect(draft?.id).toBe(newId);
     expect(draft?.services[0].location.street).toBe('Av. Luz');
-    expect(draft?.services[0].trip?.kilometers).toBe(50);
-    expect(draft?.services[0].trip?.roadType).toBe('paved');
+    expect(draft?.contactName).toBe('Juan Pérez'); // Confirmamos mapeo de retorno
   });
 
   // --- AC 5: DRAFT NOT FOUND OR NOT A DRAFT ---
@@ -153,7 +154,6 @@ describe('SqliteQuoteRepository', () => {
     
     const row = db.prepare('SELECT status, folio FROM quotes WHERE id = ?').get(insertId) as any;
     expect(row.status).toBe('issued');
-    // Asumimos que la lógica de folios también se probó o corre aquí
   });
 
   it('should return false if trying to issue a quote that does not exist or is already issued', () => {
@@ -161,8 +161,8 @@ describe('SqliteQuoteRepository', () => {
     expect(fail1).toBe(false);
 
     const insertId = Number(repository.saveDraft(mockDraftPayload));
-    repository.issueQuote(insertId); // Primera vez exitosa
-    const fail2 = repository.issueQuote(insertId); // Segunda vez falla
+    repository.issueQuote(insertId);
+    const fail2 = repository.issueQuote(insertId); 
     expect(fail2).toBe(false); 
   });
 

@@ -166,7 +166,12 @@ function App() {
                 onSaveSuccess={() => setCurrentView('dashboard')}
               />
             )}
-            {currentView === 'dashboard' && <DashboardView onEditClick={handleEditDraft} />}
+            {currentView === 'dashboard' && (
+              <DashboardView 
+                onEditClick={handleEditDraft} 
+                onQuoteIssued={() => setCurrentView('issuedQuotes')} 
+              />
+            )}
             {currentView === 'issuedQuotes' && (
               <IssuedQuotesDashboardView onCloneRedirect={() => setCurrentView('dashboard')} />
             )}

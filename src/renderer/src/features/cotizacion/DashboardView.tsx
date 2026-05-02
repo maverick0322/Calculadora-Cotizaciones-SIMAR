@@ -11,7 +11,7 @@ const statusTranslations: Record<string, string> = {
   cancelled: 'Cancelada'
 };
 
-export const DashboardView = ({ onEditClick }: { onEditClick: (id: number) => void }) => {  
+export const DashboardView = ({ onEditClick, onQuoteIssued }: { onEditClick: (id: number) => void, onQuoteIssued?: () => void }) => {  
   const { drafts, loading, fetchDrafts } = useDrafts();
   const [quoteToEmit, setQuoteToEmit] = useState<number | null>(null);
 
@@ -24,6 +24,9 @@ export const DashboardView = ({ onEditClick }: { onEditClick: (id: number) => vo
     closeModal 
   } = usePdfWorkflow(() => {
     fetchDrafts(); 
+    if (onQuoteIssued) {
+      onQuoteIssued();
+    }
   });
 
   const formatDate = (timestamp: number) => {
@@ -33,8 +36,8 @@ export const DashboardView = ({ onEditClick }: { onEditClick: (id: number) => vo
   };
 
   const handleEmitRequest = (id: number) => {
-  setQuoteToEmit(id); // Solo abre el modal, no dispara la acción aún
-};
+    setQuoteToEmit(id); 
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -150,8 +153,8 @@ export const DashboardView = ({ onEditClick }: { onEditClick: (id: number) => vo
               </button>
               <button
                 onClick={() => {
-                  openPdfPreview(quoteToEmit, true);
-                  setQuoteToEmit(null); // Cerramos el modal
+                  openPdfPreview(quoteToEmit, false, true);
+                  setQuoteToEmit(null); 
                 }}
                 className="px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center gap-2 shadow-sm"
               >

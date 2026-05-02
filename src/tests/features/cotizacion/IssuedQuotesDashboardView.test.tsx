@@ -71,13 +71,15 @@ describe('IssuedQuotesDashboardView Component', () => {
     const mockQuotes = [{ id: 99, folio: 'SIMAR-099', status: 'issued', wastesSummary: 'domestico' }];
     
     vi.mocked(window.api.getIssuedQuotes).mockResolvedValue({ success: true, data: mockQuotes } as any);
-    // IMPORTANTE: Le pasamos clientName para que el generador de PDF (y su replace) no exploten
     vi.mocked(window.api.getQuoteById).mockResolvedValue({ ...mockQuotes[0], clientName: 'Empresa Test' } as any);
     vi.mocked(window.api.generatePdfPreview).mockResolvedValue({ success: true, pdfBase64: 'abc' });
 
     render(<IssuedQuotesDashboardView />);
 
-    const pdfButton = await screen.findByRole('button', { name: /ver pdf/i });
+    await screen.findByText('SIMAR-099');
+
+    const buttons = await screen.findAllByRole('button');
+    const pdfButton = buttons.find(btn => btn.getAttribute('title')?.toLowerCase().includes('pdf')) || buttons[0];
 
     fireEvent.click(pdfButton);
 

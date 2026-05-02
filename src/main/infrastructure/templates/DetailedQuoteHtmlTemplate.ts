@@ -1,96 +1,132 @@
 import { QuoteDraft } from '../../../shared/types/Quote';
 
-export const getDetailedQuoteHtml = (data: QuoteDraft, logoBase64?: string) => {
-  const formatDate = (ts: number) => new Date(ts).toLocaleDateString('es-MX');
+export const getDetailedQuoteHtml = (quoteData: QuoteDraft, logoBase64?: string): string => {
+  const createdAt = new Date(quoteData.createdAt);
+  const dateStr = createdAt.toLocaleDateString('es-MX', { 
+    year: 'numeric', month: 'long', day: 'numeric' 
+  });
+  
+  const logoHtml = logoBase64 
+    ? `<img src="${logoBase64}" alt="Logo SIMAR" style="max-height: 70px;">`
+    : `<h1 style="color: #1e3a5f; margin: 0;">SIMAR</h1>`;
 
-  const servicesHtml = data.services.map((s, idx) => {
-    // 1. Residuos (Descripción, Cantidad, Unidad, Precio Acumulado)
-    const wastesRows = s.wastes.map(w => `
+  const activityMap: Record<string, string> = {
+    collection: 'Recolección',
+    transport: 'Transporte',
+    transfer: 'Transferencia',
+    final_disposal: 'Disposición Final'
+  };
+
+  const frequencyMap: Record<string, string> = {
+    one_time: 'Evento Único', daily: 'Diaria', weekly: 'Semanal', biweekly: 'Quincenal', monthly: 'Mensual'
+  };
+  
+  const freqString = quoteData.frequency.type === 'custom' 
+    ? quoteData.frequency.customDescription 
+    : frequencyMap[quoteData.frequency.type] || quoteData.frequency.type;
+
+  const formatCurrency = (amount: number) => 
+    `$${amount.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  const servicesHtmlBlocks = quoteData.services.map((service, index) => {
+    const loc = service.location;
+    const fullLocation = `${loc.street}, ${loc.neighborhood}, ${loc.municipality}, ${loc.state}`;
+    const activityName = activityMap[service.activity] || service.activity;
+
+    // 1. Residuos
+    const wastesRows = service.wastes.length > 0 ? service.wastes.map((w, wIdx) => `
       <tr>
-        <td style="padding: 6px; border-bottom: 1px solid #eee;">${w.name} <span style="color:#6b7280; font-size:10px;">(${w.type})</span></td>
-        <td style="padding: 6px; border-bottom: 1px solid #eee; text-align: center;">${w.quantity}</td>
-        <td style="padding: 6px; border-bottom: 1px solid #eee; text-align: center;">${w.unit}</td>
-        <td style="padding: 6px; border-bottom: 1px solid #eee; text-align: right;">$${(w.quantity * w.pricePerUnit).toFixed(2)}</td>
+        <td style="text-align: center; width: 5%;">${wIdx + 1}</td>
+        <td>${w.name} <span style="color:#666; font-size:0.9em;">(${w.type})</span></td>
+        <td style="text-align: center; width: 12%;">${w.quantity}</td>
+        <td style="text-align: center; width: 15%;">${w.unit}</td>
+        <td style="text-align: right; width: 18%;">${formatCurrency(w.quantity * (w.pricePerUnit || 0))}</td>
       </tr>
-    `).join('');
+    `).join('') : '';
 
     // 2. Vehículos
-    const vehiclesRows = s.vehicles.map(v => `
+    const vehiclesRows = service.vehicles.length > 0 ? service.vehicles.map((v, vIdx) => `
       <tr>
-        <td style="padding: 6px; border-bottom: 1px solid #eee;">${v.name}</td>
-        <td style="padding: 6px; border-bottom: 1px solid #eee; text-align: center;">${v.quantity}</td>
-        <td style="padding: 6px; border-bottom: 1px solid #eee; text-align: right;">$${(v.quantity * v.unitPrice).toFixed(2)}</td>
+        <td style="text-align: center; width: 5%;">${vIdx + 1}</td>
+        <td>${v.name}</td>
+        <td style="text-align: center; width: 12%;">${v.quantity}</td>
+        <td style="text-align: right; width: 18%;">${formatCurrency(v.quantity * (v.unitPrice || 0))}</td>
       </tr>
-    `).join('');
+    `).join('') : '';
 
-    // 3. Personal (Choferes/Técnicos)
-    const crewRows = s.crew.map(c => `
+    // 3. Personal
+    const crewRows = service.crew.length > 0 ? service.crew.map((c, cIdx) => `
       <tr>
-        <td style="padding: 6px; border-bottom: 1px solid #eee;">${c.type === 'driver' ? 'Chofer' : 'Técnico Operativo'}</td>
-        <td style="padding: 6px; border-bottom: 1px solid #eee; text-align: center;">${c.quantity}</td>
-        <td style="padding: 6px; border-bottom: 1px solid #eee; text-align: right;">$${(c.quantity * c.dailySalary).toFixed(2)}</td>
+        <td style="text-align: center; width: 5%;">${cIdx + 1}</td>
+        <td>${c.type === 'driver' ? 'Chofer' : 'Técnico Operativo'}</td>
+        <td style="text-align: center; width: 12%;">${c.quantity}</td>
+        <td style="text-align: right; width: 18%;">${formatCurrency(c.quantity * (c.dailySalary || 0))}</td>
       </tr>
-    `).join('');
+    `).join('') : '';
 
     // 4. Insumos
-    const suppliesRows = s.supplies.map(sup => `
+    const suppliesRows = service.supplies.length > 0 ? service.supplies.map((s, sIdx) => `
       <tr>
-        <td style="padding: 6px; border-bottom: 1px solid #eee;">${sup.name}</td>
-        <td style="padding: 6px; border-bottom: 1px solid #eee; text-align: center;">${sup.quantity}</td>
-        <td style="padding: 6px; border-bottom: 1px solid #eee; text-align: right;">$${(sup.quantity * sup.unitPrice).toFixed(2)}</td>
+        <td style="text-align: center; width: 5%;">${sIdx + 1}</td>
+        <td>${s.name}</td>
+        <td style="text-align: center; width: 12%;">${s.quantity}</td>
+        <td style="text-align: right; width: 18%;">${formatCurrency(s.quantity * (s.unitPrice || 0))}</td>
       </tr>
-    `).join('');
+    `).join('') : '';
 
     // 5. Extras
-    const extrasRows = s.extraCosts.map(e => `
+    const extrasRows = service.extraCosts.length > 0 ? service.extraCosts.map((e, eIdx) => `
       <tr>
-        <td style="padding: 6px; border-bottom: 1px solid #eee;">${e.description}</td>
-        <td style="padding: 6px; border-bottom: 1px solid #eee; text-align: right;">$${e.amount.toFixed(2)}</td>
+        <td style="text-align: center; width: 5%;">${eIdx + 1}</td>
+        <td colspan="2">${e.description}</td>
+        <td style="text-align: right; width: 18%;">${formatCurrency(e.amount || 0)}</td>
       </tr>
-    `).join('');
+    `).join('') : '';
 
     return `
-      <div style="margin-top: 25px; border: 1px solid #d1d5db; border-radius: 8px; padding: 15px; background-color: #fff;">
-        <h3 style="color: #1e3a8a; margin-top: 0; border-bottom: 2px solid #bfdbfe; padding-bottom: 5px; font-size: 16px;">
-          Servicio #${idx + 1}: Sucursal ${s.location.municipality}
-        </h3>
+      <div class="service-block">
+        <h3 class="service-title">Sucursal / Servicio ${index + 1}: ${fullLocation}</h3>
+        <p style="margin: 5px 0 10px 0; font-size: 0.9em; color: #444;">
+          <strong>Actividad:</strong> ${activityName} | 
+          <strong>Logística:</strong> Origen: ${service.logistics.origin || 'N/A'} ➔ Destino: ${service.logistics.primaryDestination || 'N/A'} (${service.logistics.kilometers} km)
+        </p>
         
-        ${s.wastes.length > 0 ? `
-          <h4 style="font-size: 12px; color: #374151; margin: 15px 0 5px 0; background: #f3f4f6; padding: 4px 8px; border-left: 3px solid #3b82f6;">♻️ Residuos</h4>
-          <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
-            <thead><tr style="color: #6b7280;"><th style="text-align: left; padding: 4px;">Descripción</th><th style="text-align: center; padding: 4px;">Cantidad</th><th style="text-align: center; padding: 4px;">Unidad</th><th style="text-align: right; padding: 4px;">Precio Acumulado</th></tr></thead>
+        ${service.wastes.length > 0 ? `
+          <h4 class="sub-header" style="border-left-color: #3b82f6;">♻️ Desglose de Residuos</h4>
+          <table>
+            <thead><tr><th>No.</th><th>DESCRIPCIÓN</th><th>CANT.</th><th>UNIDAD</th><th>PRECIO ACUM.</th></tr></thead>
             <tbody>${wastesRows}</tbody>
           </table>
         ` : ''}
 
-        ${s.vehicles.length > 0 ? `
-          <h4 style="font-size: 12px; color: #374151; margin: 15px 0 5px 0; background: #f3f4f6; padding: 4px 8px; border-left: 3px solid #10b981;">🚛 Vehículos</h4>
-          <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
-            <thead><tr style="color: #6b7280;"><th style="text-align: left; padding: 4px;">Descripción</th><th style="text-align: center; padding: 4px;">Cantidad</th><th style="text-align: right; padding: 4px;">Precio Acumulado</th></tr></thead>
+        ${service.vehicles.length > 0 ? `
+          <h4 class="sub-header" style="border-left-color: #10b981;">🚛 Operación de Vehículos</h4>
+          <table>
+            <thead><tr><th>No.</th><th>DESCRIPCIÓN DEL VEHÍCULO</th><th>CANT.</th><th>PRECIO ACUM.</th></tr></thead>
             <tbody>${vehiclesRows}</tbody>
           </table>
         ` : ''}
 
-        ${s.crew.length > 0 ? `
-          <h4 style="font-size: 12px; color: #374151; margin: 15px 0 5px 0; background: #f3f4f6; padding: 4px 8px; border-left: 3px solid #f59e0b;">👷 Personal</h4>
-          <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
-            <thead><tr style="color: #6b7280;"><th style="text-align: left; padding: 4px;">Descripción</th><th style="text-align: center; padding: 4px;">Cantidad</th><th style="text-align: right; padding: 4px;">Precio Acumulado</th></tr></thead>
+        ${service.crew.length > 0 ? `
+          <h4 class="sub-header" style="border-left-color: #f59e0b;">👷 Personal Asignado</h4>
+          <table>
+            <thead><tr><th>No.</th><th>CARGO OPERATIVO</th><th>CANT.</th><th>PRECIO ACUM.</th></tr></thead>
             <tbody>${crewRows}</tbody>
           </table>
         ` : ''}
 
-        ${s.supplies.length > 0 ? `
-          <h4 style="font-size: 12px; color: #374151; margin: 15px 0 5px 0; background: #f3f4f6; padding: 4px 8px; border-left: 3px solid #8b5cf6;">📦 Insumos</h4>
-          <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
-            <thead><tr style="color: #6b7280;"><th style="text-align: left; padding: 4px;">Descripción</th><th style="text-align: center; padding: 4px;">Cantidad</th><th style="text-align: right; padding: 4px;">Precio Acumulado</th></tr></thead>
+        ${service.supplies.length > 0 ? `
+          <h4 class="sub-header" style="border-left-color: #8b5cf6;">📦 Insumos y Materiales</h4>
+          <table>
+            <thead><tr><th>No.</th><th>DESCRIPCIÓN DEL INSUMO</th><th>CANT.</th><th>PRECIO ACUM.</th></tr></thead>
             <tbody>${suppliesRows}</tbody>
           </table>
         ` : ''}
 
-        ${s.extraCosts.length > 0 ? `
-          <h4 style="font-size: 12px; color: #374151; margin: 15px 0 5px 0; background: #fef2f2; padding: 4px 8px; border-left: 3px solid #ef4444;">⚠️ Costos Extra</h4>
-          <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
-            <thead><tr style="color: #6b7280;"><th style="text-align: left; padding: 4px;">Descripción</th><th style="text-align: right; padding: 4px;">Precio</th></tr></thead>
+        ${service.extraCosts.length > 0 ? `
+          <h4 class="sub-header" style="border-left-color: #ef4444;">⚠️ Costos Extra</h4>
+          <table>
+            <thead><tr><th>No.</th><th colspan="2">DESCRIPCIÓN DEL CARGO</th><th>PRECIO</th></tr></thead>
             <tbody>${extrasRows}</tbody>
           </table>
         ` : ''}
@@ -98,30 +134,118 @@ export const getDetailedQuoteHtml = (data: QuoteDraft, logoBase64?: string) => {
     `;
   }).join('');
 
+  // Cálculos financieros globales
+  const subtotal = quoteData.subtotal || 0;
+  const iva = subtotal * 0.16;
+  const total = quoteData.total || 0;
+
   return `
-    <html>
-      <body style="font-family: Arial, sans-serif; color: #333; padding: 40px; background-color: #f9fafb;">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1d4ed8; padding-bottom: 20px;">
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <style>
+            body { font-family: Arial, sans-serif; margin: 0 auto; max-width: 1000px; line-height: 1.5; color: #1a1a1a; padding: 30px 40px; background: #fff; }
+            .header { margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-start; }
+            .address { font-size: 0.95em; margin-top: 15px; }
+            .ref { font-weight: bold; margin: 15px 0 5px; color: #1e3a5f; }
+            .date-line { color: #2c3e66; margin-bottom: 20px; font-size: 0.9em; }
+            h2 { border-bottom: 2px solid #ccc; padding-bottom: 5px; color: #1e3a5f; font-size: 1.1em; margin-top: 25px; }
+            
+            /* Estilos de la iteración de servicios */
+            .service-block { margin-bottom: 30px; border-left: 3px solid #1e3a5f; padding-left: 15px; }
+            .service-title { color: #1e3a5f; font-size: 1.05em; margin: 0; padding-bottom: 3px; border-bottom: 1px dotted #e0e0e0; }
+            .sub-header { font-size: 0.85em; color: #333; margin: 15px 0 5px 0; padding: 4px 8px; background: #f3f4f6; border-left: 3px solid #1e3a5f; }
+            
+            table { width: 100%; border-collapse: collapse; font-size: 0.85em; margin-bottom: 10px;}
+            th, td { border: 1px solid #aaa; padding: 6px 10px; text-align: left; }
+            th { background-color: #eef4fc; text-align: center; }
+            
+            /* Totales */
+            .totals-container { width: 100%; display: flex; justify-content: flex-end; margin-top: 20px; }
+            .totals-table { width: 40%; border: none; }
+            .totals-table td { border: none; padding: 4px 10px; text-align: right; }
+            .totals-table .label { font-weight: bold; color: #333; }
+            .totals-table .total-row td { border-top: 1px solid #aaa; color: #1e3a5f; font-size: 1.2em; font-weight: bold; padding-top: 8px; }
+            
+            .list { margin: 15px 0; padding-left: 25px; font-size: 0.85em; }
+            .list li { margin-bottom: 8px; text-align: justify; }
+            .signature { margin-top: 40px; font-weight: bold; color: #1e3a5f; }
+            footer { margin-top: 40px; font-size: 0.8em; text-align: center; color: #666; border-top: 1px solid #ddd; padding-top: 15px; }
+        </style>
+    </head>
+    <body>
+      <div class="header">
           <div>
-            ${logoBase64 ? `<img src="${logoBase64}" style="max-height: 70px; margin-bottom: 10px;" />` : ''}
-            <h1 style="color: #1d4ed8; margin: 0; font-size: 24px;">COTIZACIÓN DETALLADA</h1>
-            <p style="font-size: 13px; color: #666; margin: 5px 0 0 0;">Folio: <b>#${data.id || 'NUEVO'}</b> | Fecha: <b>${formatDate(data.createdAt)}</b></p>
+              ${logoHtml}
+              <div class="address">
+                  <strong>Cliente:</strong> ${quoteData.clientName}<br>
+                  <strong>RFC:</strong> ${quoteData.clientRfc || 'N/D'}
+                  ${quoteData.contactName ? `<br><strong>Atención a:</strong> ${quoteData.contactName}` : ''}
+              </div>
           </div>
-        </div>
-        <div style="margin-top: 25px; background: #fff; border: 1px solid #e5e7eb; padding: 15px; border-radius: 8px;">
-          <h2 style="font-size: 15px; margin-top: 0; color: #111827;">DATOS DEL CLIENTE</h2>
-          <div style="display: flex; justify-content: space-between; font-size: 12px;">
-            <div><p style="margin: 3px 0;"><b>Razón Social:</b> ${data.clientName || 'N/A'}</p><p style="margin: 3px 0;"><b>RFC:</b> ${data.clientRfc || '-'}</p></div>
-            <div style="text-align: right;"><p style="margin: 3px 0;"><b>Atención a:</b> ${data.contactName || '-'}</p></div>
+          <div style="text-align: right;">
+              <div class="ref">REF: ${quoteData.folio || `Borrador #${quoteData.id}`}</div>
+              <div class="date-line">${dateStr}</div>
+              <div style="font-size: 0.85em; color: #555;">
+                <strong>Vigencia:</strong> ${quoteData.validityDays} días<br>
+                <strong>Frecuencia Global:</strong> ${freqString}
+              </div>
           </div>
-        </div>
-        ${servicesHtml}
-        <div style="margin-top: 30px; text-align: right; border-top: 2px solid #1d4ed8; padding-top: 15px; background-color: #fff; padding: 20px; border-radius: 8px; border: 1px solid #e5e7eb;">
-          <p style="font-size: 14px; margin: 2px 0;">Subtotal: <b>$${(data.subtotal || 0).toFixed(2)}</b></p>
-          <p style="font-size: 14px; margin: 2px 0;">IVA (16%): <b>$${((data.subtotal || 0) * 0.16).toFixed(2)}</b></p>
-          <h2 style="color: #1d4ed8; margin: 10px 0 0 0; font-size: 22px;">TOTAL: $${(data.total || 0).toFixed(2)}</h2>
-        </div>
-      </body>
+      </div>
+
+      <p style="font-size: 0.9em; text-align: justify;">Por medio del presente envío propuesta económica referente a la prestación de servicios para el manejo integral de residuos. Dicho servicio se realizará en los sitios autorizados por La Secretaría de Medio Ambiente del Estado de Veracruz, desglosados de la siguiente manera:</p>
+
+      <h2>I. Alcance y Precios por Sucursal (Desglosado)</h2>
+      
+      ${servicesHtmlBlocks}
+      
+      <div class="totals-container">
+        <table class="totals-table">
+            <tr>
+                <td class="label">Subtotal:</td>
+                <td>${formatCurrency(subtotal)}</td>
+            </tr>
+            <tr>
+                <td class="label">IVA (16%):</td>
+                <td>${formatCurrency(iva)}</td>
+            </tr>
+            <tr class="total-row">
+                <td class="label">TOTAL:</td>
+                <td>${formatCurrency(total)}</td>
+            </tr>
+        </table>
+      </div>
+
+      <h2>II. Condiciones Comerciales</h2>
+      <ol class="list">
+          <li><strong>Impuestos:</strong> Los precios indicados son más 16% de IVA.</li>
+          <li><strong>Términos de pago:</strong> Pago por adelantado del concepto de transporte al 100% para la programación del servicio.</li>
+          <li><strong>Vigencia:</strong> La presente cotización tiene una vigencia de ${quoteData.validityDays} días y no cuenta con financiamiento.</li>
+          <li><strong>Aceptación del servicio:</strong> Se requiere sea confirmada la aceptación de la presente cotización, con firma de recibido.</li>
+          <li><strong>Programación del servicio:</strong> Solicitar por escrito al área comercial en un lapso de 8 días hábiles.</li>
+          <li><strong>Suministro de insumos:</strong> Tambos metálicos (200L) disponibles por <strong>$750.00 c/u</strong>.</li>
+          <li><strong>Prestación del servicio:</strong> Residuos peligrosos deben estar envasados y etiquetados.</li>
+      </ol>
+
+      <h2>III. Garantías de Servicio</h2>
+      <p style="font-size: 0.9em;"><strong>SISTEMAS EN MANEJO Y ADMINISTRACION DE RESIDUOS, S.A. DE C.V.</strong> se compromete a:</p>
+      <ol class="list">
+          <li>Puntualidad en la Recolección de los Residuos Peligrosos.</li>
+          <li>Uso de Equipo de Seguridad acorde a la naturaleza de los residuos.</li>
+          <li>Transporte en vehículos con autorización de SEDEMA, SCT y SEMARNAT.</li>
+      </ol>
+
+      <div class="signature">
+          <p>ATENTAMENTE</p>
+          <p style="margin-top: 10px;">Departamento Comercial</p>
+      </div>
+
+      <footer>
+          Todos los precios están expresados en moneda nacional más IVA.<br>
+          Vigencia: ${quoteData.validityDays} días naturales a partir del ${dateStr}.
+      </footer>
+    </body>
     </html>
   `;
 };

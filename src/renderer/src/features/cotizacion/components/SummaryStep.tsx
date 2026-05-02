@@ -1,12 +1,19 @@
+import { useState } from 'react';
 import { QuoteFormValues } from "../../../../../shared/schemas/quoteSchema";
 import toast from 'react-hot-toast';
 import { FileText, List } from 'lucide-react';
+import { PdfPreviewModal } from './PdfPreviewModal';
 
 interface SummaryStepProps {
   data: QuoteFormValues;
 }
 
 export const SummaryStep = ({ data }: SummaryStepProps) => {
+  // --- Estados para el Modal de PDF ---
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [pdfBase64, setPdfBase64] = useState<string | null>(null);
+  const [currentFolio, setCurrentFolio] = useState<string>('');
+
   const getFrequencyString = () => {
     const f = data.frequency;
     if (f.type === 'one_time') return 'Evento Único';
@@ -28,19 +35,69 @@ export const SummaryStep = ({ data }: SummaryStepProps) => {
     collection: 'Recolección', transport: 'Transporte', transfer: 'Transferencia', final_disposal: 'Disposición Final'
   };
 
+  const calculateTotals = () => {
+    let calcSubtotal = 0;
+    
+    data.services.forEach(service => {
+      service.wastes.forEach(w => calcSubtotal += (Number(w.quantity) * Number(w.pricePerUnit || 0)));
+      service.vehicles.forEach(v => calcSubtotal += (Number(v.quantity) * Number(v.unitPrice || 0)));
+      service.crew.forEach(c => calcSubtotal += (Number(c.quantity) * Number(c.dailySalary || 0)));
+      service.supplies.forEach(s => calcSubtotal += (Number(s.quantity) * Number(s.unitPrice || 0)));
+      service.extraCosts.forEach(e => calcSubtotal += Number(e.amount || 0));
+      
+      if (service.logistics) {
+        const fuel = Number(service.logistics.fuelLiters || 0) * Number(service.logistics.fuelPricePerLiter || 0);
+        const tolls = Number(service.logistics.totalTollCost || 0);
+        const viaticos = Number(service.logistics.viaticos || 0);
+        calcSubtotal += (fuel + tolls + viaticos);
+      }
+    });
+
+    return { 
+      subtotal: calcSubtotal, 
+      total: calcSubtotal * 1.16 
+    };
+  };
+
   const handleGeneratePdf = async (detailed: boolean) => {
     const toastId = toast.loading('Generando documento PDF...');
+    setIsModalOpen(true); 
+    setPdfBase64(null);
+
     try {
-      const response = await window.api.generatePdfPreview({ quoteData: data, isDetailed: detailed });
+      const { subtotal, total } = calculateTotals();
+      const payloadConTotales = { ...data, subtotal, total };
+
+      const response = await window.api.generatePdfPreview({ quoteData: payloadConTotales, isDetailed: detailed });
       
       if (response.success && response.pdfBase64) {
-        toast.success('PDF generado. Abriendo ventana para guardar...', { id: toastId });
-        await window.api.savePdf(response.pdfBase64, detailed ? 'Cotizacion_Desglosada' : 'Cotizacion_General');
+        setPdfBase64(response.pdfBase64); 
+        setCurrentFolio(detailed ? 'Cotizacion_Desglosada' : 'Cotizacion_General');
+        toast.success('Vista previa generada', { id: toastId });
       } else {
+        setIsModalOpen(false);
         toast.error(`Error: ${response.error}`, { id: toastId });
       }
     } catch (error) {
-      toast.error('Error al generar el PDF', { id: toastId });
+      setIsModalOpen(false);
+      toast.error('Error de conexión al generar el PDF', { id: toastId });
+    }
+  };
+
+  const downloadPdf = async () => {
+    if (!pdfBase64) return;
+    const loadingToast = toast.loading('Guardando documento...');
+    try {
+      const result = await window.api.savePdf(pdfBase64, currentFolio);
+      if (result.success) {
+        toast.success('¡PDF guardado correctamente!', { id: loadingToast });
+      } else if (!result.error?.includes('cancelada')) {
+        toast.error(result.error || 'No se pudo guardar el archivo', { id: loadingToast });
+      } else {
+        toast.dismiss(loadingToast);
+      }
+    } catch (error) {
+      toast.error('Error al guardar', { id: loadingToast });
     }
   };
 
@@ -159,6 +216,15 @@ export const SummaryStep = ({ data }: SummaryStepProps) => {
           * El PDF Desglosado incluye una tabla de precios unitarios por cada residuo e insumo.
         </p>
       </div>
+
+      {/* Renderizamos el Modal */}
+      <PdfPreviewModal 
+        isOpen={isModalOpen}
+        isLoading={pdfBase64 === null}
+        pdfBase64={pdfBase64}
+        onClose={() => setIsModalOpen(false)}
+        onDownload={downloadPdf}
+      />
 
     </div>
   );
