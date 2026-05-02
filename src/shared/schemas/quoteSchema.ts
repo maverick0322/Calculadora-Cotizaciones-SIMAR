@@ -3,6 +3,9 @@ import * as z from 'zod';
 export const quoteSchema = z.object({
   clientName: z.string().min(3, 'El nombre del cliente es requerido'),
   clientRfc: z.string().regex(/^[A-Z&Ñ]{3,4}\d{6}[A-Z\d]{3}$/i, 'Formato de RFC inválido'),
+  contactName: z.string().min(3, 'El nombre del responsable es requerido'),
+  contactPhone: z.string().min(10, 'El teléfono debe tener al menos 10 dígitos'),
+  contactEmail: z.string().email('Formato de correo inválido'),
   validityDays: z.coerce.number().refine(val => val === 15 || val === 30, 'Vigencia debe ser 15 o 30 días'),
 
   frequency: z.object({
@@ -27,10 +30,11 @@ export const quoteSchema = z.object({
     }),
 
     wastes: z.array(z.object({
-      name: z.string().min(2, 'Requerido'),
-      type: z.enum(['domestic', 'organic', 'recyclable', 'hazardous', 'bulky']),
-      quantity: z.coerce.number().positive('Debe ser > 0'),
-      unit: z.enum(['kg', 'ton', 'm3', 'containers', 'trips']),
+      name: z.string().min(1, 'El nombre del residuo es obligatorio'),
+      type: z.string().min(1, 'El tipo es obligatorio'),
+      quantity: z.number().min(0.01, 'La cantidad debe ser mayor a 0'),
+      unit: z.string().min(1, 'La unidad es obligatoria'),
+      pricePerUnit: z.number().min(0, 'El precio no puede ser negativo').default(0),
     })).min(1, 'Debes agregar al menos un residuo al servicio'),
 
     vehicles: z.array(z.object({

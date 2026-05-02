@@ -1,4 +1,4 @@
-import { FileText, CheckCircle, Copy } from 'lucide-react';
+import { FileText, CheckCircle, Copy, List } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { QuoteDraft, QuoteSummary } from '../../../../shared/types/Quote';
 import { useIssuedQuotes } from './hooks/useIssuedQuotes';
@@ -37,8 +37,22 @@ export const IssuedQuotesDashboardView = ({ onCloneRedirect }: { onCloneRedirect
         id: undefined,         
         folio: undefined,      
         status: 'draft' as const,
-        createdAt: Date.now(), 
-        replacesQuoteId: originalQuote.id 
+        createdAt: Date.now(),
+        contactName: originalQuote.contactName || '',
+        contactPhone: originalQuote.contactPhone || '',
+        contactEmail: originalQuote.contactEmail || '',
+        replacesQuoteId: originalQuote.id,
+        services: originalQuote.services.map(s => ({
+          ...s,
+          wastes: s.wastes.map(w => ({
+            ...w,
+            pricePerUnit: w.pricePerUnit || 0
+          })),
+          logistics: {
+            ...s.logistics,
+            roadType: s.logistics.roadType || undefined
+          }
+        }))
       } as QuoteDraft; 
 
       const response = await window.api.saveDraft(clonedPayload);
@@ -52,7 +66,8 @@ export const IssuedQuotesDashboardView = ({ onCloneRedirect }: { onCloneRedirect
            onCloneRedirect(Number(newDraftId));
         }
       } else {
-        toast.error('Error al clonar', { id: loadingId });
+        console.error("Error validación backend:", response.details);
+        toast.error('Error de validación al clonar', { id: loadingId });
       }
     } catch (error) {
       toast.error('Ocurrió un error inesperado al clonar', { id: loadingId });
@@ -125,15 +140,26 @@ export const IssuedQuotesDashboardView = ({ onCloneRedirect }: { onCloneRedirect
                           Modificar
                         </button>
                         
-                        {/* Botón de PDF original */}
+                        {/* Botón PDF General */}
                         <button 
                           onClick={() => openPdfPreview(Number(quote.id), false)} 
                           disabled={isPdfLoading}
-                          className="inline-flex items-center justify-center px-3 py-1.5 rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors disabled:opacity-50 font-medium text-sm gap-2" 
-                          title="Ver Documento PDF"
+                          className="inline-flex items-center justify-center px-3 py-1.5 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors disabled:opacity-50 font-medium text-sm gap-2" 
+                          title="Ver PDF Estándar"
                         >
                           <FileText className="w-4 h-4" />
-                          Ver PDF
+                          Gral
+                        </button>
+
+                        {/* Botón PDF Desglosado */}
+                        <button 
+                          onClick={() => openPdfPreview(Number(quote.id), true)} 
+                          disabled={isPdfLoading}
+                          className="inline-flex items-center justify-center px-3 py-1.5 rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors disabled:opacity-50 font-medium text-sm gap-2" 
+                          title="Ver PDF con Precios Unitarios"
+                        >
+                          <List className="w-4 h-4 text-blue-600" />
+                          Detalle
                         </button>
                       </div>
                     </td>

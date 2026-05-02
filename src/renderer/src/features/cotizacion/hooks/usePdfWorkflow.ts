@@ -7,7 +7,7 @@ export const usePdfWorkflow = (onWorkflowComplete?: () => void) => {
   const [pdfBase64, setPdfBase64] = useState<string | null>(null);
   const [currentFolio, setCurrentFolio] = useState<string>('');
 
-  const openPdfPreview = async (id: number | string, isDraft: boolean) => {
+  const openPdfPreview = async (id: number | string, isDetailed: boolean = false, isDraft: boolean = false) => {
     setIsModalOpen(true);
     setIsLoading(true);
     setPdfBase64(null);
@@ -27,14 +27,15 @@ export const usePdfWorkflow = (onWorkflowComplete?: () => void) => {
 
       const folioStr = quoteData.folio || `Borrador_${quoteData.id}`;
 
-      const cleanClientName = quoteData.clientName
+      const cleanClientName = (quoteData.clientName || 'Cliente')
         .replace(/[^a-zA-Z0-9_ -]/g, '')
         .trim()
         .replace(/\s+/g, '_');
 
       setCurrentFolio(`${folioStr}_${cleanClientName}`);
 
-      const pdfResult = await window.api.generatePdfPreview(quoteData);
+      const pdfResult = await window.api.generatePdfPreview({ quoteData, isDetailed });
+      
       if (!pdfResult.success || !pdfResult.pdfBase64) {
         throw new Error(pdfResult.error || 'Fallo al generar la vista previa del PDF');
       }

@@ -1,17 +1,80 @@
-import { useFormContext, useFieldArray } from 'react-hook-form';
+import { useState } from 'react';
+import { useFormContext, useFieldArray, useWatch } from 'react-hook-form';
 import { QuoteFormValues } from "../../../../../shared/schemas/quoteSchema"; 
 import { Plus, Trash2 } from 'lucide-react';
+import { useResiduesCatalog } from '../../catalogs/hooks/useResiduesCatalog';
 
+// --- SUB-COMPONENTE: Autocompletado Inteligente de Residuos ---
+const ResidueAutocomplete = ({ 
+  residues, registerName, serviceIndex, index, setValue, error 
+}: any) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const currentValue = (useWatch({ name: registerName.name }) as string) || '';
+
+  const filteredResidues = residues.filter((r: any) => 
+    r.name.toLowerCase().includes(currentValue.toLowerCase())
+  );
+
+  const handleSelect = (residue: any) => {
+    setValue(`services.${serviceIndex}.wastes.${index}.name`, residue.name, { shouldValidate: true, shouldDirty: true });
+    setValue(`services.${serviceIndex}.wastes.${index}.type`, residue.residue_type, { shouldValidate: true, shouldDirty: true });
+    setValue(`services.${serviceIndex}.wastes.${index}.unit`, residue.unit, { shouldValidate: true, shouldDirty: true });
+    setValue(`services.${serviceIndex}.wastes.${index}.pricePerUnit`, residue.base_price, { shouldValidate: true, shouldDirty: true });
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="relative">
+      <label className="block text-xs font-medium text-gray-500 mb-1">Nombre del residuo</label>
+      <input 
+        type="text" 
+        autoComplete="off"
+        placeholder="Ej. Cartón, Aceite..."
+        className="w-full px-3 py-2 border rounded-md bg-white focus:ring-2 focus:ring-blue-500 outline-none" 
+        {...registerName} 
+        onFocus={() => setIsOpen(true)}
+        onBlur={(e) => {
+          registerName.onBlur(e); 
+          setTimeout(() => setIsOpen(false), 200); // Retraso para registrar el clic
+        }}
+      />
+      
+      {isOpen && filteredResidues.length > 0 && (
+        <ul className="absolute z-20 w-full bg-white border border-gray-200 mt-1 max-h-48 overflow-y-auto rounded-md shadow-lg">
+          {filteredResidues.map((r: any) => (
+            <li 
+              key={r.id}
+              onMouseDown={() => handleSelect(r)}
+              className="px-3 py-2 cursor-pointer hover:bg-blue-50 text-sm text-gray-700 flex justify-between items-center"
+            >
+              <span className="font-medium">{r.name}</span>
+              <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded">${r.base_price.toFixed(2)} / {r.unit}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {error && <p className="text-red-500 text-xs mt-1">{error.message}</p>}
+    </div>
+  );
+};
+
+// --- COMPONENTE PRINCIPAL ---
 export const WasteStep = ({ serviceIndex }: { serviceIndex: number }) => {
-  const { register, control, watch, formState: { errors } } = useFormContext<QuoteFormValues>();
+  const { register, control, watch, setValue, formState: { errors } } = useFormContext<QuoteFormValues>();
   
-  // Ahora el arreglo de residuos busca dentro del servicio dinámico
+  // Obtenemos los residuos de la base de datos
+  const { residues } = useResiduesCatalog();
+
   const { fields, append, remove } = useFieldArray({
     control,
     name: `services.${serviceIndex}.wastes` as const
   });
 
   const frequencyType = watch('frequency.type');
+
+  // Constantes alineadas con el Catálogo
+  const RESIDUE_TYPES = ['Peligroso', 'Manejo Especial (RME)', 'Sólido Urbano (RSU)', 'Reciclable', 'Biológico-Infeccioso (RPBI)', 'Otro'];
+  const UNIT_TYPES = ['Kilogramo', 'Tonelada', 'Metro Cúbico', 'Litro', 'Pieza', 'Contenedor', 'Viaje'];
 
   return (
     <div className="mb-8">
@@ -42,7 +105,7 @@ export const WasteStep = ({ serviceIndex }: { serviceIndex: number }) => {
               </select>
             </div>
 
-            {frequencyType !== 'one_time' && frequencyType !== 'custom' && (
+            {frequencyType !== 'one_time' && (
               <div className="animate-in fade-in slide-in-from-top-1">
                 <label className="block text-xs font-medium text-gray-500 mb-1">Duración del contrato (ej. cantidad de semanas/meses)</label>
                 <input type="number" placeholder="Ej. 6" className="w-full px-3 py-2 border rounded-md" {...register('frequency.duration')} />
@@ -63,7 +126,7 @@ export const WasteStep = ({ serviceIndex }: { serviceIndex: number }) => {
             <h3 className="text-md font-medium text-gray-800">Residuos a recolectar en esta sucursal</h3>
             <button
               type="button"
-              onClick={() => append({ name: '', type: 'domestic', quantity: 1, unit: 'kg' })}
+              onClick={() => append({ name: '', type: 'Sólido Urbano (RSU)', quantity: 1, unit: 'Kilogramo', pricePerUnit: 0 })}
               className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors"
             >
               <Plus className="w-4 h-4" /> Agregar Residuo
@@ -84,31 +147,35 @@ export const WasteStep = ({ serviceIndex }: { serviceIndex: number }) => {
                   </button>
                 )}
                 
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 pr-8">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Nombre del residuo</label>
-                    <input 
-                      type="text" 
-                      placeholder="Ej. Cartón, Aceite..."
-                      className="w-full px-3 py-2 border rounded-md bg-white" 
-                      {...register(`services.${serviceIndex}.wastes.${index}.name` as const)} 
-                    />
-                    {errors.services?.[serviceIndex]?.wastes?.[index]?.name && (
-                      <p className="text-red-500 text-xs mt-1">{errors.services[serviceIndex].wastes[index]?.name?.message}</p>
-                    )}
-                  </div>
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 pr-8">
+                  
+                  {/* 1. NOMBRE */}
+                  <ResidueAutocomplete
+                    residues={residues}
+                    serviceIndex={serviceIndex}
+                    index={index}
+                    setValue={setValue}
+                    registerName={register(`services.${serviceIndex}.wastes.${index}.name` as const)}
+                    error={errors.services?.[serviceIndex]?.wastes?.[index]?.name}
+                  />
 
+                  {/* 2. CLASIFICACIÓN (TIPO) */}
                   <div>
                     <label className="block text-xs font-medium text-gray-500 mb-1">Clasificación</label>
                     <select className="w-full px-3 py-2 border rounded-md bg-white" {...register(`services.${serviceIndex}.wastes.${index}.type` as const)}>
-                      <option value="domestic">Doméstico</option>
-                      <option value="organic">Orgánico</option>
-                      <option value="recyclable">Reciclable</option>
-                      <option value="hazardous">Peligroso</option>
-                      <option value="bulky">Voluminoso</option>
+                      {RESIDUE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
                   </div>
 
+                  {/* 3. UNIDAD (MOVIDO AQUÍ) */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Unidad</label>
+                    <select className="w-full px-3 py-2 border rounded-md bg-white" {...register(`services.${serviceIndex}.wastes.${index}.unit` as const)}>
+                      {UNIT_TYPES.map(u => <option key={u} value={u}>{u}</option>)}
+                    </select>
+                  </div>
+
+                  {/* 4. CANTIDAD (MOVIDO AQUÍ) */}
                   <div>
                     <label className="block text-xs font-medium text-gray-500 mb-1">Cantidad</label>
                     <input 
@@ -122,16 +189,21 @@ export const WasteStep = ({ serviceIndex }: { serviceIndex: number }) => {
                     )}
                   </div>
 
+                  {/* 5. PRECIO UNITARIO */}
                   <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Unidad</label>
-                    <select className="w-full px-3 py-2 border rounded-md bg-white" {...register(`services.${serviceIndex}.wastes.${index}.unit` as const)}>
-                      <option value="kg">kg</option>
-                      <option value="ton">ton</option>
-                      <option value="m3">m³</option>
-                      <option value="containers">contenedores</option>
-                      <option value="trips">viajes</option>
-                    </select>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Precio Unitario ($)</label>
+                    <input 
+                      type="number" 
+                      step="0.01" 
+                      min="0"
+                      className="w-full px-3 py-2 border rounded-md bg-white" 
+                      {...register(`services.${serviceIndex}.wastes.${index}.pricePerUnit` as const, { valueAsNumber: true })} 
+                    />
+                    {errors.services?.[serviceIndex]?.wastes?.[index]?.pricePerUnit && (
+                      <p className="text-red-500 text-xs mt-1">{errors.services[serviceIndex].wastes[index]?.pricePerUnit?.message}</p>
+                    )}
                   </div>
+
                 </div>
               </div>
             ))}

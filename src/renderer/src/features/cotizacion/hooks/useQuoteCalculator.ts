@@ -12,7 +12,8 @@ export const useQuoteCalculator = (control: Control<QuoteFormValues>) => {
       vehicles: 0,
       crew: 0,
       supplies: 0,
-      extras: 0
+      extras: 0,
+      wastes: 0
     }
   });
 
@@ -29,6 +30,7 @@ export const useQuoteCalculator = (control: Control<QuoteFormValues>) => {
     let totalCrew = 0;
     let totalSupplies = 0;
     let totalExtras = 0;
+    let totalWastes = 0;
 
     const safeNum = (val: any) => {
       const num = Number(val);
@@ -55,9 +57,13 @@ export const useQuoteCalculator = (control: Control<QuoteFormValues>) => {
       service.extraCosts?.forEach(e => {
         totalExtras += safeNum(e.amount);
       });
+
+      service.wastes?.forEach(w => {
+        totalWastes += safeNum(w.quantity) * safeNum(w.pricePerUnit);
+      });
     });
 
-    const subtotal = totalLogistics + totalVehicles + totalCrew + totalSupplies + totalExtras;
+    const subtotal = totalLogistics + totalVehicles + totalCrew + totalSupplies + totalExtras + totalWastes;
     const iva = subtotal * 0.16;
 
     setTotals({
@@ -69,7 +75,8 @@ export const useQuoteCalculator = (control: Control<QuoteFormValues>) => {
         vehicles: totalVehicles,
         crew: totalCrew,
         supplies: totalSupplies,
-        extras: totalExtras
+        extras: totalExtras,
+        wastes: totalWastes
       }
     });
   }, [services]);

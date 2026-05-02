@@ -3,28 +3,32 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { QuoteDraft } from '../../../shared/types/Quote';
 import { buildQuoteHtml } from '../../infrastructure/templates/QuoteHtmlTemplate';
+import { getDetailedQuoteHtml } from '../../infrastructure/templates/DetailedQuoteHtmlTemplate'; 
 
 export class GeneratePdfPreviewUseCase {
   
-  async execute(quoteData: QuoteDraft): Promise<{ success: boolean; pdfBase64?: string; error?: string }> {
+  async execute(quoteData: QuoteDraft, isDetailed: boolean = false): Promise<{ success: boolean; pdfBase64?: string; error?: string }> {
     return new Promise(async (resolve) => {
       let printWindow: BrowserWindow | null = null;
 
       try {
-        // ACTUALIZACIÓN: Validamos que exista el arreglo de servicios en lugar del location plano
         if (!quoteData || !quoteData.services || quoteData.services.length === 0) {
           throw new Error('Datos de cotización inválidos o incompletos.');
         }
 
         printWindow = new BrowserWindow({
-          show: false, // 100% invisible
+          show: false,
           webPreferences: { nodeIntegration: false, contextIsolation: true }
         });
 
         const logoBase64 = this.getLocalLogoBase64();
-
-        // Aquí es donde ocurre la verdadera magia visual
-        const htmlContent = buildQuoteHtml(quoteData, logoBase64);
+        
+        let htmlContent = '';
+        if (isDetailed) {
+          htmlContent = getDetailedQuoteHtml(quoteData, logoBase64); 
+        } else {
+          htmlContent = buildQuoteHtml(quoteData, logoBase64);
+        }
 
         await printWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(htmlContent)}`);
 

@@ -9,15 +9,17 @@ vi.mock('react-hook-form', async () => {
     ...actual,
     useFormContext: vi.fn(),
     useFieldArray: vi.fn(),
+    useWatch: vi.fn(), 
   };
 });
 
 describe('WasteStep Component', () => {
-  const mockRegister = vi.fn();
+  const mockRegister = vi.fn((name) => ({ name })); 
   const mockWatch = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(RHF.useWatch).mockReturnValue('' as any); 
   });
 
   // --- AC 1: BASIC RENDERING ---
@@ -44,12 +46,12 @@ describe('WasteStep Component', () => {
     expect(screen.getByText('Frecuencia Global del Contrato')).toBeDefined();
     expect(screen.getByText('Residuos a recolectar en esta sucursal')).toBeDefined();
     expect(screen.getByText('Nombre del residuo')).toBeDefined();
-    expect(screen.getByText('Clasificación')).toBeDefined(); // Cambiado de "Tipo de residuo"
+    expect(screen.getByText('Clasificación')).toBeDefined(); 
 
     expect(mockRegister).toHaveBeenCalledWith('services.0.activity');
     expect(mockRegister).toHaveBeenCalledWith('services.0.wastes.0.name');
     expect(mockRegister).toHaveBeenCalledWith('services.0.wastes.0.type');
-    expect(mockRegister).toHaveBeenCalledWith('services.0.wastes.0.quantity', { valueAsNumber: true }); // Agregado { valueAsNumber: true }
+    expect(mockRegister).toHaveBeenCalledWith('services.0.wastes.0.quantity', { valueAsNumber: true }); 
     expect(mockRegister).toHaveBeenCalledWith('services.0.wastes.0.unit');
   });
 
@@ -72,12 +74,6 @@ describe('WasteStep Component', () => {
 
     expect(screen.getByRole('option', { name: 'Recolección' })).toBeDefined();
     expect(screen.getByRole('option', { name: 'Disposición Final' })).toBeDefined();
-    
-    expect(screen.getByRole('option', { name: 'Doméstico' })).toBeDefined();
-    expect(screen.getByRole('option', { name: 'Peligroso' })).toBeDefined();
-    
-    expect(screen.getByRole('option', { name: 'kg' })).toBeDefined();
-    expect(screen.getByRole('option', { name: 'm³' })).toBeDefined();
     
     expect(screen.getByRole('option', { name: 'Diaria' })).toBeDefined();
     expect(screen.getByRole('option', { name: 'Evento Único' })).toBeDefined();

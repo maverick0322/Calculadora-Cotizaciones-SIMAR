@@ -1,10 +1,19 @@
+import { useState } from 'react';
 import { QuoteFormValues } from "../../../../../shared/schemas/quoteSchema";
+import toast from 'react-hot-toast';
+import { FileText, List } from 'lucide-react';
+import { PdfPreviewModal } from './PdfPreviewModal';
 
 interface SummaryStepProps {
   data: QuoteFormValues;
 }
 
 export const SummaryStep = ({ data }: SummaryStepProps) => {
+  // --- Estados para el Modal de PDF ---
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [pdfBase64, setPdfBase64] = useState<string | null>(null);
+  const [currentFolio, setCurrentFolio] = useState<string>('');
+
   const getFrequencyString = () => {
     const f = data.frequency;
     if (f.type === 'one_time') return 'Evento Único';
@@ -26,6 +35,72 @@ export const SummaryStep = ({ data }: SummaryStepProps) => {
     collection: 'Recolección', transport: 'Transporte', transfer: 'Transferencia', final_disposal: 'Disposición Final'
   };
 
+  const calculateTotals = () => {
+    let calcSubtotal = 0;
+    
+    data.services.forEach(service => {
+      service.wastes.forEach(w => calcSubtotal += (Number(w.quantity) * Number(w.pricePerUnit || 0)));
+      service.vehicles.forEach(v => calcSubtotal += (Number(v.quantity) * Number(v.unitPrice || 0)));
+      service.crew.forEach(c => calcSubtotal += (Number(c.quantity) * Number(c.dailySalary || 0)));
+      service.supplies.forEach(s => calcSubtotal += (Number(s.quantity) * Number(s.unitPrice || 0)));
+      service.extraCosts.forEach(e => calcSubtotal += Number(e.amount || 0));
+      
+      if (service.logistics) {
+        const fuel = Number(service.logistics.fuelLiters || 0) * Number(service.logistics.fuelPricePerLiter || 0);
+        const tolls = Number(service.logistics.totalTollCost || 0);
+        const viaticos = Number(service.logistics.viaticos || 0);
+        calcSubtotal += (fuel + tolls + viaticos);
+      }
+    });
+
+    return { 
+      subtotal: calcSubtotal, 
+      total: calcSubtotal * 1.16 
+    };
+  };
+
+  const handleGeneratePdf = async (detailed: boolean) => {
+    const toastId = toast.loading('Generando documento PDF...');
+    setIsModalOpen(true); 
+    setPdfBase64(null);
+
+    try {
+      const { subtotal, total } = calculateTotals();
+      const payloadConTotales = { ...data, subtotal, total };
+
+      const response = await window.api.generatePdfPreview({ quoteData: payloadConTotales, isDetailed: detailed });
+      
+      if (response.success && response.pdfBase64) {
+        setPdfBase64(response.pdfBase64); 
+        setCurrentFolio(detailed ? 'Cotizacion_Desglosada' : 'Cotizacion_General');
+        toast.success('Vista previa generada', { id: toastId });
+      } else {
+        setIsModalOpen(false);
+        toast.error(`Error: ${response.error}`, { id: toastId });
+      }
+    } catch (error) {
+      setIsModalOpen(false);
+      toast.error('Error de conexión al generar el PDF', { id: toastId });
+    }
+  };
+
+  const downloadPdf = async () => {
+    if (!pdfBase64) return;
+    const loadingToast = toast.loading('Guardando documento...');
+    try {
+      const result = await window.api.savePdf(pdfBase64, currentFolio);
+      if (result.success) {
+        toast.success('¡PDF guardado correctamente!', { id: loadingToast });
+      } else if (!result.error?.includes('cancelada')) {
+        toast.error(result.error || 'No se pudo guardar el archivo', { id: loadingToast });
+      } else {
+        toast.dismiss(loadingToast);
+      }
+    } catch (error) {
+      toast.error('Error al guardar', { id: loadingToast });
+    }
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in">
       <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
@@ -37,14 +112,13 @@ export const SummaryStep = ({ data }: SummaryStepProps) => {
       <div className="border border-gray-200 rounded-lg p-5 bg-white shadow-sm">
         <h4 className="font-semibold text-gray-900 border-b pb-2 mb-4">Datos Generales del Contrato</h4>
         <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
-          <div className="flex justify-between"><dt className="text-gray-500">Cliente:</dt> <dd className="font-medium text-gray-900 text-right">{data.clientName}</dd></div>
+          <div className="flex justify-between"><dt className="text-gray-500">Cliente:</dt> <dd className="font-medium text-gray-900 text-right">{data.clientName || 'Sin especificar'}</dd></div>
           <div className="flex justify-between"><dt className="text-gray-500">RFC:</dt> <dd className="font-medium text-gray-900 text-right uppercase">{data.clientRfc}</dd></div>
           <div className="flex justify-between"><dt className="text-gray-500">Vigencia:</dt> <dd className="font-medium text-blue-600 text-right">{data.validityDays} Días</dd></div>
           <div className="flex justify-between"><dt className="text-gray-500">Frecuencia Global:</dt> <dd className="font-medium text-gray-900 text-right">{getFrequencyString()}</dd></div>
         </dl>
       </div>
 
-      {/* ITERACIÓN MULTISERVICIO */}
       {data.services.map((service, index) => (
         <div key={service.id || index} className="border-2 border-gray-100 rounded-xl overflow-hidden shadow-sm">
           <div className="bg-gray-50 px-5 py-3 border-b border-gray-200">
@@ -54,7 +128,6 @@ export const SummaryStep = ({ data }: SummaryStepProps) => {
           
           <div className="p-5 bg-white grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             
-            {/* Col 1: Logística */}
             <div>
               <h5 className="text-xs font-bold text-gray-500 uppercase border-b pb-1 mb-2">Logística</h5>
               <dl className="space-y-1 text-sm">
@@ -65,7 +138,6 @@ export const SummaryStep = ({ data }: SummaryStepProps) => {
               </dl>
             </div>
 
-            {/* Col 2: Residuos y Operación */}
             <div>
               <h5 className="text-xs font-bold text-gray-500 uppercase border-b pb-1 mb-2">Residuos a Recolectar</h5>
               <ul className="space-y-2 mb-4">
@@ -92,7 +164,6 @@ export const SummaryStep = ({ data }: SummaryStepProps) => {
               </div>
             </div>
 
-            {/* Col 3: Insumos y Costos */}
             <div>
               <h5 className="text-xs font-bold text-gray-500 uppercase border-b pb-1 mb-2">Insumos / Extras</h5>
               <div className="text-sm space-y-1">
@@ -119,6 +190,42 @@ export const SummaryStep = ({ data }: SummaryStepProps) => {
           </div>
         </div>
       ))}
+
+      <div className="flex flex-col items-center gap-4 p-6 bg-blue-50 rounded-xl border border-blue-200 mt-6 shadow-inner">
+        <h3 className="font-semibold text-blue-900">Vista Previa del Documento</h3>
+        <div className="flex flex-wrap justify-center gap-4">
+          <button
+            type="button"
+            onClick={() => handleGeneratePdf(false)}
+            className="px-6 py-2 bg-white text-blue-700 border border-blue-300 rounded-lg hover:bg-blue-100 transition-all shadow-sm flex items-center gap-2"
+          >
+            <FileText className="w-4 h-4" />
+            PDF General
+          </button>
+          
+          <button
+            type="button"
+            onClick={() => handleGeneratePdf(true)}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-md flex items-center gap-2"
+          >
+            <List className="w-4 h-4" />
+            PDF Desglosado
+          </button>
+        </div>
+        <p className="text-xs text-blue-600 italic">
+          * El PDF Desglosado incluye una tabla de precios unitarios por cada residuo e insumo.
+        </p>
+      </div>
+
+      {/* Renderizamos el Modal */}
+      <PdfPreviewModal 
+        isOpen={isModalOpen}
+        isLoading={pdfBase64 === null}
+        pdfBase64={pdfBase64}
+        onClose={() => setIsModalOpen(false)}
+        onDownload={downloadPdf}
+      />
+
     </div>
   );
 };

@@ -12,10 +12,13 @@ interface RawQuoteRow {
   folio: string | null;
   client_name: string;
   client_rfc: string;
+  contact_name: string | null;
+  contact_phone: string | null;
+  contact_email: string | null;
   validity_days: number;
   frequency_json: string;
   services_json: string;
-  subtotal: number; // <-- Nuevo
+  subtotal: number;
   total: number;
   created_at: number;
   status: string;
@@ -30,6 +33,9 @@ export class SqliteQuoteRepository implements IQuoteRepository {
     const params = {
       clientName: quote.clientName,
       clientRfc: quote.clientRfc,
+      contactName: quote.contactName || '',
+      contactPhone: quote.contactPhone || '',
+      contactEmail: quote.contactEmail || '',
       validityDays: quote.validityDays,
       frequencyJson: JSON.stringify(quote.frequency),
       servicesJson: JSON.stringify(quote.services),
@@ -44,6 +50,9 @@ export class SqliteQuoteRepository implements IQuoteRepository {
         UPDATE quotes SET
           client_name = @clientName,
           client_rfc = @clientRfc,
+          contact_name = @contactName,
+          contact_phone = @contactPhone,
+          contact_email = @contactEmail,
           validity_days = @validityDays,
           frequency_json = @frequencyJson,
           services_json = @servicesJson,
@@ -59,11 +68,13 @@ export class SqliteQuoteRepository implements IQuoteRepository {
     
     const stmt = this.db.prepare(`
       INSERT INTO quotes (
-        client_name, client_rfc, validity_days, frequency_json, 
-        services_json, subtotal, total, created_at, status, replaces_quote_id
+        client_name, client_rfc, contact_name, contact_phone, contact_email, 
+        validity_days, frequency_json, services_json, 
+        subtotal, total, created_at, status, replaces_quote_id
       ) VALUES (
-        @clientName, @clientRfc, @validityDays, @frequencyJson, 
-        @servicesJson, @subtotal, @total, @createdAt, 'draft', @replacesQuoteId
+        @clientName, @clientRfc, @contactName, @contactPhone, @contactEmail, 
+        @validityDays, @frequencyJson, @servicesJson, 
+        @subtotal, @total, @createdAt, 'draft', @replacesQuoteId
       )
     `);
 
@@ -75,8 +86,8 @@ export class SqliteQuoteRepository implements IQuoteRepository {
     return rows.map(row => {
       const services: ServiceItem[] = JSON.parse(row.services_json || '[]');
       
-      const loc = services[0].location;
-      const firstLocation = services.length > 0 
+      const loc = services[0]?.location;
+      const firstLocation = (loc && services.length > 0)
         ? `${loc.street}, ${loc.neighborhood}, ${loc.municipality}, ${loc.state}` 
         : 'Sin dirección';
 
@@ -135,10 +146,13 @@ export class SqliteQuoteRepository implements IQuoteRepository {
       replacesQuoteId: row.replaces_quote_id || undefined,
       clientName: row.client_name,
       clientRfc: row.client_rfc,
+      contactName: row.contact_name || '',
+      contactPhone: row.contact_phone || '',
+      contactEmail: row.contact_email || '',
       validityDays: row.validity_days,
       frequency: JSON.parse(row.frequency_json || '{}'),
       services: JSON.parse(row.services_json || '[]'),
-      subtotal: row.subtotal, // <-- Extraer el dinero
+      subtotal: row.subtotal,
       total: row.total,
       createdAt: row.created_at,
       status: row.status as QuoteStatus

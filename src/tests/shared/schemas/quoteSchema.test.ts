@@ -3,10 +3,12 @@ import { quoteSchema } from '../../../shared/schemas/quoteSchema';
 
 describe('quoteSchema Validation', () => {
   
-  // Objeto base que cumple AL 100% con tu interfaz QuoteDraft y ServiceItem
   const getValidBasePayload = (): any => ({
     clientName: 'Empresa Test SA de CV',
     clientRfc: 'TEST010203XXX',
+    contactName: 'Juan Pérez',
+    contactPhone: '2288123456', 
+    contactEmail: 'juan@empresatest.com',
     validityDays: 15,
     frequency: { type: 'weekly' },
     services: [
@@ -15,7 +17,7 @@ describe('quoteSchema Validation', () => {
         activity: 'collection',
         location: { street: 'Av. Lazaro Cardenas 100', municipality: 'Xalapa', neighborhood: 'Centro', state: 'Veracruz' },
         wastes: [
-          { type: 'domestic', name: 'Basura general', quantity: 15.5, unit: 'kg' }
+          { type: 'domestic', name: 'Basura general', quantity: 15.5, unit: 'kg', pricePerUnit: 10 }
         ],
         vehicles: [{ vehicleId: 1, name: 'Camion', quantity: 1, unitPrice: 100 }], 
         crew: [{ type: 'driver', quantity: 1, dailySalary: 200 }],
@@ -45,7 +47,6 @@ describe('quoteSchema Validation', () => {
     });
 
     it('should validate successfully when the optional trip object is completely missing', () => {
-      // Borramos las propiedades opcionales de logística (peajes)
       const payload = getValidBasePayload();
       delete payload.services[0].logistics.roadType;
       delete payload.services[0].logistics.tolls;
@@ -74,10 +75,10 @@ describe('quoteSchema Validation', () => {
     });
   });
 
-  describe('Enums Validation', () => {
-    it('should fail when an invalid waste type is provided', () => {
+  describe('Waste Details Validation', () => {
+    it('should fail when waste type is completely empty', () => {
       const payload = getValidBasePayload();
-      payload.services[0].wastes[0].type = 'radioactive'; 
+      payload.services[0].wastes[0].type = ''; 
 
       const result = quoteSchema.safeParse(payload);
       expect(result.success).toBe(false);
@@ -85,16 +86,13 @@ describe('quoteSchema Validation', () => {
   });
 
   describe('Volume Quantity Coercion and Validation', () => {
-    it('should successfully coerce a string number to a real number', () => {
+    it('should fail when volume quantity is provided as a string (requires strict number)', () => {
       const payload = getValidBasePayload();
       payload.services[0].wastes[0].quantity = "25.5"; 
       
       const result = quoteSchema.safeParse(payload);
       
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.services[0].wastes[0].quantity).toBe(25.5);
-      }
+      expect(result.success).toBe(false);
     });
 
     it('should fail when volume quantity is 0 or negative', () => {

@@ -11,6 +11,9 @@ export const useQuoteForm = (editId?: number | null) => {
     defaultValues: {
       clientName: '',
       clientRfc: '',
+      contactName: '',  
+      contactPhone: '',
+      contactEmail: '',
       validityDays: 15,
       frequency: {
         type: 'one_time',
@@ -44,7 +47,6 @@ export const useQuoteForm = (editId?: number | null) => {
     }
   });
 
-  // MAGIA MULTISERVICIO: Controlamos el arreglo de servicios dinámicamente
   const { fields: serviceFields, append: appendService, remove: removeService } = useFieldArray({
     control: form.control,
     name: 'services'
@@ -55,7 +57,7 @@ export const useQuoteForm = (editId?: number | null) => {
       id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
       activity: 'collection',
       location: { street: '', municipality: '', neighborhood: '', state: '' },
-      wastes: [{ name: '', type: 'domestic', quantity: 1, unit: 'kg' }],
+      wastes: [{ name: '', type: 'Sólido Urbano (RSU)', quantity: 1, unit: 'Kilogramo', pricePerUnit: 0 }],
       vehicles: [],
       crew: [],
       supplies: [],
@@ -92,6 +94,9 @@ export const useQuoteForm = (editId?: number | null) => {
           form.reset({
             clientName: draft.clientName,
             clientRfc: draft.clientRfc,
+            contactName: draft.contactName || '',
+            contactPhone: draft.contactPhone || '',
+            contactEmail: draft.contactEmail || '',
             validityDays: draft.validityDays,
             frequency: draft.frequency,
             services: draft.services 
@@ -102,6 +107,7 @@ export const useQuoteForm = (editId?: number | null) => {
           toast.error('No se pudo cargar el borrador', { id: toastId });
         }
       } catch (error) {
+        console.error('Failed to fetch draft:', error);
         toast.error(`Error de conexión`, { id: toastId });
       }
     };
@@ -131,6 +137,9 @@ export const useQuoteForm = (editId?: number | null) => {
         createdAt: Date.now(),
         clientName: data.clientName,
         clientRfc: data.clientRfc,
+        contactName: data.contactName,   
+        contactPhone: data.contactPhone,
+        contactEmail: data.contactEmail,
         validityDays: data.validityDays,
         frequency: data.frequency,
         services: cleanedServices,
@@ -142,6 +151,8 @@ export const useQuoteForm = (editId?: number | null) => {
       const response = await window.api.saveDraft(payload);
       return response.success;
     } catch (error) {
+      console.error('Failed to save draft:', error);
+      toast.error('No se pudo guardar el borrador');
       return false;
     }
   };
