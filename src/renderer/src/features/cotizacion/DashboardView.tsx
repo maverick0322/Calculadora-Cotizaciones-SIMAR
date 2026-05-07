@@ -1,9 +1,9 @@
-import { Pencil, FileText, AlertTriangle } from 'lucide-react';
+import { Pencil, FileText, AlertTriangle, Search } from 'lucide-react';
 import { QuoteSummary } from '../../../../shared/types/Quote';
 import { useDrafts } from './hooks/useDrafts';
 import { usePdfWorkflow } from './hooks/usePdfWorkflow';
 import { PdfPreviewModal } from './components/PdfPreviewModal';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 const statusTranslations: Record<string, string> = {
   draft: 'Borrador',
@@ -14,6 +14,9 @@ const statusTranslations: Record<string, string> = {
 export const DashboardView = ({ onEditClick, onQuoteIssued }: { onEditClick: (id: number) => void, onQuoteIssued?: () => void }) => {  
   const { drafts, loading, fetchDrafts } = useDrafts();
   const [quoteToEmit, setQuoteToEmit] = useState<number | null>(null);
+  
+  // 👇 Nuevo estado para el buscador
+  const [searchTerm, setSearchTerm] = useState('');
 
   const { 
     isModalOpen, 
@@ -39,15 +42,46 @@ export const DashboardView = ({ onEditClick, onQuoteIssued }: { onEditClick: (id
     setQuoteToEmit(id); 
   };
 
+  // 👇 Lógica de filtrado en tiempo real (Súper rápida gracias a useMemo)
+  const filteredDrafts = useMemo(() => {
+    if (!searchTerm.trim()) return drafts;
+    
+    const lowerTerm = searchTerm.toLowerCase();
+    return drafts.filter((draft: QuoteSummary) => {
+      // Filtramos por Folio, Dirección (que a veces incluye el cliente) o Residuos
+      const matchFolio = draft.folio?.toLowerCase().includes(lowerTerm) || String(draft.id).includes(lowerTerm);
+      const matchLocation = draft.location?.toLowerCase().includes(lowerTerm);
+      const matchWastes = draft.wastesSummary?.toLowerCase().includes(lowerTerm);
+      
+      return matchFolio || matchLocation || matchWastes;
+    });
+  }, [drafts, searchTerm]);
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-1">
-          Borradores recientes
-        </h1>
-        <p className="text-sm text-gray-500">
-          Administra tus borradores editables
-        </p>
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900 mb-1">
+            Borradores recientes
+          </h1>
+          <p className="text-sm text-gray-500">
+            Administra tus borradores editables
+          </p>
+        </div>
+        
+        {/* 👇 Barra de búsqueda UI */}
+        <div className="relative max-w-md w-full sm:w-72">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
+            placeholder="Buscar por folio, cliente o residuo..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
@@ -68,11 +102,18 @@ export const DashboardView = ({ onEditClick, onQuoteIssued }: { onEditClick: (id
               {loading && (
                 <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">Cargando borradores...</td></tr>
               )}
+              
               {!loading && drafts.length === 0 && (
                 <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">No se encontraron borradores. ¡Crea uno nuevo!</td></tr>
               )}
 
-              {drafts.map((draft: QuoteSummary) => {
+              {/* 👇 Mensaje de estado vacío para cuando la búsqueda no coincide */}
+              {!loading && drafts.length > 0 && filteredDrafts.length === 0 && (
+                <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">No hay resultados para "{searchTerm}".</td></tr>
+              )}
+
+              {/* 👇 Mapeamos sobre filteredDrafts en lugar de drafts */}
+              {filteredDrafts.map((draft: QuoteSummary) => {
                 const dateToShow = draft.createdAt ? formatDate(Number(draft.createdAt)) : 'Fecha desconocida';
                 const locationToShow = draft.location || 'Sin dirección';
                 
