@@ -164,8 +164,19 @@ export const initDatabase = () => {
             created_at INTEGER NOT NULL
         );
 
+        CREATE TABLE IF NOT EXISTS user_clients_directory (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            client_name VARCHAR NOT NULL,
+            client_rfc VARCHAR,
+            contact_name VARCHAR,
+            contact_phone VARCHAR,
+            contact_email VARCHAR,
+            last_used_at INTEGER NOT NULL
+        );
+
         CREATE INDEX IF NOT EXISTS idx_locations_cp ON catalog_locations(cp);
         CREATE INDEX IF NOT EXISTS idx_municipalities_state ON catalog_municipalities(state_id);
+        CREATE INDEX IF NOT EXISTS idx_clients_name ON user_clients_directory(client_name);
     `;
 
     db.exec(schema);

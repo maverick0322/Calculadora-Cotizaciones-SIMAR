@@ -21,6 +21,7 @@ declare global {
       getLocations: (action: 'states' | 'municipalities' | 'colonies' | 'byCP', payload?: any) => Promise<{ success: boolean, data?: any, error?: string }>;
       addCustomLocation: (data: any) => Promise<{ success: boolean, id?: number, error?: string }>;
       manageResidues: (action: 'add' | 'delete' | 'updatePrice' | 'get', payload?: any) => Promise<any>;
+      manageClientDirectory: (action: 'search' | 'upsert', payload?: any) => Promise<any>;
     }
   }
 }
@@ -42,6 +43,7 @@ const api = {
   getLocations: (action: string, payload?: any) => ipcRenderer.invoke('get-locations', { action, payload }),
   addCustomLocation: (data: any) => ipcRenderer.invoke('add-custom-location', data),
   manageResidues: (action, payload) => ipcRenderer.invoke('residues:manage', { action, payload }),
+  manageClientDirectory: (action, payload) => ipcRenderer.invoke('clients:manage', { action, payload }),
 };
 
 if (process.contextIsolated) {

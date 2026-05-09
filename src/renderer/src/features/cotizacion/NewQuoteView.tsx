@@ -9,6 +9,7 @@ import { TripStep } from './components/TripStep';
 import { SummaryStep } from './components/SummaryStep';
 import { VehiclesAndCrewStep } from './components/VehiclesAndCrewStep';
 import { SuppliesStep } from './components/SuppliesStep';
+import { ClientInfoStep } from './components/ClientInfoStep'; // <-- IMPORT AGREGADO
 import { useQuoteCalculator } from './hooks/useQuoteCalculator';
 import { Save, ArrowLeft, CheckCircle, Plus, Trash2 } from 'lucide-react';
 
@@ -29,6 +30,9 @@ export const NewQuoteView = ({ editId, onSaveSuccess }: INewQuoteViewProps) => {
   
   const [isReviewMode, setIsReviewMode] = useState(false);
   const [activeTab, setActiveTab] = useState(0); 
+  
+  // <-- ESTADO DEL CHECKBOX AGREGADO -->
+  const [saveClientToDirectory, setSaveClientToDirectory] = useState(true);
   
   const [catalogs, setCatalogs] = useState<CatalogData>({ warehouses: [], vehicles: [], supplies: [] });
 
@@ -60,6 +64,17 @@ export const NewQuoteView = ({ editId, onSaveSuccess }: INewQuoteViewProps) => {
       if (!isSuccess) {
         toast.error('Error al guardar el borrador. Revisa tu conexión.', { id: toastId });
         return;
+      }
+
+      // <-- LLAMADA IPC PARA GUARDAR AL CLIENTE AGREGADA -->
+      if (saveClientToDirectory && data.clientName) {
+        await window.api.manageClientDirectory('upsert', {
+          clientName: data.clientName,
+          clientRfc: data.clientRfc,
+          contactName: data.contactName,
+          contactPhone: data.contactPhone,
+          contactEmail: data.contactEmail,
+        });
       }
 
       toast.success(editId ? '¡Borrador actualizado!' : '¡Borrador guardado exitosamente!', { id: toastId });
@@ -103,64 +118,11 @@ export const NewQuoteView = ({ editId, onSaveSuccess }: INewQuoteViewProps) => {
                {/* Usamos 3 columnas: 2 para el cliente, 1 para la vigencia */}
                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                  
-                 {/* Columna Izquierda/Centro: Datos del Cliente (Espacio para Ana) */}
-                 <div className="lg:col-span-2">
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                     
-                     <div>
-                       <label className="block text-sm font-medium text-gray-700 mb-1">Razón Social</label>
-                       <input 
-                         {...form.register('clientName')} 
-                         className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none" 
-                         placeholder="Ej. Empresa SA de CV" 
-                       />
-                       {form.formState.errors.clientName && <p className="text-red-500 text-xs mt-1">{form.formState.errors.clientName.message}</p>}
-                     </div>
-
-                     <div>
-                       <label className="block text-sm font-medium text-gray-700 mb-1">RFC</label>
-                       <input 
-                         {...form.register('clientRfc')} 
-                         className="w-full px-3 py-2 border rounded-md uppercase focus:ring-2 focus:ring-blue-500 outline-none" 
-                         placeholder="XAXX010101000" 
-                       />
-                       {form.formState.errors.clientRfc && <p className="text-red-500 text-xs mt-1">{form.formState.errors.clientRfc.message}</p>}
-                     </div>
-
-                     <div>
-                       <label className="block text-sm font-medium text-gray-700 mb-1">Nombre del Responsable</label>
-                       <input 
-                         {...form.register('contactName')} 
-                         className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none" 
-                         placeholder="Ej. Ing. Juan Pérez" 
-                       />
-                       {form.formState.errors.contactName && <p className="text-red-500 text-xs mt-1">{form.formState.errors.contactName.message}</p>}
-                     </div>
-
-                     <div>
-                       <label className="block text-sm font-medium text-gray-700 mb-1">Número de Teléfono</label>
-                       <input 
-                         type="tel"
-                         {...form.register('contactPhone')} 
-                         className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none" 
-                         placeholder="Ej. 228 123 4567" 
-                       />
-                       {form.formState.errors.contactPhone && <p className="text-red-500 text-xs mt-1">{form.formState.errors.contactPhone.message}</p>}
-                     </div>
-
-                     <div className="md:col-span-2">
-                       <label className="block text-sm font-medium text-gray-700 mb-1">Correo del Responsable</label>
-                       <input 
-                         type="email"
-                         {...form.register('contactEmail')} 
-                         className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none" 
-                         placeholder="Ej. juan.perez@empresa.com" 
-                       />
-                       {form.formState.errors.contactEmail && <p className="text-red-500 text-xs mt-1">{form.formState.errors.contactEmail.message}</p>}
-                     </div>
-
-                   </div>
-                 </div>
+                 {/* <-- AQUÍ REEMPLAZAMOS TODOS LOS INPUTS VIEJOS POR EL NUEVO COMPONENTE --> */}
+                 <ClientInfoStep 
+                   saveClient={saveClientToDirectory} 
+                   setSaveClient={setSaveClientToDirectory} 
+                 />
 
                  <div className="lg:col-span-1">
                    <div className="bg-blue-50/50 p-5 rounded-lg border border-blue-100 h-full flex flex-col justify-center">

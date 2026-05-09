@@ -29,6 +29,7 @@ import { RegisterWorkerUseCase } from './application/useCases/RegisterWorkerUseC
 
 import { quoteSchema } from '../shared/schemas/quoteSchema';
 import { registerResidueHandlers } from './ipc/residueHandlers';
+import { registerClientDirectoryHandlers } from './ipc/clientDirectoryHandlers';
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -212,6 +213,7 @@ app.whenReady().then(() => {
   
   registerLocationHandlers();
   registerResidueHandlers();
+  registerClientDirectoryHandlers();
 
   createWindow()
 
