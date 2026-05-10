@@ -2,6 +2,7 @@ import Database from 'better-sqlite3';
 import type { Database as DatabaseType } from 'better-sqlite3';
 import { app } from 'electron';
 import path from 'path';
+import residuosCatalog from './catalogo_residuos.json';
 
 const dbPath = path.join(app.getPath('userData'), 'gestor_residuos.sqlite');
 const db: DatabaseType = new Database(dbPath, {});
@@ -128,6 +129,8 @@ export const initDatabase = () => {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             residue_type TEXT NOT NULL,
+            classification TEXT, 
+            clave TEXT,          
             unit TEXT NOT NULL,
             base_price DECIMAL NOT NULL DEFAULT 0,
             is_active INTEGER DEFAULT 1
@@ -214,6 +217,20 @@ export const initDatabase = () => {
                 const insertWarehouse = db.prepare(`INSERT INTO catalog_warehouses (name, address) VALUES (?, ?)`);
                 insertWarehouse.run('Almacén Central SIMAR', 'Av. de las Industrias S/N, Zona Industrial');
                 insertWarehouse.run('Planta de Tratamiento Norte', 'Carretera Federal Km 15');
+            }
+
+            const residueCount = (db.prepare('SELECT COUNT(*) as count FROM catalog_residues').get() as any).count;
+            if (residueCount === 0) {
+                console.log(`🌱 Sembrando catálogo con ${residuosCatalog.length} residuos especiales...`);
+                
+                const insertResidue = db.prepare(`
+                  INSERT INTO catalog_residues (name, residue_type, classification, clave, unit, base_price) 
+                  VALUES (?, ?, ?, ?, ?, ?)
+                `);
+                
+                for (const r of residuosCatalog) {
+                  insertResidue.run(r.name, r.type, r.classification, r.clave, 'Kilogramo', 0.00);
+                }
             }
         });
 

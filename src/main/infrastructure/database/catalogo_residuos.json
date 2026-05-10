@@ -1,0 +1,1496 @@
+[
+  {
+    "name": "Grava y rocas trituradas",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RR",
+    "clave": "RR-1"
+  },
+  {
+    "name": "Arena y arcillas",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RR",
+    "clave": "RR-2"
+  },
+  {
+    "name": "Corte y serrado de piedra",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RR",
+    "clave": "RR-3"
+  },
+  {
+    "name": "Polvo y arenilla",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RR",
+    "clave": "RR-4"
+  },
+  {
+    "name": "Otros",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RR",
+    "clave": "RR-5"
+  },
+  {
+    "name": "Residuos sin requisitos especiales",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RSA",
+    "clave": "RSA-1"
+  },
+  {
+    "name": "Vendajes",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RSA",
+    "clave": "RSA-2"
+  },
+  {
+    "name": "Ropa",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RSA",
+    "clave": "RSA-3"
+  },
+  {
+    "name": "Pañales",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RSA",
+    "clave": "RSA-4"
+  },
+  {
+    "name": "Toallas sanitarias",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RSA",
+    "clave": "RSA-5"
+  },
+  {
+    "name": "Abatelenguas",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RSA",
+    "clave": "RSA-6"
+  },
+  {
+    "name": "Objetos cortantes y punzocortantes",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RSA",
+    "clave": "RSA-7"
+  },
+  {
+    "name": "Restos anatómicos",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RSA",
+    "clave": "RSA-8"
+  },
+  {
+    "name": "Medicamentos",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RSA",
+    "clave": "RSA-9"
+  },
+  {
+    "name": "Placas radiológicas",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RSA",
+    "clave": "RSA-10"
+  },
+  {
+    "name": "Otros",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RSA",
+    "clave": "RSA-11"
+  },
+  {
+    "name": "Lodos de lavado y limpieza",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RGA-PASFA",
+    "clave": "RGA-PASFA-1"
+  },
+  {
+    "name": "Tejidos animales y cadáveres",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RGA-PASFA",
+    "clave": "RGA-PASFA-2"
+  },
+  {
+    "name": "Tejidos vegetales",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RGA-PASFA",
+    "clave": "RGA-PASFA-3"
+  },
+  {
+    "name": "Heces, orina y estiércol",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RGA-PASFA",
+    "clave": "RGA-PASFA-4"
+  },
+  {
+    "name": "Residuos agroquímicos",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RGA-PASFA",
+    "clave": "RGA-PASFA-5"
+  },
+  {
+    "name": "Objetos cortantes (no especiales)",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RGA-PASFA",
+    "clave": "RGA-PASFA-6"
+  },
+  {
+    "name": "Medicamentos y hormonas (no especiales)",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RGA-PASFA",
+    "clave": "RGA-PASFA-7"
+  },
+  {
+    "name": "Otros",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RGA-PASFA",
+    "clave": "RGA-PASFA-8"
+  },
+  {
+    "name": "Aserín, virutas, madera",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-1"
+  },
+  {
+    "name": "Fibras textiles",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-2"
+  },
+  {
+    "name": "Cueros y pieles curtidas",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-3"
+  },
+  {
+    "name": "Metales (previo CRETI)",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-4"
+  },
+  {
+    "name": "Pinturas y tintas",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-5"
+  },
+  {
+    "name": "Tóner de impresión",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-6"
+  },
+  {
+    "name": "Adhesivos y sellantes",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-7"
+  },
+  {
+    "name": "Cenizas, escorias y polvo",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-8"
+  },
+  {
+    "name": "Partículas de efluentes gaseosos",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-9"
+  },
+  {
+    "name": "Escorias de hornos",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-10"
+  },
+  {
+    "name": "Fibra de vidrio",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-11"
+  },
+  {
+    "name": "Fibras sintéticas (nylon, poliéster)",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-12"
+  },
+  {
+    "name": "Plástico de película (LDPE)",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-13"
+  },
+  {
+    "name": "Plástico rígido (PET, HDPE, PVC, PP)",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-14"
+  },
+  {
+    "name": "Poliuretano",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-15"
+  },
+  {
+    "name": "Unicel (poliestireno expandido)",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-16"
+  },
+  {
+    "name": "Cerámica, ladrillos, tejas",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-17"
+  },
+  {
+    "name": "Limaduras y virutas de metales férreos",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-18"
+  },
+  {
+    "name": "Polvo de metales férreos",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-19"
+  },
+  {
+    "name": "Limaduras de metales no férreos",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-20"
+  },
+  {
+    "name": "Polvo de metales no férreos",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-21"
+  },
+  {
+    "name": "Virutas de plástico",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-22"
+  },
+  {
+    "name": "Soldadura",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-23"
+  },
+  {
+    "name": "Envases de papel y cartón",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-24"
+  },
+  {
+    "name": "Envases de plástico",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-25"
+  },
+  {
+    "name": "Envases de madera",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-26"
+  },
+  {
+    "name": "Envases metálicos",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-27"
+  },
+  {
+    "name": "Envases de vidrio",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-28"
+  },
+  {
+    "name": "Envases textiles",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-29"
+  },
+  {
+    "name": "Envases de hule",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-30"
+  },
+  {
+    "name": "Absorbentes, trapos y ropa protectora",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-31"
+  },
+  {
+    "name": "Neumáticos fuera de uso",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-32"
+  },
+  {
+    "name": "Vehículos (sin líquidos peligrosos)",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-33"
+  },
+  {
+    "name": "Metales ferrosos",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-34"
+  },
+  {
+    "name": "Metales no ferrosos",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-35"
+  },
+  {
+    "name": "Equipos eléctricos y electrónicos",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-36"
+  },
+  {
+    "name": "Cables",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-37"
+  },
+  {
+    "name": "Tierras, piedras y lodos",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-38"
+  },
+  {
+    "name": "Construcción y demolición mezclados",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-39"
+  },
+  {
+    "name": "Bagazo de malta",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-40"
+  },
+  {
+    "name": "Levadura líquida",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-41"
+  },
+  {
+    "name": "Malta seca",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-42"
+  },
+  {
+    "name": "Melanina",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-43"
+  },
+  {
+    "name": "Noryl",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-44"
+  },
+  {
+    "name": "Acetal",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-45"
+  },
+  {
+    "name": "Papel encerado",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-46"
+  },
+  {
+    "name": "Micelio",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-47"
+  },
+  {
+    "name": "Otros",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RINP",
+    "clave": "RINP-48"
+  },
+  {
+    "name": "Llantas fuera de uso",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RST-PAFPA",
+    "clave": "RST-PAFPA-1"
+  },
+  {
+    "name": "Empaques de hule",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RST-PAFPA",
+    "clave": "RST-PAFPA-2"
+  },
+  {
+    "name": "Cables",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RST-PAFPA",
+    "clave": "RST-PAFPA-3"
+  },
+  {
+    "name": "Cartón",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RST-PAFPA",
+    "clave": "RST-PAFPA-4"
+  },
+  {
+    "name": "Materiales férreos",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RST-PAFPA",
+    "clave": "RST-PAFPA-5"
+  },
+  {
+    "name": "Materiales no férreos",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RST-PAFPA",
+    "clave": "RST-PAFPA-6"
+  },
+  {
+    "name": "Plásticos",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RST-PAFPA",
+    "clave": "RST-PAFPA-7"
+  },
+  {
+    "name": "Madera",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RST-PAFPA",
+    "clave": "RST-PAFPA-8"
+  },
+  {
+    "name": "Pintura",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RST-PAFPA",
+    "clave": "RST-PAFPA-9"
+  },
+  {
+    "name": "Vehículos (sin líquidos)",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RST-PAFPA",
+    "clave": "RST-PAFPA-10"
+  },
+  {
+    "name": "Otros",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RST-PAFPA",
+    "clave": "RST-PAFPA-11"
+  },
+  {
+    "name": "Lodos de cárcamos",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RLTAR",
+    "clave": "RLTAR-1"
+  },
+  {
+    "name": "Lodos de rejas",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RLTAR",
+    "clave": "RLTAR-2"
+  },
+  {
+    "name": "Lodos de desarenador",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RLTAR",
+    "clave": "RLTAR-3"
+  },
+  {
+    "name": "Lodos de digestores",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RLTAR",
+    "clave": "RLTAR-4"
+  },
+  {
+    "name": "Lodos de mantenimiento de drenajes",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RLTAR",
+    "clave": "RLTAR-5"
+  },
+  {
+    "name": "Lodos de precipitaciones químicas",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RLTAR",
+    "clave": "RLTAR-6"
+  },
+  {
+    "name": "Lodos de mantenimiento de equipos",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RLTAR",
+    "clave": "RLTAR-7"
+  },
+  {
+    "name": "Otros",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RLTAR",
+    "clave": "RLTAR-8"
+  },
+  {
+    "name": "Cartón",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RDP",
+    "clave": "RDP-1"
+  },
+  {
+    "name": "Madera",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RDP",
+    "clave": "RDP-2"
+  },
+  {
+    "name": "Plásticos",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RDP",
+    "clave": "RDP-3"
+  },
+  {
+    "name": "Empaques y embalajes",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RDP",
+    "clave": "RDP-4"
+  },
+  {
+    "name": "Fibras textiles",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RDP",
+    "clave": "RDP-5"
+  },
+  {
+    "name": "Otros",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RDP",
+    "clave": "RDP-6"
+  },
+  {
+    "name": "Adocreto",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RCA",
+    "clave": "RC-1"
+  },
+  {
+    "name": "Concretos limpios",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RCA",
+    "clave": "RC-2"
+  },
+  {
+    "name": "Concreto armado",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RCA",
+    "clave": "RC-3"
+  },
+  {
+    "name": "Mampostería",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RCA",
+    "clave": "RC-4"
+  },
+  {
+    "name": "Tepetates",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RCA",
+    "clave": "RC-5"
+  },
+  {
+    "name": "Tabiques",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RCA",
+    "clave": "RC-6"
+  },
+  {
+    "name": "Ladrillos",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RCA",
+    "clave": "RC-7"
+  },
+  {
+    "name": "Blocks",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RCA",
+    "clave": "RC-8"
+  },
+  {
+    "name": "Morteros",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RCA",
+    "clave": "RC-9"
+  },
+  {
+    "name": "Suelo orgánico",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RCA",
+    "clave": "RC-10"
+  },
+  {
+    "name": "Suelo y materiales naturales",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RCA",
+    "clave": "RC-11"
+  },
+  {
+    "name": "Otros",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RCA",
+    "clave": "RC-12"
+  },
+  {
+    "name": "Cartón",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RTPII",
+    "clave": "RTPII-1"
+  },
+  {
+    "name": "Hule",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RTPII",
+    "clave": "RTPII-2"
+  },
+  {
+    "name": "Papel",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RTPII",
+    "clave": "RTPII-3"
+  },
+  {
+    "name": "Unicel",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RTPII",
+    "clave": "RTPII-4"
+  },
+  {
+    "name": "Cables",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RTPII",
+    "clave": "RTPII-5"
+  },
+  {
+    "name": "Materiales férreos",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RTPII",
+    "clave": "RTPII-6"
+  },
+  {
+    "name": "Materiales no férreos",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RTPII",
+    "clave": "RTPII-7"
+  },
+  {
+    "name": "Plásticos",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RTPII",
+    "clave": "RTPII-8"
+  },
+  {
+    "name": "Fibras textiles",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RTPII",
+    "clave": "RTPII-9"
+  },
+  {
+    "name": "Piel",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RTPII",
+    "clave": "RTPII-10"
+  },
+  {
+    "name": "Fibras sintéticas",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RTPII",
+    "clave": "RTPII-11"
+  },
+  {
+    "name": "Poliuretano",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RTPII",
+    "clave": "RTPII-12"
+  },
+  {
+    "name": "Madera",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RTPII",
+    "clave": "RTPII-13"
+  },
+  {
+    "name": "Envases",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RTPII",
+    "clave": "RTPII-14"
+  },
+  {
+    "name": "Otros",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RTPII",
+    "clave": "RTPII-15"
+  },
+  {
+    "name": "Restos de alimentos",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RO",
+    "clave": "RO-1"
+  },
+  {
+    "name": "Aceites y grasas comestibles",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RO",
+    "clave": "RO-2"
+  },
+  {
+    "name": "Podas y hojarascas",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RO",
+    "clave": "RO-3"
+  },
+  {
+    "name": "Bagazo",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RO",
+    "clave": "RO-4"
+  },
+  {
+    "name": "Nixtamal",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RO",
+    "clave": "RO-5"
+  },
+  {
+    "name": "Cascarillas de café, cacao, nuez, aguacate",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RO",
+    "clave": "RO-6"
+  },
+  {
+    "name": "Huesos",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RO",
+    "clave": "RO-7"
+  },
+  {
+    "name": "Chocolate",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RO",
+    "clave": "RO-8"
+  },
+  {
+    "name": "Otros",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RO",
+    "clave": "RO-9"
+  },
+  {
+    "name": "Papel",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RI",
+    "clave": "RI-1"
+  },
+  {
+    "name": "Cartón",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RI",
+    "clave": "RI-2"
+  },
+  {
+    "name": "Vidrio de color",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RI",
+    "clave": "RI-3"
+  },
+  {
+    "name": "Vidrio transparente",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RI",
+    "clave": "RI-4"
+  },
+  {
+    "name": "Ropa y trapos",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RI",
+    "clave": "RI-5"
+  },
+  {
+    "name": "Madera",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RI",
+    "clave": "RI-6"
+  },
+  {
+    "name": "Plásticos",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RI",
+    "clave": "RI-7"
+  },
+  {
+    "name": "Loza y cerámica",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RI",
+    "clave": "RI-8"
+  },
+  {
+    "name": "Metales ferrosos",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RI",
+    "clave": "RI-9"
+  },
+  {
+    "name": "Metales no ferrosos",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RI",
+    "clave": "RI-10"
+  },
+  {
+    "name": "Otros",
+    "type": "Residuo de Manejo Especial (RME)",
+    "classification": "RI",
+    "clave": "RI-11"
+  },
+  {
+    "name": "Cubas electrolíticas gastadas de la reducción primaria de aluminio (Tt)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "E1/01"
+  },
+  {
+    "name": "Licor gastado generado por operaciones de acabado del acero (C,Tt)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "E1/02"
+  },
+  {
+    "name": "Lodos y polvos del equipo de control de emisiones en la producción secundaria de plomo (Tt)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "E1/03"
+  },
+  {
+    "name": "Solución gastada de lixiviación ácida en la fundición secundaria de plomo (Tt)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "E1/04"
+  },
+  {
+    "name": "Carbón agotado del tratamiento de aguas residuales que contienen explosivos (R,E)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "E3/01"
+  },
+  {
+    "name": "Lodos del tratamiento de aguas residuales en la fabricación de compuestos iniciadores (Tt)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "E3/02"
+  },
+  {
+    "name": "Residuos de agua rosa-azul y ácidos gastados de la manufactura de TNT (R,E)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "E3/03"
+  },
+  {
+    "name": "Catalizadores gastados de hidrocracking en la refinación de petróleo (I,Tt)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "E4/01"
+  },
+  {
+    "name": "Lodos de separación primaria (aceite/agua/sólidos) en refinación de petróleo (Tt)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "E4/02"
+  },
+  {
+    "name": "Lodos de separación secundaria (emulsionados) de aceite/agua/sólidos (Tt)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "E4/03"
+  },
+  {
+    "name": "Lodos del separador API y cárcamos en refinación de petróleo (Tt)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "E4/04"
+  },
+  {
+    "name": "Lodos de tanques de almacenamiento de hidrocarburos (Tt)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "E4/05"
+  },
+  {
+    "name": "Lodos de limpieza de haces de intercambiador de calor (Tt)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "E4/06"
+  },
+  {
+    "name": "Natas del sistema de flotación con aire disuelto (Tt)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "E4/07"
+  },
+  {
+    "name": "Sólidos de emulsiones de aceites de baja calidad en refinación (Tt)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "E4/08"
+  },
+  {
+    "name": "Fondos de destilación en producción de acetaldehído (C,Tt,I)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "E4/09"
+  },
+  {
+    "name": "Cortes laterales de destilación en producción de acetaldehído (C,Tt,I)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "E4/10"
+  },
+  {
+    "name": "Residuos de procesos con clorados (destilación, fondos pesados, breas) (Tt)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "E4/11"
+  },
+  {
+    "name": "Residuos de pigmentos base cromo y base plomo (Tt)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "E5/01"
+  },
+  {
+    "name": "Residuos del manejo de fibra de asbesto puro (Tt)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "NE-01"
+  },
+  {
+    "name": "Celdas de desecho en la producción de baterías Ni-Cd (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-1/01"
+  },
+  {
+    "name": "Pilas o baterías zinc-óxido de plata usadas (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-1/02"
+  },
+  {
+    "name": "Catalizador gastado de estireno con óxidos de Fe, Cr, K (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-2/01"
+  },
+  {
+    "name": "Catalizador gastado de cloruro de mercurio en producción de cloro (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-2/02"
+  },
+  {
+    "name": "Catalizador gastado de purga de torre en acrilonitrilo (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-2/03"
+  },
+  {
+    "name": "Catalizadores gastados en producción de plásticos y resinas sintéticas (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-2/04"
+  },
+  {
+    "name": "Catalizadores gastados de vehículos automotores (T,C)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-2/05"
+  },
+  {
+    "name": "Escoria de horno en fundición de chatarra de aluminio (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-3/01"
+  },
+  {
+    "name": "Escoria de horno en producción de fósforo (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-3/02"
+  },
+  {
+    "name": "Escoria de horno en producción secundaria de cobre (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-3/03"
+  },
+  {
+    "name": "Escoria de horno en producción secundaria de plomo (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-3/04"
+  },
+  {
+    "name": "Lodos con aceites usados en enfriamiento en galvanoplastia (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-4/01"
+  },
+  {
+    "name": "Lodos de operaciones de decapado y desengrasado (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-4/02"
+  },
+  {
+    "name": "Lodos de baños cromo, niquelado, zincado (T,C)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-4/03"
+  },
+  {
+    "name": "Lodos de ánodo electrolítico en producción primaria de zinc (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-4/04"
+  },
+  {
+    "name": "Lodos del equipo de emisiones en producción de fierro y acero (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-4/05"
+  },
+  {
+    "name": "Lodos del lavador de gases en fundición de aluminio (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-4/06"
+  },
+  {
+    "name": "Lodos en manufactura de aleaciones de níquel (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-4/07"
+  },
+  {
+    "name": "Lodos de purga de plantas de ácido en producción de cobre (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-4/08"
+  },
+  {
+    "name": "Lodos del equipo de emisiones de ferroaleaciones (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-4/09"
+  },
+  {
+    "name": "Lodos de laguna de evaporación en producción de plomo (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-4/10"
+  },
+  {
+    "name": "Lodos del equipo de emisiones en afinado de plomo (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-4/11"
+  },
+  {
+    "name": "Lodos de curtido con cromo (C,R)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-4/12"
+  },
+  {
+    "name": "Lodos de pelambre (depilado) en curtiduría (C,R)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-4/13"
+  },
+  {
+    "name": "Lodos de curtido al cromo (C)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-4/14"
+  },
+  {
+    "name": "Lodos de emisiones de lavado en plásticos y resinas (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-4/15"
+  },
+  {
+    "name": "Lodos de tanques de almacenamiento de monómeros (T,I)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-4/16"
+  },
+  {
+    "name": "Lodos de cabinas de pintura industrial (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-4/17"
+  },
+  {
+    "name": "Lodos de regeneración de aceites gastados (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-4/18"
+  },
+  {
+    "name": "Lodos de separador API en petroquímicos (T,I)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-4/19"
+  },
+  {
+    "name": "Lodos de destilación de solventes (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-4/20"
+  },
+  {
+    "name": "Lodos de tratamiento de aguas de galvanoplastia (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-5/01"
+  },
+  {
+    "name": "Lodos de tratamiento de aguas en baterías plomo-ácido (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-5/02"
+  },
+  {
+    "name": "Lodos de tratamiento de aguas en baterías NiCd (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-5/03"
+  },
+  {
+    "name": "Lodos de producción de ácido fluorhídrico (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-5/04"
+  },
+  {
+    "name": "Polvos de emisiones en producción de hierro y acero (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-6/01"
+  },
+  {
+    "name": "Polvos de emisiones en afinado de plomo (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "NA",
+    "clave": "RP-6/02"
+  },
+  {
+    "name": "Acetona/2-Propanona (I,Tt)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "CRETI",
+    "clave": "H002"
+  },
+  {
+    "name": "Acroleína/2-Propenal (Tt)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "CRETI",
+    "clave": "H003"
+  },
+  {
+    "name": "Aldicarb (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "CRETI",
+    "clave": "H070"
+  },
+  {
+    "name": "Amonio, picrato (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "CRETI",
+    "clave": "H009"
+  },
+  {
+    "name": "Amonio, vanadato (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "CRETI",
+    "clave": "H119"
+  },
+  {
+    "name": "Arsénico, ácido (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "CRETI",
+    "clave": "H010"
+  },
+  {
+    "name": "Arsénico, óxido As2O3 (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "CRETI",
+    "clave": "H012"
+  },
+  {
+    "name": "Arsénico, óxido As2O5 (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "CRETI",
+    "clave": "H011"
+  },
+  {
+    "name": "Carbofurano (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "CRETI",
+    "clave": "H127"
+  },
+  {
+    "name": "Metil paratión/Fosforotioico (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "CRETI",
+    "clave": "H071"
+  },
+  {
+    "name": "Paratión (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "CRETI",
+    "clave": "H089"
+  },
+  {
+    "name": "Cianhídrico, ácido (T)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "CRETI",
+    "clave": "H063"
+  },
+  {
+    "name": "Benceno (I,Tt)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "CRETI",
+    "clave": "T019"
+  },
+  {
+    "name": "Tricloroetileno (Tt)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "CRETI",
+    "clave": "T044"
+  },
+  {
+    "name": "Cresol/metilfenol (Tt)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "CRETI",
+    "clave": "T052"
+  },
+  {
+    "name": "DDT (Tt)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "CRETI",
+    "clave": "T061"
+  },
+  {
+    "name": "Etilo, acetato (I,Tt)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "CRETI",
+    "clave": "T112"
+  },
+  {
+    "name": "Etilo, acrilato (I,Tt)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "CRETI",
+    "clave": "T113"
+  },
+  {
+    "name": "Fenol/metilfenol (Tt)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "CRETI",
+    "clave": "T188"
+  },
+  {
+    "name": "Formaldehído (Tt)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "CRETI",
+    "clave": "T122"
+  },
+  {
+    "name": "Clorobenceno (Tt)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "CRETI",
+    "clave": "T037"
+  },
+  {
+    "name": "Benzo(a)pireno (Tt)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "CRETI",
+    "clave": "T022"
+  },
+  {
+    "name": "Acetilo, cloruro de (C,R,Tt)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "CRETI",
+    "clave": "T006"
+  },
+  {
+    "name": "Bromometano (Tt)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "CRETI",
+    "clave": "T029"
+  },
+  {
+    "name": "Cianuro, sales solubles (Tt)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "CRETI",
+    "clave": "T030"
+  },
+  {
+    "name": "Creosota (Tt)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "CRETI",
+    "clave": "T051"
+  },
+  {
+    "name": "Amoníaco (gas)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "CRETI",
+    "clave": "NA"
+  },
+  {
+    "name": "Aceites lubricantes usados (peligrosos)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "RP-ACEITE",
+    "clave": "NA"
+  },
+  {
+    "name": "Solvente industrial (genérico)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "RP-QUIMICO",
+    "clave": "NA"
+  },
+  {
+    "name": "Baterías de plomo fuera de uso",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "RP-PILA",
+    "clave": "NA"
+  },
+  {
+    "name": "Residuos biológico-infecciosos (hospitalarios)",
+    "type": "Residuo Peligroso (RP)",
+    "classification": "RP-BIOINFECCIOSO",
+    "clave": "NA"
+  },
+  {
+    "name": "Materia orgánica (restos de comida y jardín)",
+    "type": "Residuo Sólido Urbano (RSU)",
+    "classification": "RSU-ORGÁNICO",
+    "clave": "NA"
+  },
+  {
+    "name": "Residuos de poda y jardín",
+    "type": "Residuo Sólido Urbano (RSU)",
+    "classification": "RSU-ORGÁNICO",
+    "clave": "NA"
+  },
+  {
+    "name": "Papel y cartón",
+    "type": "Residuo Sólido Urbano (RSU)",
+    "classification": "RSU-RECICLABLE",
+    "clave": "NA"
+  },
+  {
+    "name": "Vidrio (botellas y envases)",
+    "type": "Residuo Sólido Urbano (RSU)",
+    "classification": "RSU-RECICLABLE",
+    "clave": "NA"
+  },
+  {
+    "name": "Plásticos (envases y artículos de usar y tirar)",
+    "type": "Residuo Sólido Urbano (RSU)",
+    "classification": "RSU-RECICLABLE",
+    "clave": "NA"
+  },
+  {
+    "name": "Metales ferrosos (latas, chatarra)",
+    "type": "Residuo Sólido Urbano (RSU)",
+    "classification": "RSU-RECICLABLE",
+    "clave": "NA"
+  },
+  {
+    "name": "Metales no ferrosos (aluminio, cobre)",
+    "type": "Residuo Sólido Urbano (RSU)",
+    "classification": "RSU-RECICLABLE",
+    "clave": "NA"
+  },
+  {
+    "name": "Ropa, textiles y calzado usados",
+    "type": "Residuo Sólido Urbano (RSU)",
+    "classification": "RSU-RECICLABLE",
+    "clave": "NA"
+  },
+  {
+    "name": "Residuos electrónicos domésticos (aparatos pequeños)",
+    "type": "Residuo Sólido Urbano (RSU)",
+    "classification": "RSU-ELECTRÓNICO",
+    "clave": "NA"
+  },
+  {
+    "name": "Lámparas fluorescentes y de vapor (residuos de iluminación)",
+    "type": "Residuo Sólido Urbano (RSU)",
+    "classification": "RSU-PELIGROSO-DOMÉSTICO",
+    "clave": "NA"
+  },
+  {
+    "name": "Envases de pintura y solventes (residuos químicos)",
+    "type": "Residuo Sólido Urbano (RSU)",
+    "classification": "RSU-PELIGROSO-DOMÉSTICO",
+    "clave": "NA"
+  },
+  {
+    "name": "Baterías y pilas usadas",
+    "type": "Residuo Sólido Urbano (RSU)",
+    "classification": "RSU-PELIGROSO-DOMÉSTICO",
+    "clave": "NA"
+  },
+  {
+    "name": "Medicamentos caducados (residuos químicos)",
+    "type": "Residuo Sólido Urbano (RSU)",
+    "classification": "RSU-PELIGROSO-DOMÉSTICO",
+    "clave": "NA"
+  },
+  {
+    "name": "Residuos voluminosos (muebles, colchones)",
+    "type": "Residuo Sólido Urbano (RSU)",
+    "classification": "RSU-VOLUMINOSO",
+    "clave": "NA"
+  },
+  {
+    "name": "Escombros domésticos (pequeños restos de construcción)",
+    "type": "Residuo Sólido Urbano (RSU)",
+    "classification": "RSU-ESCOMBRO",
+    "clave": "NA"
+  },
+  {
+    "name": "Residuos sanitarios domésticos (pañales, toallas)",
+    "type": "Residuo Sólido Urbano (RSU)",
+    "classification": "RSU-ORGÁNICO",
+    "clave": "NA"
+  },
+  {
+    "name": "Residuos mezclados no separados (basura general)",
+    "type": "Residuo Sólido Urbano (RSU)",
+    "classification": "RSU-INORGÁNICO",
+    "clave": "NA"
+  }
+]

@@ -8,18 +8,19 @@ export const quoteSchema = z.object({
   contactEmail: z.string().email('Formato de correo inválido'),
   validityDays: z.coerce.number().refine(val => val === 15 || val === 30, 'Vigencia debe ser 15 o 30 días'),
 
-  frequency: z.object({
-    type: z.enum(['daily', 'weekly', 'biweekly', 'monthly', 'one_time', 'custom']),
-    duration: z.preprocess(
-      (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)), 
-      z.number().positive().optional()
-    ),
-    customDescription: z.string().optional()
-  }),
-
   services: z.array(z.object({
     id: z.string(),
     activity: z.enum(['collection', 'transport', 'transfer', 'final_disposal']),
+    
+    // 👇 Frecuencia ahora vive aquí adentro, es específica de cada servicio
+    frequency: z.object({
+      type: z.enum(['daily', 'weekly', 'biweekly', 'monthly', 'one_time', 'custom']),
+      duration: z.preprocess(
+        (val) => (val === '' || val === null || val === undefined ? undefined : Number(val)), 
+        z.number().positive().optional()
+      ),
+      customDescription: z.string().optional()
+    }),
     
     location: z.object({
       cp: z.string().optional(),
@@ -32,6 +33,9 @@ export const quoteSchema = z.object({
     wastes: z.array(z.object({
       name: z.string().min(1, 'El nombre del residuo es obligatorio'),
       type: z.string().min(1, 'El tipo es obligatorio'),
+      classification: z.string().min(1, 'La clasificación es obligatoria'),
+      clave: z.string().min(1, 'La clave es obligatoria'),
+      specificDescription: z.string().optional(),
       quantity: z.number().min(0.01, 'La cantidad debe ser mayor a 0'),
       unit: z.string().min(1, 'La unidad es obligatoria'),
       pricePerUnit: z.number().min(0, 'El precio no puede ser negativo').default(0),

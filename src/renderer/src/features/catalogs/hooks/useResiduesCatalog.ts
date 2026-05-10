@@ -4,6 +4,8 @@ export interface Residue {
   id: number;
   name: string;
   residue_type: string;
+  classification?: string
+  clave?: string
   unit: string;
   base_price: number;
 }
