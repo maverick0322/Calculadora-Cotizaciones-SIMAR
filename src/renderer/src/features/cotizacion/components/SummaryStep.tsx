@@ -14,8 +14,9 @@ export const SummaryStep = ({ data }: SummaryStepProps) => {
   const [pdfBase64, setPdfBase64] = useState<string | null>(null);
   const [currentFolio, setCurrentFolio] = useState<string>('');
 
-  const getFrequencyString = () => {
-    const f = data.frequency;
+  // 👇 AHORA RECIBE LA FRECUENCIA DEL SERVICIO COMO PARÁMETRO
+  const getFrequencyString = (f: any) => {
+    if (!f) return 'No especificada';
     if (f.type === 'one_time') return 'Evento Único';
     if (f.type === 'custom') return f.customDescription || 'Personalizada';
     
@@ -111,11 +112,11 @@ export const SummaryStep = ({ data }: SummaryStepProps) => {
       {/* SECCIÓN GLOBAL */}
       <div className="border border-gray-200 rounded-lg p-5 bg-white shadow-sm">
         <h4 className="font-semibold text-gray-900 border-b pb-2 mb-4">Datos Generales del Contrato</h4>
-        <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-sm">
+        {/* 👇 Modificamos las columnas a 3 para quitar el hueco que dejó la frecuencia global */}
+        <dl className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-4 text-sm">
           <div className="flex justify-between"><dt className="text-gray-500">Cliente:</dt> <dd className="font-medium text-gray-900 text-right">{data.clientName || 'Sin especificar'}</dd></div>
           <div className="flex justify-between"><dt className="text-gray-500">RFC:</dt> <dd className="font-medium text-gray-900 text-right uppercase">{data.clientRfc}</dd></div>
           <div className="flex justify-between"><dt className="text-gray-500">Vigencia:</dt> <dd className="font-medium text-blue-600 text-right">{data.validityDays} Días</dd></div>
-          <div className="flex justify-between"><dt className="text-gray-500">Frecuencia Global:</dt> <dd className="font-medium text-gray-900 text-right">{getFrequencyString()}</dd></div>
         </dl>
       </div>
 
@@ -123,7 +124,13 @@ export const SummaryStep = ({ data }: SummaryStepProps) => {
         <div key={service.id || index} className="border-2 border-gray-100 rounded-xl overflow-hidden shadow-sm">
           <div className="bg-gray-50 px-5 py-3 border-b border-gray-200">
             <h3 className="font-bold text-gray-800">Servicio {index + 1}: {service.location.street || 'Sin dirección'}</h3>
-            <p className="text-xs text-gray-500 capitalize">{activityTranslates[service.activity]}</p>
+            {/* 👇 AHORA LA FRECUENCIA SE MUESTRA A NIVEL DE SERVICIO */}
+            <div className="flex justify-between items-center mt-1">
+              <p className="text-xs text-gray-500 capitalize">{activityTranslates[service.activity]}</p>
+              <span className="text-xs font-medium text-blue-700 bg-blue-100/50 px-2.5 py-1 rounded-md border border-blue-200">
+                Frecuencia: {getFrequencyString(service.frequency)}
+              </span>
+            </div>
           </div>
           
           <div className="p-5 bg-white grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

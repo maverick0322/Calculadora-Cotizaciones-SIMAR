@@ -15,17 +15,18 @@ export const useQuoteForm = (editId?: number | null) => {
       contactPhone: '',
       contactEmail: '',
       validityDays: 15,
-      frequency: {
-        type: 'one_time',
-        duration: undefined,
-        customDescription: ''
-      },
       services: [
         {
           id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
           activity: 'collection',
+          frequency: {
+            type: 'one_time',
+            duration: undefined,
+            customDescription: ''
+          },
           location: { street: '', municipality: '', neighborhood: '', state: '' },
-          wastes: [{ name: '', type: 'domestic', quantity: 1, unit: 'kg' }],
+          // 👇 ACTUALIZADO AL NUEVO ESQUEMA DE RESIDUOS
+          wastes: [{ name: '', type: 'Residuo de Manejo Especial (RME)', classification: 'N/A', clave: 'N/A', quantity: 1, unit: 'Kilogramo', pricePerUnit: 0 }],
           vehicles: [],
           crew: [],
           supplies: [],
@@ -56,8 +57,14 @@ export const useQuoteForm = (editId?: number | null) => {
     appendService({
       id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
       activity: 'collection',
+      frequency: {
+        type: 'one_time',
+        duration: undefined,
+        customDescription: ''
+      },  
       location: { street: '', municipality: '', neighborhood: '', state: '' },
-      wastes: [{ name: '', type: 'Sólido Urbano (RSU)', quantity: 1, unit: 'Kilogramo', pricePerUnit: 0 }],
+      // 👇 ACTUALIZADO AL NUEVO ESQUEMA DE RESIDUOS
+      wastes: [{ name: '', type: 'Residuo de Manejo Especial (RME)', classification: 'N/A', clave: 'N/A', quantity: 1, unit: 'Kilogramo', pricePerUnit: 0 }],
       vehicles: [],
       crew: [],
       supplies: [],
@@ -98,7 +105,7 @@ export const useQuoteForm = (editId?: number | null) => {
             contactPhone: draft.contactPhone || '',
             contactEmail: draft.contactEmail || '',
             validityDays: draft.validityDays,
-            frequency: draft.frequency,
+            // ❌ ELIMINADA LA FRECUENCIA GLOBAL DE AQUÍ
             services: draft.services 
           } as unknown as QuoteFormValues);
           
@@ -141,7 +148,6 @@ export const useQuoteForm = (editId?: number | null) => {
         contactPhone: data.contactPhone,
         contactEmail: data.contactEmail,
         validityDays: data.validityDays,
-        frequency: data.frequency,
         services: cleanedServices,
         
         subtotal: subtotal,

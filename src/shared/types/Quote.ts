@@ -15,6 +15,10 @@ export interface Location {
 export interface WasteItem {
   name: string;
   type: string;
+  // 👇 Nuevos campos para RME y catálogos avanzados
+  classification: string;
+  clave: string;
+  specificDescription?: string;
   quantity: number;
   unit: string;
   pricePerUnit: number;
@@ -25,7 +29,6 @@ export interface ServiceFrequencyDetail {
   duration?: number; 
   customDescription?: string;
 }
-
 
 export interface VehicleItem {
   vehicleId: number;
@@ -68,6 +71,10 @@ export interface ServiceLogistics {
 export interface ServiceItem {
   id: string; // UUID local para que React Hook Form iteré correctamente
   activity: ActivityType;
+  
+  // 👇 La frecuencia ahora pertenece a cada servicio individualmente
+  frequency: ServiceFrequencyDetail; 
+  
   location: Location; // Cada servicio puede tener una dirección distinta
   wastes: WasteItem[];
   vehicles: VehicleItem[];
@@ -90,7 +97,8 @@ export interface QuoteDraft {
   contactPhone?: string;
   contactEmail?: string;
   validityDays: number;
-  frequency: ServiceFrequencyDetail; 
+  
+  // ❌ La frecuencia global fue eliminada de aquí
   
   services: ServiceItem[];
 

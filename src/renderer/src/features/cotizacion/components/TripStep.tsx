@@ -39,7 +39,7 @@ export const TripStep = ({ serviceIndex, catalogs }: TripStepProps) => {
           {logisticsErrors?.origin && <p className="mt-1 text-sm text-red-600">{logisticsErrors.origin.message}</p>}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">Almacén de Llegada Principal</label>
+          <label className="block text-sm font-medium text-gray-700">Punto de Llegada</label>
           <input
             type="text"
             list="warehouse-list"
