@@ -16,7 +16,9 @@ declare global {
       savePdf: (pdfBase64: string, defaultFolio: string) => Promise<{ success: boolean; filePath?: string; error?: string }>;
       
       getCatalogs: () => Promise<{ success: boolean; data?: any; error?: string }>;
-      updateCatalogPrice: (type: 'vehicle' | 'supply', id: number, price: number) => Promise<any>;    }
+      updateCatalogPrice: (type: 'vehicle' | 'supply', id: number, price: number) => Promise<any>;
+      // 👇 La llave } estaba aquí cortando el código. Ya está corregido.
       manageCatalog: (action: 'add' | 'delete', type: 'vehicle' | 'supply' | 'warehouse', payload: any) => Promise<any>;
+    }
   }
 }

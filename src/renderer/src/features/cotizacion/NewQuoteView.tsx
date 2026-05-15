@@ -14,9 +14,31 @@ import { useQuoteCalculator } from './hooks/useQuoteCalculator';
 import { Save, ArrowLeft, CheckCircle, Plus, Trash2 } from 'lucide-react';
 
 export interface CatalogData {
-  warehouses: { id: number; name: string; address: string }[];
-  vehicles: { id: number; name: string; vehicle_type: string; capacity_kg: number; base_price: number }[];
-  supplies: { id: number; name: string; unit: string; suggested_price: number }[];
+  warehouses: { 
+    id: number; 
+    name: string; 
+    address: string;
+  }[];
+  vehicles: { 
+    id: number; 
+    plate: string;
+    name: string; 
+    vehicle_type: string; 
+    useful_tonnage: number;     // 👈 NUEVO: Reemplaza capacity_kg
+    volume_m3: number;          // 👈 NUEVO
+    drum_capacity: number;      // 👈 NUEVO
+    fuel_efficiency_km_l: number; // 👈 NUEVO
+    price_per_day: number;      // 👈 NUEVO: Reemplaza base_price
+    price_per_ton: number;      // 👈 NUEVO
+    price_per_m3: number;       // 👈 NUEVO
+  }[];
+  supplies: { 
+    id: number; 
+    name: string; 
+    category: 'supply' | 'material' | 'equipment'; // 👈 NUEVO
+    unit: string; 
+    suggested_price: number; 
+  }[];
 }
 
 interface INewQuoteViewProps {

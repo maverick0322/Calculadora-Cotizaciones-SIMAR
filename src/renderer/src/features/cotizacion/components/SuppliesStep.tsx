@@ -5,37 +5,66 @@ import { CatalogData } from '../NewQuoteView';
 
 interface SuppliesStepProps {
   serviceIndex: number;
-  catalogs?: CatalogData;
+  catalogs?: CatalogData & { 
+    // Extendemos temporalmente el tipo aquí si en NewQuoteView aún no agregas 'category' a la interfaz
+    supplies: Array<{id: number, name: string, unit: string, suggested_price: number, category?: string}> 
+  };
 }
 
 export const SuppliesStep = ({ serviceIndex, catalogs }: SuppliesStepProps) => {
   const { register, control, setValue, formState: { errors } } = useFormContext<QuoteFormValues>();
 
+  // 1. Array de Insumos
   const { fields: supplyFields, append: appendSupply, remove: removeSupply } = useFieldArray({
     control,
     name: `services.${serviceIndex}.supplies` as const
   });
 
+  // 2. Array de Materiales
+  const { fields: materialFields, append: appendMaterial, remove: removeMaterial } = useFieldArray({
+    control,
+    name: `services.${serviceIndex}.materials` as const
+  });
+
+  // 3. Array de Equipos/Maquinaria
+  const { fields: equipmentFields, append: appendEquipment, remove: removeEquipment } = useFieldArray({
+    control,
+    name: `services.${serviceIndex}.equipment` as const
+  });
+
+  // 4. Array de Costos Extra
   const { fields: extraCostFields, append: appendExtraCost, remove: removeExtraCost } = useFieldArray({
     control,
     name: `services.${serviceIndex}.extraCosts` as const
   });
 
-  const handleSupplySelection = (index: number, supplyId: string) => {
-    const selectedSupply = catalogs?.supplies.find(s => s.id.toString() === supplyId);
-    if (selectedSupply) {
-      setValue(`services.${serviceIndex}.supplies.${index}.name` as const, selectedSupply.name, { shouldValidate: true });
-      setValue(`services.${serviceIndex}.supplies.${index}.unitPrice` as const, selectedSupply.suggested_price, { shouldValidate: true });
+  // Filtramos el catálogo global en las 3 categorías (con fallback a 'supply' para registros viejos)
+  const catSupplies = catalogs?.supplies.filter(s => s.category === 'supply' || !s.category) || [];
+  const catMaterials = catalogs?.supplies.filter(s => s.category === 'material') || [];
+  const catEquipment = catalogs?.supplies.filter(s => s.category === 'equipment') || [];
+
+  // Manejador genérico para autocompletar nombre y precio al seleccionar del catálogo
+  const handleCatalogSelection = (
+    type: 'supplies' | 'materials' | 'equipment', 
+    index: number, 
+    id: string
+  ) => {
+    const selectedItem = catalogs?.supplies.find(s => s.id.toString() === id);
+    if (selectedItem) {
+      setValue(`services.${serviceIndex}.${type}.${index}.name` as const, selectedItem.name, { shouldValidate: true });
+      setValue(`services.${serviceIndex}.${type}.${index}.unitPrice` as const, selectedItem.suggested_price, { shouldValidate: true });
     }
   };
 
   return (
     <div className="space-y-10 mb-8">
+      
+      {/* ======================= 1. INSUMOS ======================= */}
       <div>
         <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-4">
           <div>
-            <h3 className="text-lg font-medium text-gray-900">Insumos y Materiales</h3>
-            <p className="text-sm text-gray-500">Bolsas, contenedores, equipo de protección, etc.</p>
+            <h3 className="text-lg font-medium text-gray-900">1. Insumos (Venta)</h3>
+            <p className="text-sm text-gray-500">Bolsas, etiquetas, consumibles, etc.</p>
           </div>
           <button
             type="button"
@@ -62,13 +91,11 @@ export const SuppliesStep = ({ serviceIndex, catalogs }: SuppliesStepProps) => {
                   {...register(`services.${serviceIndex}.supplies.${index}.supplyId` as const, { valueAsNumber: true })}
                   onChange={(e) => {
                     register(`services.${serviceIndex}.supplies.${index}.supplyId` as const).onChange(e); 
-                    handleSupplySelection(index, e.target.value); 
+                    handleCatalogSelection('supplies', index, e.target.value); 
                   }}
                 >
                   <option value="0">Seleccione un insumo...</option>
-                  {catalogs?.supplies.map(s => (
-                    <option key={s.id} value={s.id}>{s.name} ({s.unit})</option>
-                  ))}
+                  {catSupplies.map(s => <option key={s.id} value={s.id}>{s.name} ({s.unit})</option>)}
                 </select>
                 {errors.services?.[serviceIndex]?.supplies?.[index]?.supplyId && <p className="text-red-500 text-xs mt-1">Requerido</p>}
               </div>
@@ -93,12 +120,7 @@ export const SuppliesStep = ({ serviceIndex, catalogs }: SuppliesStepProps) => {
                 />
               </div>
 
-              <button
-                type="button"
-                onClick={() => removeSupply(index)}
-                className="mb-2 text-gray-400 hover:text-red-500 transition-colors"
-                title="Quitar insumo"
-              >
+              <button type="button" onClick={() => removeSupply(index)} className="mb-2 text-gray-400 hover:text-red-500 transition-colors">
                 <Trash2 className="w-5 h-5" />
               </button>
             </div>
@@ -106,6 +128,145 @@ export const SuppliesStep = ({ serviceIndex, catalogs }: SuppliesStepProps) => {
         </div>
       </div>
 
+      {/* ======================= 2. MATERIALES ======================= */}
+      <div>
+        <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-4">
+          <div>
+            <h3 className="text-lg font-medium text-gray-900">2. Materiales y Herramientas</h3>
+            <p className="text-sm text-gray-500">Contenedores, supersacos, tambores en préstamo, etc.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => appendMaterial({ materialId: 0, name: '', quantity: 1, unitPrice: 0 })}
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-purple-50 text-purple-700 rounded-md hover:bg-purple-100 transition-colors"
+          >
+            <Plus className="w-4 h-4" /> Agregar Material
+          </button>
+        </div>
+
+        {materialFields.length === 0 && (
+          <div className="text-center py-6 bg-gray-50 rounded-lg border border-dashed border-gray-300 text-gray-500 text-sm">
+            Sin materiales requeridos.
+          </div>
+        )}
+
+        <div className="space-y-3">
+          {materialFields.map((field, index) => (
+            <div key={field.id} className="flex gap-4 items-end bg-purple-50/30 p-4 rounded-lg border border-purple-100 relative">
+              <div className="flex-1">
+                <label className="block text-xs font-medium text-gray-500 mb-1">Tipo de Material</label>
+                <select 
+                  className="w-full px-3 py-2 border rounded-md bg-white"
+                  {...register(`services.${serviceIndex}.materials.${index}.materialId` as const, { valueAsNumber: true })}
+                  onChange={(e) => {
+                    register(`services.${serviceIndex}.materials.${index}.materialId` as const).onChange(e); 
+                    handleCatalogSelection('materials', index, e.target.value); 
+                  }}
+                >
+                  <option value="0">Seleccione un material...</option>
+                  {catMaterials.map(s => <option key={s.id} value={s.id}>{s.name} ({s.unit})</option>)}
+                </select>
+                {errors.services?.[serviceIndex]?.materials?.[index]?.materialId && <p className="text-red-500 text-xs mt-1">Requerido</p>}
+              </div>
+
+              <input type="hidden" {...register(`services.${serviceIndex}.materials.${index}.name` as const)} />
+
+              <div className="w-24">
+                <label className="block text-xs font-medium text-gray-500 mb-1">Cantidad</label>
+                <input 
+                  type="number" min="1"
+                  className="w-full px-3 py-2 border rounded-md bg-white"
+                  {...register(`services.${serviceIndex}.materials.${index}.quantity` as const, { valueAsNumber: true })}
+                />
+              </div>
+
+              <div className="w-32">
+                <label className="block text-xs font-medium text-gray-500 mb-1">Precio Unit. ($)</label>
+                <input 
+                  type="number" step="0.01" min="0"
+                  className="w-full px-3 py-2 border rounded-md bg-white"
+                  {...register(`services.${serviceIndex}.materials.${index}.unitPrice` as const, { valueAsNumber: true })}
+                />
+              </div>
+
+              <button type="button" onClick={() => removeMaterial(index)} className="mb-2 text-gray-400 hover:text-red-500 transition-colors">
+                <Trash2 className="w-5 h-5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ======================= 3. MAQUINARIA ======================= */}
+      <div>
+        <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-4">
+          <div>
+            <h3 className="text-lg font-medium text-gray-900">3. Maquinaria y Equipo</h3>
+            <p className="text-sm text-gray-500">Bombas, equipo de protección, montacargas, etc.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => appendEquipment({ equipmentId: 0, name: '', quantity: 1, unitPrice: 0 })}
+            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-teal-50 text-teal-700 rounded-md hover:bg-teal-100 transition-colors"
+          >
+            <Plus className="w-4 h-4" /> Agregar Equipo
+          </button>
+        </div>
+
+        {equipmentFields.length === 0 && (
+          <div className="text-center py-6 bg-gray-50 rounded-lg border border-dashed border-gray-300 text-gray-500 text-sm">
+            Sin equipo adicional.
+          </div>
+        )}
+
+        <div className="space-y-3">
+          {equipmentFields.map((field, index) => (
+            <div key={field.id} className="flex gap-4 items-end bg-teal-50/30 p-4 rounded-lg border border-teal-100 relative">
+              <div className="flex-1">
+                <label className="block text-xs font-medium text-gray-500 mb-1">Tipo de Equipo</label>
+                <select 
+                  className="w-full px-3 py-2 border rounded-md bg-white"
+                  {...register(`services.${serviceIndex}.equipment.${index}.equipmentId` as const, { valueAsNumber: true })}
+                  onChange={(e) => {
+                    register(`services.${serviceIndex}.equipment.${index}.equipmentId` as const).onChange(e); 
+                    handleCatalogSelection('equipment', index, e.target.value); 
+                  }}
+                >
+                  <option value="0">Seleccione un equipo...</option>
+                  {catEquipment.map(s => <option key={s.id} value={s.id}>{s.name} ({s.unit})</option>)}
+                </select>
+                {errors.services?.[serviceIndex]?.equipment?.[index]?.equipmentId && <p className="text-red-500 text-xs mt-1">Requerido</p>}
+              </div>
+
+              <input type="hidden" {...register(`services.${serviceIndex}.equipment.${index}.name` as const)} />
+
+              <div className="w-24">
+                <label className="block text-xs font-medium text-gray-500 mb-1">Cantidad</label>
+                <input 
+                  type="number" min="1"
+                  className="w-full px-3 py-2 border rounded-md bg-white"
+                  {...register(`services.${serviceIndex}.equipment.${index}.quantity` as const, { valueAsNumber: true })}
+                />
+              </div>
+
+              <div className="w-32">
+                <label className="block text-xs font-medium text-gray-500 mb-1">Precio Unit. ($)</label>
+                <input 
+                  type="number" step="0.01" min="0"
+                  className="w-full px-3 py-2 border rounded-md bg-white"
+                  {...register(`services.${serviceIndex}.equipment.${index}.unitPrice` as const, { valueAsNumber: true })}
+                />
+              </div>
+
+              <button type="button" onClick={() => removeEquipment(index)} className="mb-2 text-gray-400 hover:text-red-500 transition-colors">
+                <Trash2 className="w-5 h-5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ======================= 4. COSTOS EXTRA ======================= */}
       <div>
         <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-4">
           <div>
@@ -151,12 +312,7 @@ export const SuppliesStep = ({ serviceIndex, catalogs }: SuppliesStepProps) => {
                 {errors.services?.[serviceIndex]?.extraCosts?.[index]?.amount && <p className="text-red-500 text-xs mt-1">Inválido</p>}
               </div>
 
-              <button
-                type="button"
-                onClick={() => removeExtraCost(index)}
-                className="mb-2 text-gray-400 hover:text-red-500 transition-colors"
-                title="Quitar costo extra"
-              >
+              <button type="button" onClick={() => removeExtraCost(index)} className="mb-2 text-gray-400 hover:text-red-500 transition-colors">
                 <Trash2 className="w-5 h-5" />
               </button>
             </div>
