@@ -17,7 +17,7 @@ declare global {
       generatePdfPreview: (payload: { quoteData: any, isDetailed: boolean }) => Promise<{ success: boolean; pdfBase64?: string; error?: string }>;
       savePdf: (pdfBase64: string, defaultFolio: string) => Promise<{ success: boolean; filePath?: string; error?: string }>;
       getCatalogs: () => Promise<any>;
-      manageCatalog: (action: 'add' | 'delete', type: 'vehicle' | 'supply' | 'warehouse', payload: any) => Promise<any>;
+      manageCatalog: (action: 'add' | 'delete' | 'edit', type: 'vehicle' | 'supply' | 'warehouse', payload: any) => Promise<any>;
       getLocations: (action: 'states' | 'municipalities' | 'colonies' | 'byCP', payload?: any) => Promise<{ success: boolean, data?: any, error?: string }>;
       addCustomLocation: (data: any) => Promise<{ success: boolean, id?: number, error?: string }>;
       manageResidues: (action: 'add' | 'delete' | 'updatePrice' | 'get', payload?: any) => Promise<any>;

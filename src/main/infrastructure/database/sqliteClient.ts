@@ -2,6 +2,7 @@ import Database from 'better-sqlite3';
 import type { Database as DatabaseType } from 'better-sqlite3';
 import { app } from 'electron';
 import path from 'path';
+import { runSepomexSeeder } from './seeders/sepomexSeeder';
 import residuosCatalog from './catalogo_residuos.json';
 
 const dbPath = path.join(app.getPath('userData'), 'gestor_residuos.sqlite');
@@ -255,6 +256,8 @@ export const initDatabase = () => {
                   insertResidue.run(r.name, r.type, r.classification, r.clave, 'Kilogramo', 0.00);
                 }
             }
+
+            runSepomexSeeder(db);
         });
 
         seedTransaction();

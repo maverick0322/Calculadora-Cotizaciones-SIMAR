@@ -16,7 +16,6 @@ export class SqliteCatalogRepository {
     return stmt.all();
   }
 
-  // 👇 ACTUALIZADO: Ahora recibe el objeto 'payload' completo desde el frontend
   addVehicle(payload: any) {
     const stmt = this.db.prepare(`
       INSERT INTO catalog_vehicles 
@@ -24,7 +23,6 @@ export class SqliteCatalogRepository {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     
-    // Asignación segura con fallback en caso de que falte algún dato
     const finalPlate = payload.plate || `TMP-${Date.now().toString().slice(-4)}`;
 
     return stmt.run(
@@ -34,10 +32,24 @@ export class SqliteCatalogRepository {
       payload.usefulTonnage || 0, 
       payload.volumeM3 || 0, 
       payload.drumCapacity || 0, 
-      0, // Eficiencia de combustible (se puede agregar al UI en el futuro)
+      payload.fuelEfficiencyKmL || 0,
       payload.pricePerDay || 0, 
       payload.pricePerTon || 0, 
       payload.pricePerM3 || 0
+    );
+  }
+
+  editVehicle(payload: any) {
+    const stmt = this.db.prepare(`
+      UPDATE catalog_vehicles SET
+        plate = ?, name = ?, vehicle_type = ?, useful_tonnage = ?, volume_m3 = ?, 
+        drum_capacity = ?, fuel_efficiency_km_l = ?, price_per_day = ?, price_per_ton = ?, price_per_m3 = ?
+      WHERE id = ?
+    `);
+    return stmt.run(
+      payload.plate, payload.name, payload.vehicleType, payload.usefulTonnage, payload.volumeM3,
+      payload.drumCapacity, payload.fuelEfficiencyKmL, payload.pricePerDay, payload.pricePerTon, payload.pricePerM3,
+      payload.id
     );
   }
 
@@ -51,12 +63,19 @@ export class SqliteCatalogRepository {
     return stmt.all();
   }
 
-  addSupply(name: string, unit: string, suggestedPrice: number) {
+  addSupply(payload: any) {
     const stmt = this.db.prepare(`
       INSERT INTO catalog_supplies (name, category, unit, suggested_price) 
-      VALUES (?, 'supply', ?, ?)
+      VALUES (?, ?, ?, ?)
     `);
-    return stmt.run(name, unit, suggestedPrice);
+    return stmt.run(payload.name, payload.category || 'supply', payload.unit, payload.suggestedPrice);
+  }
+
+  editSupply(payload: any) {
+    const stmt = this.db.prepare(`
+      UPDATE catalog_supplies SET name = ?, category = ?, unit = ?, suggested_price = ? WHERE id = ?
+    `);
+    return stmt.run(payload.name, payload.category || 'supply', payload.unit, payload.suggestedPrice, payload.id);
   }
 
   deleteSupply(id: number) {
@@ -69,12 +88,19 @@ export class SqliteCatalogRepository {
     return stmt.all();
   }
 
-  addWarehouse(name: string, address: string) {
+  addWarehouse(payload: any) {
     const stmt = this.db.prepare(`
       INSERT INTO catalog_warehouses (name, address) 
       VALUES (?, ?)
     `);
-    return stmt.run(name, address);
+    return stmt.run(payload.name, payload.address);
+  }
+
+  editWarehouse(payload: any) {
+    const stmt = this.db.prepare(`
+      UPDATE catalog_warehouses SET name = ?, address = ? WHERE id = ?
+    `);
+    return stmt.run(payload.name, payload.address, payload.id);
   }
 
   deleteWarehouse(id: number) {
