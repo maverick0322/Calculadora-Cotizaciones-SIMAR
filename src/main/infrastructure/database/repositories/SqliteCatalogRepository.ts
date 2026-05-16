@@ -4,30 +4,41 @@ export class SqliteCatalogRepository {
   constructor(private readonly db: Database) {}
 
   getAllVehicles() {
+    // 👇 Limpio y directo con las nuevas columnas
     const stmt = this.db.prepare(`
       SELECT 
         id, plate, name, vehicle_type, 
-        useful_tonnage, 
-        (useful_tonnage * 1000) AS capacity_kg, 
-        volume_m3, drum_capacity, fuel_efficiency_km_l, 
-        price_per_day, 
-        price_per_day AS base_price,
-        price_per_ton, price_per_m3 
+        useful_tonnage, volume_m3, drum_capacity, fuel_efficiency_km_l, 
+        price_per_day, price_per_ton, price_per_m3 
       FROM catalog_vehicles 
       WHERE is_active = 1
     `);
     return stmt.all();
   }
 
-  addVehicle(name: string, vehicleType: string, capacityKg: number, basePrice: number) {
+  // 👇 ACTUALIZADO: Ahora recibe el objeto 'payload' completo desde el frontend
+  addVehicle(payload: any) {
     const stmt = this.db.prepare(`
       INSERT INTO catalog_vehicles 
       (plate, name, vehicle_type, useful_tonnage, volume_m3, drum_capacity, fuel_efficiency_km_l, price_per_day, price_per_ton, price_per_m3) 
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    const tempPlate = `TMP-${Date.now().toString().slice(-4)}`;
-    const usefulTonnage = capacityKg ? (capacityKg / 1000) : 0;
-    return stmt.run(tempPlate, name, vehicleType, usefulTonnage, 0, 0, 0, basePrice, 0, 0);
+    
+    // Asignación segura con fallback en caso de que falte algún dato
+    const finalPlate = payload.plate || `TMP-${Date.now().toString().slice(-4)}`;
+
+    return stmt.run(
+      finalPlate, 
+      payload.name, 
+      payload.vehicleType || 'Mediano', 
+      payload.usefulTonnage || 0, 
+      payload.volumeM3 || 0, 
+      payload.drumCapacity || 0, 
+      0, // Eficiencia de combustible (se puede agregar al UI en el futuro)
+      payload.pricePerDay || 0, 
+      payload.pricePerTon || 0, 
+      payload.pricePerM3 || 0
+    );
   }
 
   deleteVehicle(id: number) {
