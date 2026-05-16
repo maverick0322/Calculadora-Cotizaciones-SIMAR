@@ -3,42 +3,20 @@ import { FormProvider, FieldErrors } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { useQuoteForm } from './hooks/useQuoteForm';
 import { QuoteFormValues } from '../../../../shared/schemas/quoteSchema';
-import { LocationStep } from './components/LocationStep';
-import { WasteStep } from './components/WasteStep';
-import { TripStep } from './components/TripStep';
-import { SummaryStep } from './components/SummaryStep';
-import { VehiclesAndCrewStep } from './components/VehiclesAndCrewStep';
-import { SuppliesStep } from './components/SuppliesStep';
-import { ClientInfoStep } from './components/ClientInfoStep'; // <-- IMPORT AGREGADO
 import { useQuoteCalculator } from './hooks/useQuoteCalculator';
-import { Save, ArrowLeft, CheckCircle, Plus, Trash2 } from 'lucide-react';
+import { Save, ArrowLeft, CheckCircle } from 'lucide-react';
+
+// IMPORTACIÓN DE COMPONENTES MODULARIZADOS
+import { ClientInfoStep } from './components/ClientInfoStep';
+import { ValiditySelector } from './components/ValiditySelector';
+import { ServicesTabSystem } from './components/ServicesTabSystem';
+import { StickyTotalsFooter } from './components/StickyTotalsFooter';
+import { SummaryStep } from './components/SummaryStep';
 
 export interface CatalogData {
-  warehouses: { 
-    id: number; 
-    name: string; 
-    address: string;
-  }[];
-  vehicles: { 
-    id: number; 
-    plate: string;
-    name: string; 
-    vehicle_type: string; 
-    useful_tonnage: number;     // 👈 NUEVO: Reemplaza capacity_kg
-    volume_m3: number;          // 👈 NUEVO
-    drum_capacity: number;      // 👈 NUEVO
-    fuel_efficiency_km_l: number; // 👈 NUEVO
-    price_per_day: number;      // 👈 NUEVO: Reemplaza base_price
-    price_per_ton: number;      // 👈 NUEVO
-    price_per_m3: number;       // 👈 NUEVO
-  }[];
-  supplies: { 
-    id: number; 
-    name: string; 
-    category: 'supply' | 'material' | 'equipment'; // 👈 NUEVO
-    unit: string; 
-    suggested_price: number; 
-  }[];
+  warehouses: { id: number; name: string; address: string; }[];
+  vehicles: { id: number; plate: string; name: string; vehicle_type: string; useful_tonnage: number; volume_m3: number; drum_capacity: number; fuel_efficiency_km_l: number; price_per_day: number; price_per_ton: number; price_per_m3: number; }[];
+  supplies: { id: number; name: string; category: 'supply' | 'material' | 'equipment'; unit: string; suggested_price: number; }[];
 }
 
 interface INewQuoteViewProps {
@@ -52,19 +30,14 @@ export const NewQuoteView = ({ editId, onSaveSuccess }: INewQuoteViewProps) => {
   
   const [isReviewMode, setIsReviewMode] = useState(false);
   const [activeTab, setActiveTab] = useState(0); 
-  
-  // <-- ESTADO DEL CHECKBOX AGREGADO -->
   const [saveClientToDirectory, setSaveClientToDirectory] = useState(true);
-  
   const [catalogs, setCatalogs] = useState<CatalogData>({ warehouses: [], vehicles: [], supplies: [] });
 
   useEffect(() => {
     const fetchCatalogs = async () => {
       try {
         const response = await window.api.getCatalogs();
-        if (response.success && response.data) {
-          setCatalogs(response.data);
-        }
+        if (response.success && response.data) setCatalogs(response.data);
       } catch (error) {
         console.error("Error al cargar los catálogos:", error);
       }
@@ -72,9 +45,7 @@ export const NewQuoteView = ({ editId, onSaveSuccess }: INewQuoteViewProps) => {
     fetchCatalogs();
   }, []);
 
-  const handleGoToReview = (data: QuoteFormValues) => {
-    setIsReviewMode(true);
-  };
+  const handleGoToReview = (data: QuoteFormValues) => setIsReviewMode(true);
 
   const handleConfirmSave = async () => {
     const data = form.getValues(); 
@@ -82,33 +53,22 @@ export const NewQuoteView = ({ editId, onSaveSuccess }: INewQuoteViewProps) => {
 
     try {
       const isSuccess = await submitDraft(data, subtotal, total);
-
       if (!isSuccess) {
         toast.error('Error al guardar el borrador. Revisa tu conexión.', { id: toastId });
         return;
       }
 
-      // <-- LLAMADA IPC PARA GUARDAR AL CLIENTE AGREGADA -->
       if (saveClientToDirectory && data.clientName) {
         await window.api.manageClientDirectory('upsert', {
-          clientName: data.clientName,
-          clientRfc: data.clientRfc,
-          contactName: data.contactName,
-          contactPhone: data.contactPhone,
-          contactEmail: data.contactEmail,
+          clientName: data.clientName, clientRfc: data.clientRfc, contactName: data.contactName, contactPhone: data.contactPhone, contactEmail: data.contactEmail,
         });
       }
 
       toast.success(editId ? '¡Borrador actualizado!' : '¡Borrador guardado exitosamente!', { id: toastId });
       
-      if (!editId) {
-        form.reset();
-        setIsReviewMode(false);
-      }
-
-      if (onSaveSuccess) {
-        onSaveSuccess();
-      }
+      if (!editId) { form.reset(); setIsReviewMode(false); }
+      if (onSaveSuccess) onSaveSuccess();
+      
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
       toast.error(`Error inesperado al guardar: ${errorMessage}`, { id: toastId });
@@ -116,14 +76,14 @@ export const NewQuoteView = ({ editId, onSaveSuccess }: INewQuoteViewProps) => {
   };
 
   const onFormError = (errors: FieldErrors<QuoteFormValues>) => {
-    console.error('❌ Errores de validación bloqueando el guardado:', errors);
+    console.error('❌ Errores:', errors);
     toast.error('Hay campos inválidos o incompletos. Revisa las pestañas en rojo.');
   };
 
   return (
     <div className="max-w-5xl mx-auto p-6 bg-white rounded-lg shadow-md transition-all relative mb-20">
       <h1 className="text-2xl font-bold mb-6 text-gray-800 border-b pb-4 flex items-center gap-2">
-        {isReviewMode ? <CheckCircle className="text-green-600" /> : null}
+        {isReviewMode && <CheckCircle className="text-green-600" />}
         {editId 
           ? (isReviewMode ? `Revisando Borrador #${editId}` : `Editando Borrador #${editId}`)
           : (isReviewMode ? 'Confirmar Nueva Cotización' : 'Nueva Cotización')}
@@ -132,157 +92,29 @@ export const NewQuoteView = ({ editId, onSaveSuccess }: INewQuoteViewProps) => {
       <FormProvider {...form}>
         <form onSubmit={form.handleSubmit(handleGoToReview, onFormError)} className="space-y-8">
           
-          {/* SECCIÓN GLOBAL: Cliente y Frecuencia Global */}
-          {!isReviewMode && (
-             <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-               <h2 className="text-lg font-semibold text-gray-800 mb-4">1. Datos Generales del Contrato</h2>
-               
-               {/* Usamos 3 columnas: 2 para el cliente, 1 para la vigencia */}
-               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                 
-                 {/* <-- AQUÍ REEMPLAZAMOS TODOS LOS INPUTS VIEJOS POR EL NUEVO COMPONENTE --> */}
-                 <ClientInfoStep 
-                   saveClient={saveClientToDirectory} 
-                   setSaveClient={setSaveClientToDirectory} 
-                 />
-
-                 <div className="lg:col-span-1">
-                   <div className="bg-blue-50/50 p-5 rounded-lg border border-blue-100 h-full flex flex-col justify-center">
-                     <label className="block text-sm font-medium text-gray-800 mb-4">Vigencia de la Cotización</label>
-                     <div className="flex gap-6">
-                       <label className="inline-flex items-center cursor-pointer">
-                         <input 
-                           type="radio" 
-                           value={15} 
-                           {...form.register('validityDays', { valueAsNumber: true })} 
-                           className="text-blue-600 focus:ring-blue-500 w-4 h-4" 
-                         />
-                         <span className="ml-2 text-sm text-gray-700 font-medium">15 Días</span>
-                       </label>
-                       <label className="inline-flex items-center cursor-pointer">
-                         <input 
-                           type="radio" 
-                           value={30} 
-                           {...form.register('validityDays', { valueAsNumber: true })} 
-                           className="text-blue-600 focus:ring-blue-500 w-4 h-4" 
-                         />
-                         <span className="ml-2 text-sm text-gray-700 font-medium">30 Días</span>
-                       </label>
-                     </div>
-                     <p className="text-xs text-gray-500 mt-5 leading-relaxed">
-                       Los días comienzan a contar a partir de la fecha de emisión del documento oficial.
-                     </p>
-                     {form.formState.errors.validityDays && (
-                       <p className="text-red-500 text-xs mt-2">{form.formState.errors.validityDays.message}</p>
-                     )}
-                   </div>
-                 </div>
-
-               </div>
-             </div>
-          )}
-
           {!isReviewMode ? (
             <>
-              {/* SISTEMA DE PESTAÑAS (TABS) MULTISERVICIO */}
-              <div className="mt-8">
-                <div className="flex items-center gap-2 border-b border-gray-200 overflow-x-auto pb-1">
-                  {serviceFields.map((field, index) => (
-                    <button
-                      key={field.id}
-                      type="button"
-                      onClick={() => setActiveTab(index)}
-                      className={`px-4 py-2 rounded-t-lg font-medium text-sm transition-colors whitespace-nowrap flex items-center gap-2
-                        ${activeTab === index 
-                          ? 'bg-blue-600 text-white shadow-sm' 
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-b-0'}`}
-                    >
-                      Servicio {index + 1}
-                      {serviceFields.length > 1 && (
-                        <Trash2 
-                          className="w-4 h-4 ml-2 hover:text-red-400" 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeService(index);
-                            if (activeTab >= index) setActiveTab(Math.max(0, activeTab - 1));
-                          }}
-                        />
-                      )}
-                    </button>
-                  ))}
-                  
-                  <button
-                    type="button"
-                    onClick={addNewService}
-                    className="ml-2 px-3 py-2 rounded-t-lg font-medium text-sm text-blue-600 bg-blue-50 hover:bg-blue-100 border border-blue-200 border-b-0 flex items-center gap-1 transition-colors whitespace-nowrap"
-                  >
-                    <Plus className="w-4 h-4" /> Agregar Servicio
-                  </button>
-                </div>
-
-                {/* CONTENIDO DE LA PESTAÑA ACTIVA */}
-                <div className="border border-t-0 border-gray-200 p-6 rounded-b-lg shadow-sm bg-white min-h-[500px]">
-                  {serviceFields.map((field, index) => (
-                    <div 
-                      key={field.id} 
-                      className={activeTab === index ? 'block animate-in fade-in' : 'hidden'}
-                    >
-                      <h2 className="text-xl font-semibold text-gray-800 mb-6 border-b pb-2">
-                        Configuración del Servicio {index + 1}
-                      </h2>
-                      
-                      <LocationStep serviceIndex={index} />
-                      <WasteStep serviceIndex={index} />
-                      <TripStep serviceIndex={index} catalogs={catalogs} />
-                      <VehiclesAndCrewStep serviceIndex={index} catalogs={catalogs} />
-                      <SuppliesStep serviceIndex={index} catalogs={catalogs} />
-                    </div>
-                  ))}
+              {/* BLOQUE 1: DATOS GLOBALES */}
+              <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                <h2 className="text-lg font-semibold text-gray-800 mb-4">1. Datos Generales del Contrato</h2>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  <ClientInfoStep saveClient={saveClientToDirectory} setSaveClient={setSaveClientToDirectory} />
+                  <ValiditySelector />
                 </div>
               </div>
 
-              {/* --- BARRA DE TOTALES EN TIEMPO REAL --- */}
-              <div className="fixed bottom-0 left-0 right-0 bg-gray-900 text-white p-4 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.5)] flex flex-wrap justify-center md:justify-between items-center px-10 z-50">
-                <div className="flex gap-8 text-xs text-gray-400 hidden md:flex">
-                  <div>
-                    <p>Logística</p>
-                    <p className="text-white font-mono">${breakdown.logistics.toFixed(2)}</p>
-                  </div>
-                  <div>
-                    <p>Operación</p>
-                    <p className="text-white font-mono">${(breakdown.vehicles + breakdown.crew).toFixed(2)}</p>
-                  </div>
-                  <div>
-                    <p>Insumos/Extras</p>
-                    <p className="text-white font-mono">${(breakdown.supplies + breakdown.extras).toFixed(2)}</p>
-                  </div>
-                  <div>
-                    <p className="text-blue-300">Residuos</p>
-                    <p className="text-white font-mono">${(breakdown.wastes || 0).toFixed(2)}</p>
-                  </div>
-                </div>
-                
-                <div className="text-right flex items-center gap-6">
-                  <div>
-                     <p className="text-xs text-gray-400 uppercase tracking-widest mb-1">Subtotal: ${subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}</p>
-                     <div className="flex items-baseline gap-2 justify-end">
-                       <span className="text-sm text-gray-400">+ IVA</span>
-                       <p className="text-3xl font-bold text-green-400 font-mono">
-                         ${total.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                       </p>
-                     </div>
-                  </div>
-                  <button
-                    type="submit"
-                    className="px-8 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-500 transition shadow-lg text-lg"
-                  >
-                    Revisar
-                  </button>
-                </div>
-              </div>
+              {/* BLOQUE 2: PESTAÑAS Y SERVICIOS */}
+              <ServicesTabSystem 
+                serviceFields={serviceFields} activeTab={activeTab} setActiveTab={setActiveTab}
+                removeService={removeService} addNewService={addNewService} catalogs={catalogs}
+              />
+
+              {/* BLOQUE 3: FOOTER DINÁMICO */}
+              <StickyTotalsFooter breakdown={breakdown} subtotal={subtotal} total={total} />
             </>
           ) : (
             <>
+              {/* MODO REVISIÓN */}
               <SummaryStep data={form.getValues()} />
 
               <div className="bg-gray-50 border border-gray-200 p-6 rounded-lg mt-8 flex justify-end items-center">
@@ -296,27 +128,15 @@ export const NewQuoteView = ({ editId, onSaveSuccess }: INewQuoteViewProps) => {
               </div>
 
               <div className="flex justify-between items-center pt-6 border-t mt-8">
-                <button
-                  type="button"
-                  onClick={() => setIsReviewMode(false)}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  Volver a Editar
+                <button type="button" onClick={() => setIsReviewMode(false)} className="flex items-center gap-2 px-6 py-2.5 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition">
+                  <ArrowLeft className="w-4 h-4" /> Volver a Editar
                 </button>
-
-                <button
-                  type="button"
-                  onClick={handleConfirmSave}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition shadow-sm"
-                >
-                  <Save className="w-4 h-4" />
-                  {editId ? 'Confirmar Actualización' : 'Confirmar y Guardar'}
+                <button type="button" onClick={handleConfirmSave} className="flex items-center gap-2 px-6 py-2.5 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition shadow-sm">
+                  <Save className="w-4 h-4" /> {editId ? 'Confirmar Actualización' : 'Confirmar y Guardar'}
                 </button>
               </div>
             </>
           )}
-
         </form>
       </FormProvider>
     </div>
