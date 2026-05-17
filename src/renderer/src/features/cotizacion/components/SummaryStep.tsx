@@ -16,26 +16,33 @@ export const SummaryStep = ({ data }: SummaryStepProps) => {
   const [currentFolio, setCurrentFolio] = useState<string>('');
 
   const calculateTotals = () => {
-    let calcSubtotal = 0;
+    let subtotal = 0;
     
     data.services.forEach(service => {
-      service.wastes.forEach(w => calcSubtotal += (Number(w.quantity) * Number(w.pricePerUnit || 0)));
-      service.vehicles.forEach(v => calcSubtotal += (Number(v.quantity) * Number(v.unitPrice || 0)));
-      service.crew.forEach(c => calcSubtotal += (Number(c.quantity) * Number(c.dailySalary || 0)));
-      service.supplies.forEach(s => calcSubtotal += (Number(s.quantity) * Number(s.unitPrice || 0)));
-      service.extraCosts.forEach(e => calcSubtotal += Number(e.amount || 0));
+      // Tratamiento
+      service.wastes?.forEach(w => subtotal += (Number(w.quantity) * Number(w.pricePerUnit || 0)));
       
+      // Transporte
+      service.vehicles?.forEach(v => subtotal += (Number(v.quantity) * Number(v.unitPrice || 0)));
       if (service.logistics) {
         const fuel = Number(service.logistics.fuelLiters || 0) * Number(service.logistics.fuelPricePerLiter || 0);
         const tolls = Number(service.logistics.totalTollCost || 0);
-        const viaticos = Number(service.logistics.viaticos || 0);
-        calcSubtotal += (fuel + tolls + viaticos);
+        subtotal += (fuel + tolls);
       }
+
+      // Acondicionamiento
+      service.crew?.forEach(c => subtotal += (Number(c.quantity) * Number(c.dailySalary || 0)));
+      service.equipment?.forEach(e => subtotal += (Number(e.quantity) * Number(e.unitPrice || 0)));
+      service.extraCosts?.forEach(e => subtotal += Number(e.amount || 0));
+
+      // Insumos
+      service.supplies?.forEach(s => subtotal += (Number(s.quantity) * Number(s.unitPrice || 0)));
+      service.materials?.forEach(m => subtotal += (Number(m.quantity) * Number(m.unitPrice || 0)));
     });
 
     return { 
-      subtotal: calcSubtotal, 
-      total: calcSubtotal * 1.16 
+      subtotal, 
+      total: subtotal * 1.16 
     };
   };
 
