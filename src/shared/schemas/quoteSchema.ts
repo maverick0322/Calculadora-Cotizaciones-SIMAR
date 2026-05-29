@@ -1,7 +1,10 @@
 import * as z from 'zod';
 
 export const quoteSchema = z.object({
-  clientName: z.string().min(3, 'El nombre del cliente es requerido'),
+  // 👇 Nuevos campos para Persona Física/Moral y Nombre Comercial
+  personType: z.enum(['fisica', 'moral']).default('moral'),
+  commercialName: z.string().optional(),
+  clientName: z.string().min(3, 'La razón social / nombre legal es requerido'),
   clientRfc: z.string().regex(/^[A-Z&Ñ]{3,4}\d{6}[A-Z\d]{3}$/i, 'Formato de RFC inválido'),
   contactName: z.string().min(3, 'El nombre del responsable es requerido'),
   contactPhone: z.string().min(10, 'El teléfono debe tener al menos 10 dígitos'),
@@ -12,7 +15,6 @@ export const quoteSchema = z.object({
     id: z.string(),
     activity: z.enum(['collection', 'transport', 'transfer', 'final_disposal']),
     
-    // 👇 Frecuencia ahora vive aquí adentro, es específica de cada servicio
     frequency: z.object({
       type: z.enum(['daily', 'weekly', 'biweekly', 'monthly', 'one_time', 'custom']),
       duration: z.preprocess(
@@ -54,8 +56,23 @@ export const quoteSchema = z.object({
       dailySalary: z.coerce.number().min(0, 'Salario inválido')
     })),
 
+    // 👇 Insumos divididos en 3 arreglos independientes
     supplies: z.array(z.object({
       supplyId: z.coerce.number(),
+      name: z.string(),
+      quantity: z.coerce.number().min(1, 'Mínimo 1'),
+      unitPrice: z.coerce.number().min(0, 'Precio inválido')
+    })),
+
+    materials: z.array(z.object({
+      materialId: z.coerce.number(),
+      name: z.string(),
+      quantity: z.coerce.number().min(1, 'Mínimo 1'),
+      unitPrice: z.coerce.number().min(0, 'Precio inválido')
+    })),
+
+    equipment: z.array(z.object({
+      equipmentId: z.coerce.number(),
       name: z.string(),
       quantity: z.coerce.number().min(1, 'Mínimo 1'),
       unitPrice: z.coerce.number().min(0, 'Precio inválido')

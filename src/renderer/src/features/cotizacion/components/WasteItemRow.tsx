@@ -53,8 +53,11 @@ export const WasteItemRow = ({ serviceIndex, index, residues, onRemove, showRemo
         </button>
       )}
       
-      <div className="grid grid-cols-1 lg:grid-cols-6 gap-4 pr-8">
-        <div className="lg:col-span-2">
+      {/* 👇 Cambiado a grid-cols-12 para control fino del ancho */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 pr-8">
+        
+        {/* 1. NOMBRE (3 de 12) */}
+        <div className="lg:col-span-3">
           <ResidueAutocomplete
             residues={residues}
             serviceIndex={serviceIndex}
@@ -65,7 +68,8 @@ export const WasteItemRow = ({ serviceIndex, index, residues, onRemove, showRemo
           />
         </div>
 
-        <div>
+        {/* 2. TIPO DE RESIDUO (3 de 12 - Más ancho para evitar recortes) */}
+        <div className="lg:col-span-3">
           <label className="block text-xs font-medium text-gray-500 mb-1">Tipo</label>
           <select 
             className="w-full px-3 py-2 border rounded-md bg-white disabled:bg-gray-100 disabled:text-gray-500" 
@@ -76,7 +80,8 @@ export const WasteItemRow = ({ serviceIndex, index, residues, onRemove, showRemo
           </select>
         </div>
 
-        <div>
+        {/* 3. CLASIFICACIÓN (2 de 12) */}
+        <div className="lg:col-span-2">
           <label className="block text-xs font-medium text-gray-500 mb-1">Clasificación</label>
           {isManualEntry ? (
             <select 
@@ -97,7 +102,8 @@ export const WasteItemRow = ({ serviceIndex, index, residues, onRemove, showRemo
           )}
         </div>
 
-        <div>
+        {/* 4. CLAVE (2 de 12) */}
+        <div className="lg:col-span-2">
           <label className="block text-xs font-medium text-gray-500 mb-1">Clave</label>
           <input 
             type="text" 
@@ -107,7 +113,8 @@ export const WasteItemRow = ({ serviceIndex, index, residues, onRemove, showRemo
           />
         </div>
 
-        <div>
+        {/* 5. PRECIO UNITARIO (2 de 12) */}
+        <div className="lg:col-span-2">
           <label className="block text-xs font-medium text-gray-500 mb-1">Precio Unitario ($)</label>
           <input 
             type="number" 
@@ -118,8 +125,9 @@ export const WasteItemRow = ({ serviceIndex, index, residues, onRemove, showRemo
           />
         </div>
 
+        {/* SEGUNDA FILA: Especificar, Cantidad, Unidad */}
         {requiresSpecificDescription ? (
-          <div className="lg:col-span-4 animate-in fade-in slide-in-from-top-2">
+          <div className="lg:col-span-8 animate-in fade-in slide-in-from-top-2">
             <label className="block text-xs font-medium text-orange-600 mb-1 flex items-center gap-1">
               <AlertCircle className="w-3 h-3" /> Especificar residuo (Obligatorio)
             </label>
@@ -134,10 +142,11 @@ export const WasteItemRow = ({ serviceIndex, index, residues, onRemove, showRemo
             )}
           </div>
         ) : (
-          <div className="lg:col-span-4"></div>
+          <div className="lg:col-span-8"></div>
         )}
 
-        <div>
+        {/* CANTIDAD (2 de 12) */}
+        <div className="lg:col-span-2">
           <label className="block text-xs font-medium text-gray-500 mb-1">Cantidad</label>
           <input 
             type="number" 
@@ -147,7 +156,8 @@ export const WasteItemRow = ({ serviceIndex, index, residues, onRemove, showRemo
           />
         </div>
 
-        <div>
+        {/* UNIDAD (2 de 12) */}
+        <div className="lg:col-span-2">
           <label className="block text-xs font-medium text-gray-500 mb-1">Unidad</label>
           <select className="w-full px-3 py-2 border rounded-md bg-white" {...register(`services.${serviceIndex}.wastes.${index}.unit` as const)}>
             {UNIT_TYPES.map(u => <option key={u} value={u}>{u}</option>)}

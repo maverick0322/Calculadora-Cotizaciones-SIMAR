@@ -2,6 +2,7 @@ import Database from 'better-sqlite3';
 import type { Database as DatabaseType } from 'better-sqlite3';
 import { app } from 'electron';
 import path from 'path';
+import { runSepomexSeeder } from './seeders/sepomexSeeder';
 import residuosCatalog from './catalogo_residuos.json';
 
 const dbPath = path.join(app.getPath('userData'), 'gestor_residuos.sqlite');
@@ -31,18 +32,27 @@ export const initDatabase = () => {
             email VARCHAR
         );
 
+        -- 👇 NUEVA ESTRUCTURA TÉCNICA DE VEHÍCULOS
         CREATE TABLE IF NOT EXISTS catalog_vehicles (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            plate VARCHAR UNIQUE,
             name VARCHAR,
             vehicle_type VARCHAR,
-            capacity_kg DECIMAL,
-            base_price DECIMAL,
+            useful_tonnage DECIMAL,
+            volume_m3 DECIMAL,
+            drum_capacity INTEGER,
+            fuel_efficiency_km_l DECIMAL,
+            price_per_day DECIMAL,
+            price_per_ton DECIMAL,
+            price_per_m3 DECIMAL,
             is_active BOOLEAN DEFAULT 1
         );
 
+        -- 👇 NUEVA ESTRUCTURA DE INSUMOS CON CATEGORÍA
         CREATE TABLE IF NOT EXISTS catalog_supplies (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name VARCHAR,
+            category VARCHAR, -- 'supply', 'material', 'equipment'
             unit VARCHAR,
             suggested_price DECIMAL,
             is_active BOOLEAN DEFAULT 1
@@ -195,20 +205,34 @@ export const initDatabase = () => {
 
             const vehicleCount = (db.prepare('SELECT COUNT(*) as count FROM catalog_vehicles').get() as any).count;
             if (vehicleCount === 0) {
-                console.log('🌱 Sembrando catálogo de vehículos...');
-                const insertVehicle = db.prepare(`INSERT INTO catalog_vehicles (name, vehicle_type, capacity_kg, base_price) VALUES (?, ?, ?, ?)`);
-                insertVehicle.run('Camioneta 3.5 Toneladas', 'Ligero', 3500, 1500.00);
-                insertVehicle.run('Tractocamión con Tolva', 'Pesado', 30000, 8500.00);
-                insertVehicle.run('Camión Recolector Compactador', 'Mediano', 8000, 4200.00);
+                console.log('🌱 Sembrando catálogo de vehículos con datos técnicos...');
+                const insertVehicle = db.prepare(`
+                    INSERT INTO catalog_vehicles 
+                    (plate, name, vehicle_type, useful_tonnage, volume_m3, drum_capacity, fuel_efficiency_km_l, price_per_day, price_per_ton, price_per_m3) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `);
+                // Ejemplos técnicos listos para la Fase 3
+                insertVehicle.run('XY-1234-A', 'Camioneta 3.5 Toneladas', 'Ligero', 3.0, 15.0, 12, 8.5, 1500.00, 500.00, 100.00);
+                insertVehicle.run('AB-9876-Z', 'Tractocamión con Tolva', 'Pesado', 30.0, 60.0, 0, 3.2, 8500.00, 280.00, 140.00);
+                insertVehicle.run('TR-5555-C', 'Camión Recolector Compactador', 'Mediano', 8.0, 25.0, 0, 5.5, 4200.00, 525.00, 168.00);
             }
 
             const supplyCount = (db.prepare('SELECT COUNT(*) as count FROM catalog_supplies').get() as any).count;
             if (supplyCount === 0) {
-                console.log('🌱 Sembrando catálogo de insumos...');
-                const insertSupply = db.prepare(`INSERT INTO catalog_supplies (name, unit, suggested_price) VALUES (?, ?, ?)`);
-                insertSupply.run('Bolsas de plástico grueso (Paquete 100)', 'Paquete', 250.00);
-                insertSupply.run('Contenedor de 200L (Préstamo)', 'Unidad', 50.00);
-                insertSupply.run('Equipo de Protección Personal (Desechable)', 'Kit', 120.00);
+                console.log('🌱 Sembrando catálogo de insumos categorizados...');
+                const insertSupply = db.prepare(`INSERT INTO catalog_supplies (name, category, unit, suggested_price) VALUES (?, ?, ?, ?)`);
+                
+                // Categoría Insumo
+                insertSupply.run('Bolsas de plástico grueso (Paquete 100)', 'supply', 'Paquete', 250.00);
+                insertSupply.run('Etiquetas de RME', 'supply', 'Unidad', 5.00);
+                
+                // Categoría Material
+                insertSupply.run('Contenedor de 200L (Préstamo)', 'material', 'Unidad', 50.00);
+                insertSupply.run('Supersaco 1 Tonelada', 'material', 'Unidad', 180.00);
+                
+                // Categoría Maquinaria/Equipo
+                insertSupply.run('Equipo de Protección Personal (Desechable)', 'equipment', 'Kit', 120.00);
+                insertSupply.run('Bomba extractora (Renta día)', 'equipment', 'Día', 850.00);
             }
 
             const warehouseCount = (db.prepare('SELECT COUNT(*) as count FROM catalog_warehouses').get() as any).count;
@@ -232,6 +256,8 @@ export const initDatabase = () => {
                   insertResidue.run(r.name, r.type, r.classification, r.clave, 'Kilogramo', 0.00);
                 }
             }
+
+            runSepomexSeeder(db);
         });
 
         seedTransaction();

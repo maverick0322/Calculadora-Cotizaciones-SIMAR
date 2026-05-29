@@ -37,7 +37,8 @@ export class SqliteQuoteRepository implements IQuoteRepository {
       contactPhone: quote.contactPhone || '',
       contactEmail: quote.contactEmail || '',
       validityDays: quote.validityDays,
-      frequencyJson: JSON.stringify(quote.frequency),
+      // 👇 Ya no existe frequency en QuoteDraft, guardamos un objeto vacío para SQLite
+      frequencyJson: JSON.stringify({}), 
       servicesJson: JSON.stringify(quote.services),
       subtotal: quote.subtotal || 0,
       total: quote.total || 0,
@@ -150,7 +151,6 @@ export class SqliteQuoteRepository implements IQuoteRepository {
       contactPhone: row.contact_phone || '',
       contactEmail: row.contact_email || '',
       validityDays: row.validity_days,
-      frequency: JSON.parse(row.frequency_json || '{}'),
       services: JSON.parse(row.services_json || '[]'),
       subtotal: row.subtotal,
       total: row.total,

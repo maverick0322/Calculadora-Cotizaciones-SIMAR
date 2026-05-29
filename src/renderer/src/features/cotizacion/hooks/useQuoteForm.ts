@@ -9,6 +9,8 @@ export const useQuoteForm = (editId?: number | null) => {
   const form = useForm<QuoteFormValues>({
     resolver: zodResolver(quoteSchema) as unknown as Resolver<QuoteFormValues>,
     defaultValues: {
+      personType: 'moral',
+      commercialName: '',
       clientName: '',
       clientRfc: '',
       contactName: '',  
@@ -25,11 +27,12 @@ export const useQuoteForm = (editId?: number | null) => {
             customDescription: ''
           },
           location: { street: '', municipality: '', neighborhood: '', state: '' },
-          // 👇 ACTUALIZADO AL NUEVO ESQUEMA DE RESIDUOS
           wastes: [{ name: '', type: 'Residuo de Manejo Especial (RME)', classification: 'N/A', clave: 'N/A', quantity: 1, unit: 'Kilogramo', pricePerUnit: 0 }],
           vehicles: [],
           crew: [],
           supplies: [],
+          materials: [], // 👇 AGREGADO
+          equipment: [], // 👇 AGREGADO
           logistics: {
             origin: '',
             primaryDestination: '',
@@ -63,11 +66,12 @@ export const useQuoteForm = (editId?: number | null) => {
         customDescription: ''
       },  
       location: { street: '', municipality: '', neighborhood: '', state: '' },
-      // 👇 ACTUALIZADO AL NUEVO ESQUEMA DE RESIDUOS
       wastes: [{ name: '', type: 'Residuo de Manejo Especial (RME)', classification: 'N/A', clave: 'N/A', quantity: 1, unit: 'Kilogramo', pricePerUnit: 0 }],
       vehicles: [],
       crew: [],
       supplies: [],
+      materials: [], // 👇 AGREGADO
+      equipment: [], // 👇 AGREGADO
       logistics: {
         origin: '',
         primaryDestination: '',
@@ -105,7 +109,6 @@ export const useQuoteForm = (editId?: number | null) => {
             contactPhone: draft.contactPhone || '',
             contactEmail: draft.contactEmail || '',
             validityDays: draft.validityDays,
-            // ❌ ELIMINADA LA FRECUENCIA GLOBAL DE AQUÍ
             services: draft.services 
           } as unknown as QuoteFormValues);
           

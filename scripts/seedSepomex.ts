@@ -1,7 +1,11 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url'; // 👈 IMPORTACIÓN NUEVA
 
+// 👇 MAGIA: Fabricamos __dirname para que funcione en ES Modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const appName = 'calculadora-cotizaciones-simar'; 
 const userDataPath = process.env.APPDATA 

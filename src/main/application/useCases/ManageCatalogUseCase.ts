@@ -3,7 +3,7 @@ import { SqliteCatalogRepository } from '../../infrastructure/database/repositor
 export class ManageCatalogUseCase {
   constructor(private readonly repository: SqliteCatalogRepository) {}
 
-  async execute(action: 'add' | 'delete', type: 'vehicle' | 'supply' | 'warehouse', payload: any) {
+  async execute(action: 'add' | 'delete' | 'edit', type: 'vehicle' | 'supply' | 'warehouse', payload: any) {
     try {
       if (action === 'delete') {
         if (!payload.id) throw new Error("Se requiere el ID para eliminar");
@@ -14,15 +14,17 @@ export class ManageCatalogUseCase {
       }
 
       if (action === 'add') {
-        if (type === 'vehicle') {
-          return this.repository.addVehicle(payload.name, payload.vehicleType, payload.capacityKg, payload.basePrice);
-        }
-        if (type === 'supply') {
-          return this.repository.addSupply(payload.name, payload.unit, payload.suggestedPrice);
-        }
-        if (type === 'warehouse') {
-          return this.repository.addWarehouse(payload.name, payload.address);
-        }
+        if (type === 'vehicle') return this.repository.addVehicle(payload);
+        if (type === 'supply') return this.repository.addSupply(payload);
+        if (type === 'warehouse') return this.repository.addWarehouse(payload);
+      }
+
+      if (action === 'edit') {
+        if (!payload.id) throw new Error("Se requiere el ID para editar");
+        
+        if (type === 'vehicle') return this.repository.editVehicle(payload);
+        if (type === 'supply') return this.repository.editSupply(payload);
+        if (type === 'warehouse') return this.repository.editWarehouse(payload);
       }
 
       throw new Error('Acción o tipo de catálogo no soportado');

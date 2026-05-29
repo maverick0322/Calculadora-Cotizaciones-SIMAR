@@ -1,58 +1,31 @@
-import { Pencil, FileText, AlertTriangle, Search } from 'lucide-react';
+import { useState, useMemo } from 'react';
 import { QuoteSummary } from '../../../../shared/types/Quote';
 import { useDrafts } from './hooks/useDrafts';
 import { usePdfWorkflow } from './hooks/usePdfWorkflow';
 import { PdfPreviewModal } from './components/PdfPreviewModal';
-import { useState, useMemo } from 'react';
-
-const statusTranslations: Record<string, string> = {
-  draft: 'Borrador',
-  issued: 'Emitida',
-  cancelled: 'Cancelada'
-};
+import { DashboardSearchBar } from './components/dashboard/DashboardSearchBar';
+import { EmitConfirmationModal } from './components/dashboard/EmitConfirmationModal';
+import { DraftsTable } from './components/dashboard/DraftsTable';
 
 export const DashboardView = ({ onEditClick, onQuoteIssued }: { onEditClick: (id: number) => void, onQuoteIssued?: () => void }) => {  
   const { drafts, loading, fetchDrafts } = useDrafts();
   const [quoteToEmit, setQuoteToEmit] = useState<number | null>(null);
-  
-  // 👇 Nuevo estado para el buscador
   const [searchTerm, setSearchTerm] = useState('');
 
   const { 
-    isModalOpen, 
-    isLoading: isPdfLoading, 
-    pdfBase64, 
-    openPdfPreview, 
-    downloadPdf, 
-    closeModal 
+    isModalOpen, isLoading: isPdfLoading, pdfBase64, openPdfPreview, downloadPdf, closeModal 
   } = usePdfWorkflow(() => {
     fetchDrafts(); 
-    if (onQuoteIssued) {
-      onQuoteIssued();
-    }
+    if (onQuoteIssued) onQuoteIssued();
   });
 
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleDateString('es-MX', {
-      year: 'numeric', month: 'short', day: 'numeric'
-    });
-  };
-
-  const handleEmitRequest = (id: number) => {
-    setQuoteToEmit(id); 
-  };
-
-  // 👇 Lógica de filtrado en tiempo real (Súper rápida gracias a useMemo)
   const filteredDrafts = useMemo(() => {
     if (!searchTerm.trim()) return drafts;
-    
     const lowerTerm = searchTerm.toLowerCase();
     return drafts.filter((draft: QuoteSummary) => {
-      // Filtramos por Folio, Dirección (que a veces incluye el cliente) o Residuos
       const matchFolio = draft.folio?.toLowerCase().includes(lowerTerm) || String(draft.id).includes(lowerTerm);
       const matchLocation = draft.location?.toLowerCase().includes(lowerTerm);
       const matchWastes = draft.wastesSummary?.toLowerCase().includes(lowerTerm);
-      
       return matchFolio || matchLocation || matchWastes;
     });
   }, [drafts, searchTerm]);
@@ -61,151 +34,31 @@ export const DashboardView = ({ onEditClick, onQuoteIssued }: { onEditClick: (id
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900 mb-1">
-            Borradores recientes
-          </h1>
-          <p className="text-sm text-gray-500">
-            Administra tus borradores editables
-          </p>
+          <h1 className="text-2xl font-semibold text-gray-900 mb-1">Borradores recientes</h1>
+          <p className="text-sm text-gray-500">Administra tus borradores editables</p>
         </div>
-        
-        {/* 👇 Barra de búsqueda UI */}
-        <div className="relative max-w-md w-full sm:w-72">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-gray-400" />
-          </div>
-          <input
-            type="text"
-            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all"
-            placeholder="Buscar por folio, cliente o residuo..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
+        <DashboardSearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200 bg-gray-50/50">
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Folio</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dirección</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Residuos</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha de creación</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
+      <DraftsTable 
+        drafts={filteredDrafts} 
+        loading={loading} 
+        searchTerm={searchTerm} 
+        isPdfLoading={isPdfLoading}
+        onEditClick={onEditClick}
+        onEmitRequest={setQuoteToEmit}
+      />
 
-              {loading && (
-                <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">Cargando borradores...</td></tr>
-              )}
-              
-              {!loading && drafts.length === 0 && (
-                <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">No se encontraron borradores. ¡Crea uno nuevo!</td></tr>
-              )}
-
-              {/* 👇 Mensaje de estado vacío para cuando la búsqueda no coincide */}
-              {!loading && drafts.length > 0 && filteredDrafts.length === 0 && (
-                <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">No hay resultados para "{searchTerm}".</td></tr>
-              )}
-
-              {/* 👇 Mapeamos sobre filteredDrafts en lugar de drafts */}
-              {filteredDrafts.map((draft: QuoteSummary) => {
-                const dateToShow = draft.createdAt ? formatDate(Number(draft.createdAt)) : 'Fecha desconocida';
-                const locationToShow = draft.location || 'Sin dirección';
-                
-                const wastesToShow = draft.wastesSummary || 'No especificado';
-                const statusToShow = statusTranslations[draft.status] || draft.status || 'Borrador';
-
-                return (
-                  <tr key={draft.id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm font-medium text-gray-900">{draft.folio || `#00${draft.id}`}</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm text-gray-900">{locationToShow}</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">
-                        {wastesToShow}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-500">{dateToShow}</span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200 capitalize">
-                        {statusToShow}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button 
-                          onClick={() => onEditClick(Number(draft.id))} 
-                          disabled={isPdfLoading}
-                          className="inline-flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 text-gray-600 hover:text-blue-600 transition-colors disabled:opacity-50" 
-                          title="Editar Borrador"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-
-                        <button 
-                          onClick={() => handleEmitRequest(Number(draft.id))}
-                          disabled={isPdfLoading}
-                          className="inline-flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 text-gray-600 hover:text-red-600 transition-colors disabled:opacity-50" 
-                          title="Emitir y Generar PDF Oficial"
-                        >
-                          <FileText className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {quoteToEmit && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-gray-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4 animate-in zoom-in-95 duration-200">
-            <div className="flex items-start gap-4 mb-5">
-              <div className="bg-blue-50 p-3 rounded-full text-blue-600 shrink-0">
-                <AlertTriangle className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-gray-900">¿Emitir Cotización Oficial?</h3>
-                <p className="text-sm text-gray-500 mt-1">
-                  Al emitir este documento, se generará el PDF final, se le asignará un folio oficial y <strong>el borrador quedará bloqueado</strong>.
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex justify-end gap-3 mt-6">
-              <button
-                onClick={() => setQuoteToEmit(null)}
-                className="px-5 py-2.5 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => {
-                  openPdfPreview(quoteToEmit, false, true);
-                  setQuoteToEmit(null); 
-                }}
-                className="px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center gap-2 shadow-sm"
-              >
-                <FileText className="w-4 h-4" />
-                Sí, Emitir PDF
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <EmitConfirmationModal 
+        isOpen={quoteToEmit !== null}
+        onCancel={() => setQuoteToEmit(null)}
+        onConfirm={() => {
+          if (quoteToEmit !== null) { 
+            openPdfPreview(quoteToEmit, false, true);
+            setQuoteToEmit(null); 
+          }
+        }}
+      />
 
       <PdfPreviewModal 
         isOpen={isModalOpen}
@@ -214,7 +67,6 @@ export const DashboardView = ({ onEditClick, onQuoteIssued }: { onEditClick: (id
         onClose={closeModal}
         onDownload={downloadPdf}
       />
-
     </div>
   );
 };
