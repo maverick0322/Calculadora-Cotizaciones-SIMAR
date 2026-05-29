@@ -26,10 +26,13 @@ import { GetCatalogsUseCase } from './application/useCases/GetCatalogsUseCase';
 import { UpdateCatalogPriceUseCase } from './application/useCases/UpdateCatalogPriceUseCase';
 import { ManageCatalogUseCase } from './application/useCases/ManageCatalogUseCase';
 import { RegisterWorkerUseCase } from './application/useCases/RegisterWorkerUseCase';
+import { UpdateQuoteStatusUseCase } from './application/useCases/UpdateQuoteStatusUseCase';
 
 import { quoteSchema } from '../shared/schemas/quoteSchema';
 import { registerResidueHandlers } from './ipc/residueHandlers';
 import { registerClientDirectoryHandlers } from './ipc/clientDirectoryHandlers';
+import { logger } from './infrastructure/logging/SafeLogger';
+import { CurrentQuoteStatus } from '../shared/types/Quote';
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -68,7 +71,7 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  ipcMain.on('ping', () => console.log('pong'))
+  ipcMain.on('ping', () => logger.warn('Ping recibido desde renderer'))
 
   initDatabase();
 
@@ -93,32 +96,35 @@ app.whenReady().then(() => {
   const getCatalogsUseCase = new GetCatalogsUseCase(catalogRepo);
   const updateCatalogUseCase = new UpdateCatalogPriceUseCase(catalogRepo);
   const manageCatalogUseCase = new ManageCatalogUseCase(catalogRepo);
+  const updateQuoteStatusUseCase = new UpdateQuoteStatusUseCase(quoteRepo, logAuditUseCase);
 
   ipcMain.handle('quotes:save-draft', (_event, payload) => {
     try {
-      console.log('Main received request to save draft:', payload);
-
       const validation = quoteSchema.safeParse(payload);
 
       if (!validation.success) {
-        console.warn('Blocked by local backend (Invalid data):', validation.error.format());
+        logger.warn('Cotización bloqueada por validación local', { details: validation.error.format() });
         return {
           success: false,
-          error: 'Local server security validation failed',
+          error: 'La cotización contiene campos inválidos o incompletos.',
           details: validation.error.format()
         };
       }
 
-      return saveDraftUseCase.execute(payload);
+      return saveDraftUseCase.execute({
+        ...validation.data,
+        id: payload?.id,
+        createdAt: payload?.createdAt ?? Date.now(),
+        status: 'en_proceso'
+      });
 
     } catch (error) {
-      console.error('Error saving draft:', error);
-      return { success: false, error: (error as Error).message };
+      logger.error('Error inesperado al guardar cotización', { quoteId: payload?.id, error });
+      return { success: false, error: 'Error inesperado al guardar la cotización.' };
     }
   });
 
   ipcMain.handle('auth:login', async (_event, credentials) => {
-    console.log(`Attempting login for: ${credentials?.email}`);
     return loginUseCase.execute(credentials);
   });
 
@@ -128,44 +134,41 @@ app.whenReady().then(() => {
 
   ipcMain.handle('quotes:get-draft-by-id', async (_event, id) => {
     try {
-      console.log(`Main received request to fetch draft #${id}`);
-
       const data = getDraftByIdUseCase.execute(id);
 
       if (data) {
         return { success: true, data };
       } else {
-        return { success: false, error: 'Draft not found' };
+        return { success: false, error: 'No se encontró la cotización en proceso.' };
       }
     } catch (error) {
-      console.error('Error fetching draft:', error);
-      return { success: false, error: (error as Error).message };
+      logger.error('Error al obtener cotización en proceso', { quoteId: id, error });
+      return { success: false, error: 'Error inesperado al obtener la cotización.' };
     }
   });
 
   ipcMain.handle('quotes:get-drafts', () => {
     try {
-      console.log('Main received request to list drafts');
       return getDraftsUseCase.execute();
     } catch (error) {
-      console.error('Error listing drafts:', error);
-      return { success: false, error: (error as Error).message };
+      logger.error('Error al listar cotizaciones en proceso', { error });
+      return { success: false, error: 'Error inesperado al listar cotizaciones.' };
     }
   });
 
   ipcMain.handle('quotes:issue', async (_event, id) => {
-    console.log(`Main received request to issue quote #${id}`);
     return await issueQuoteUseCase.execute(id);
   });
 
+  ipcMain.handle('quotes:update-status', (_event, { id, nextStatus }: { id: number; nextStatus: CurrentQuoteStatus }) => {
+    return updateQuoteStatusUseCase.execute(id, nextStatus);
+  });
+
   ipcMain.handle('quotes:get-quote-by-id', (_event, id) => {
-    console.log(`Main received request to fetch ANY quote #${id}`);
     return fetchQuoteByIdUseCase.execute(id);
   });
 
   ipcMain.handle('pdf:generate-preview', async (_event, payload) => {
-    console.log('Main received request to generate PDF preview');
-    
     const data = payload.quoteData ? payload.quoteData : payload;
     const isDetailed = payload.isDetailed || false;
     
@@ -173,23 +176,20 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle('pdf:save', async (_event, pdfBase64, defaultFolio) => {
-    console.log('Main received request to save PDF to disk');
     return await savePdfUseCase.execute(pdfBase64, defaultFolio);
   });
 
   ipcMain.handle('quotes:get-issued', () => {
-    console.log("Main received request to get issued quotes");
     return getIssuedQuotesUseCase.execute(); 
   });
 
   ipcMain.handle('catalogs:get-all', () => {
     try {
-      console.log('Main received request to fetch catalogs');
       const data = getCatalogsUseCase.execute();
       return { success: true, data };
     } catch (error) {
-      console.error('Error fetching catalogs:', error);
-      return { success: false, error: (error as Error).message };
+      logger.error('Error al obtener catálogos', { error });
+      return { success: false, error: 'Error inesperado al obtener catálogos.' };
     }
   });
 

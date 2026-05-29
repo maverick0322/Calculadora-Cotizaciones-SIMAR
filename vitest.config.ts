@@ -6,6 +6,9 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
   },
+  esbuild: {
+    jsx: 'automatic'
+  },
   resolve: {
     alias: {
       '@renderer': resolve(__dirname, './src/renderer/src')

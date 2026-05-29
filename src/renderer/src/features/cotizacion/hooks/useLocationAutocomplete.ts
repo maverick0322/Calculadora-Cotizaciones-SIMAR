@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { QuoteFormValues } from '../../../../../shared/schemas/quoteSchema';
 
-export const useLocationAutocomplete = (serviceIndex: number) => {
+export const useLocationAutocomplete = (locationPath: string) => {
   const { control, setValue } = useFormContext<QuoteFormValues>();
 
   const [states, setStates] = useState<string[]>([]);
@@ -10,10 +10,9 @@ export const useLocationAutocomplete = (serviceIndex: number) => {
   const [colonies, setColonies] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // 👇 Rutas dinámicas correctas para observar solo este servicio
-  const cp = useWatch({ control, name: `services.${serviceIndex}.location.cp` as any }); 
-  const currentState = useWatch({ control, name: `services.${serviceIndex}.location.state` as any });
-  const currentMunicipality = useWatch({ control, name: `services.${serviceIndex}.location.municipality` as any });
+  const cp = useWatch({ control, name: `${locationPath}.cp` as any });
+  const currentState = useWatch({ control, name: `${locationPath}.state` as any });
+  const currentMunicipality = useWatch({ control, name: `${locationPath}.municipality` as any });
 
   // Carga inicial de Estados
   useEffect(() => {
@@ -30,8 +29,8 @@ export const useLocationAutocomplete = (serviceIndex: number) => {
         if (res.success && res.data.length > 0) {
           const location = res.data[0];
           
-          setValue(`services.${serviceIndex}.location.state` as any, location.state, { shouldValidate: true });
-          setValue(`services.${serviceIndex}.location.municipality` as any, location.municipality, { shouldValidate: true });
+          setValue(`${locationPath}.state` as any, location.state, { shouldValidate: true });
+          setValue(`${locationPath}.municipality` as any, location.municipality, { shouldValidate: true });
 
           const cpColonies = res.data.map((d: any) => d.colony);
           setColonies(cpColonies);
@@ -43,7 +42,7 @@ export const useLocationAutocomplete = (serviceIndex: number) => {
         setIsLoading(false);
       });
     }
-  }, [cp, serviceIndex, setValue]);
+  }, [cp, locationPath, setValue]);
 
   // Si cambia el Estado manualmente, trae sus municipios
   useEffect(() => {
@@ -81,7 +80,7 @@ export const useLocationAutocomplete = (serviceIndex: number) => {
       const res = await window.api.getLocations('colonies', { state: currentState, municipality: currentMunicipality });
       if (res.success) setColonies(res.data);
       
-      setValue(`services.${serviceIndex}.location.neighborhood` as any, newColonyName.toUpperCase(), { shouldValidate: true });
+      setValue(`${locationPath}.neighborhood` as any, newColonyName.toUpperCase(), { shouldValidate: true });
       return true;
     }
     return false;

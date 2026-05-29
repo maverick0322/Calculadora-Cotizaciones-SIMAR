@@ -1,19 +1,21 @@
 // src/domain/repositories/IQuoteRepository.ts
-import { QuoteDraft, QuoteSummary } from '../../../shared/types/Quote';
+import { CurrentQuoteStatus, QuoteDraft, QuoteSummary } from '../../../shared/types/Quote';
 
 export interface IQuoteRepository {
   /**
-   * Saves a new quote draft into the database.
-   * @param quote The draft data to save.
+   * Saves a new in-process quote into the database.
+   * @param quote The quote data to save.
    * @returns The ID of the newly inserted row.
    */
   saveDraft(quote: QuoteDraft): number | bigint;
   
   /**
-   * Retrieves a summary list of all quotes currently in 'draft' status.
+   * Retrieves a summary list of all quotes currently in progress.
    * @returns An array of QuoteSummary objects.
    */
   getDrafts(): QuoteSummary[];
+
+  getQuotesByStatus(status: CurrentQuoteStatus): QuoteSummary[];
 
   /**
    * Retrieves the full details of a specific draft by its ID.
@@ -30,7 +32,15 @@ export interface IQuoteRepository {
   getQuoteById(id: number): QuoteDraft | null;
 
   /**
-   * Changes the status of a quote from 'draft' to 'issued', making it a finalized quote.
+   * Changes the status of a quote to the requested next status.
+   * @param id The unique identifier of the quote.
+   * @param nextStatus The requested next status.
+   * @returns A boolean indicating whether the operation was successful.
+   */
+  updateQuoteStatus(id: number, nextStatus: CurrentQuoteStatus): boolean;
+
+  /**
+   * Changes an authorized quote to issued/emitted, making it a client document.
    * @param id The unique identifier of the draft to issue.
    * @returns A boolean indicating whether the operation was successful.
    */

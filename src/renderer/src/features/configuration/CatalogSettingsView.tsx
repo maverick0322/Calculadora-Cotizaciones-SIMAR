@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { CatalogData } from '../cotizacion/NewQuoteView';
-import { Settings, Plus, Trash2, Truck, Package, MapPin, Edit2, X } from 'lucide-react';
+import { Settings, Plus, Trash2, Truck, Package, MapPin, Edit2, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const VEHICLE_TYPES = ['Ligero', 'Mediano', 'Pesado', 'Especial'];
 const SUPPLY_CATEGORIES = [
   { value: 'supply', label: 'Insumo (Consumible)' },
+  { value: 'tool', label: 'Herramienta' },
   { value: 'material', label: 'Material (Contenedores/Préstamo)' },
   { value: 'equipment', label: 'Maquinaria / Equipo' }
 ];
@@ -17,14 +17,17 @@ export const CatalogSettingsView = () => {
   // Estados de "Modo Edición"
   const [editingVehicleId, setEditingVehicleId] = useState<number | null>(null);
   const [editingSupplyId, setEditingSupplyId] = useState<number | null>(null);
+  const [editingEppId, setEditingEppId] = useState<number | null>(null);
   const [editingWarehouseId, setEditingWarehouseId] = useState<number | null>(null);
 
-  const defaultVehicle = { plate: '', name: '', vehicleType: 'Pesado', usefulTonnage: 3.0, volumeM3: 15, drumCapacity: 75, fuelEfficiencyKmL: 8.5, pricePerDay: 0, pricePerTon: 0, pricePerM3: 0 };
+  const defaultVehicle = { vehicleKey: '', plate: '', name: '', modelName: '', vehicleType: '', usefulTonnage: 3.0, volumeM3: 15, drumCapacity: 75, fuelEfficiencyKmL: 8.5, pricePerDay: 0, pricePerTon: 0, pricePerM3: 0 };
   const defaultSupply = { name: '', category: 'supply', unit: 'pieza', suggestedPrice: 0 };
+  const defaultEpp = { name: '', category: 'specialized_epp', unit: 'kit', suggestedPrice: 0 };
   const defaultWarehouse = { name: '', address: '' };
 
   const [newVehicle, setNewVehicle] = useState(defaultVehicle);
   const [newSupply, setNewSupply] = useState(defaultSupply);
+  const [newEpp, setNewEpp] = useState(defaultEpp);
   const [newWarehouse, setNewWarehouse] = useState(defaultWarehouse);
 
   const load = async () => {
@@ -55,7 +58,7 @@ export const CatalogSettingsView = () => {
         
         // Limpiamos los formularios
         if (type === 'vehicle') { setNewVehicle(defaultVehicle); setEditingVehicleId(null); }
-        if (type === 'supply') { setNewSupply(defaultSupply); setEditingSupplyId(null); }
+        if (type === 'supply') { setNewSupply(defaultSupply); setEditingSupplyId(null); setNewEpp(defaultEpp); setEditingEppId(null); }
         if (type === 'warehouse') { setNewWarehouse(defaultWarehouse); setEditingWarehouseId(null); }
       } else {
         toast.error(`Error: ${res.error}`, { id: toastId });
@@ -69,7 +72,7 @@ export const CatalogSettingsView = () => {
   const handleEditVehicle = (v: any) => {
     setEditingVehicleId(v.id);
     setNewVehicle({
-      plate: v.plate, name: v.name, vehicleType: v.vehicle_type || 'Pesado',
+      vehicleKey: v.vehicle_key || '', plate: v.plate, name: v.name, modelName: v.model_name || v.name, vehicleType: v.vehicle_type || '',
       usefulTonnage: v.useful_tonnage, volumeM3: v.volume_m3, drumCapacity: v.drum_capacity,
       fuelEfficiencyKmL: v.fuel_efficiency_km_l, pricePerDay: v.price_per_day, pricePerTon: v.price_per_ton, pricePerM3: v.price_per_m3
     });
@@ -81,12 +84,20 @@ export const CatalogSettingsView = () => {
     setNewSupply({ name: s.name, category: s.category || 'supply', unit: s.unit, suggestedPrice: s.suggested_price });
   };
 
+  const handleEditEpp = (s: any) => {
+    setEditingEppId(s.id);
+    setNewEpp({ name: s.name, category: 'specialized_epp', unit: s.unit, suggestedPrice: s.suggested_price });
+  };
+
   const handleEditWarehouse = (w: any) => {
     setEditingWarehouseId(w.id);
     setNewWarehouse({ name: w.name, address: w.address });
   };
 
   if (!catalogs && !loading) return null;
+
+  const regularSupplies = catalogs?.supplies.filter(s => s.category !== 'specialized_epp') || [];
+  const specializedEpp = catalogs?.supplies.filter(s => s.category === 'specialized_epp') || [];
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-10 animate-in fade-in">
@@ -108,22 +119,24 @@ export const CatalogSettingsView = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <div className="md:col-span-1">
-              <label className="block text-xs font-medium text-gray-600 mb-1">Clave/Placa</label>
-              <input type="text" value={newVehicle.plate} onChange={e => setNewVehicle({...newVehicle, plate: e.target.value})} className="w-full p-2 border rounded text-sm uppercase" placeholder="Ej. XY-123" />
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-xs font-medium text-gray-600 mb-1">Nombre / Modelo</label>
-              <input type="text" value={newVehicle.name} onChange={e => setNewVehicle({...newVehicle, name: e.target.value})} className="w-full p-2 border rounded text-sm" placeholder="Ej. Tractocamión Tolva" />
+              <label className="block text-xs font-medium text-gray-600 mb-1">Clave</label>
+              <input type="text" value={newVehicle.vehicleKey} onChange={e => setNewVehicle({...newVehicle, vehicleKey: e.target.value})} className="w-full p-2 border rounded text-sm uppercase" placeholder="VH-001" />
             </div>
             <div className="md:col-span-1">
-              <label className="block text-xs font-medium text-gray-600 mb-1">Tipo</label>
-              <select value={newVehicle.vehicleType} onChange={e => setNewVehicle({...newVehicle, vehicleType: e.target.value})} className="w-full p-2 border rounded text-sm bg-white">
-                {VEHICLE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-              </select>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Placa</label>
+              <input type="text" value={newVehicle.plate} onChange={e => setNewVehicle({...newVehicle, plate: e.target.value})} className="w-full p-2 border rounded text-sm uppercase" placeholder="XY-123-A" />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-xs font-medium text-gray-600 mb-1">Nombre</label>
+              <input type="text" value={newVehicle.name} onChange={e => setNewVehicle({...newVehicle, name: e.target.value})} className="w-full p-2 border rounded text-sm" placeholder="Ej. Tractocamión Tolva" />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
+            <div className="md:col-span-1">
+              <label className="block text-xs font-medium text-gray-600 mb-1">Modelo</label>
+              <input type="text" value={newVehicle.modelName} onChange={e => setNewVehicle({...newVehicle, modelName: e.target.value})} className="w-full p-2 border rounded text-sm" placeholder="Ej. Tolva 2024" />
+            </div>
             <div className="md:col-span-1">
               <label className="block text-xs font-medium text-gray-600 mb-1">Carga Útil (Ton)</label>
               <input type="number" step="0.1" value={newVehicle.usefulTonnage} onChange={e => setNewVehicle({...newVehicle, usefulTonnage: Number(e.target.value)})} className="w-full p-2 border rounded text-sm" />
@@ -162,7 +175,7 @@ export const CatalogSettingsView = () => {
                 </button>
               )}
               <button 
-                disabled={!newVehicle.name || !newVehicle.plate}
+                disabled={!newVehicle.name || !newVehicle.plate || !newVehicle.vehicleKey || !newVehicle.modelName}
                 onClick={() => executeAction(editingVehicleId ? 'edit' : 'add', 'vehicle', { ...newVehicle, id: editingVehicleId })}
                 className={`w-full text-white px-4 py-2 rounded font-medium disabled:opacity-50 flex items-center justify-center gap-2 transition-colors ${editingVehicleId ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-blue-600 hover:bg-blue-700'}`}
               >
@@ -177,7 +190,8 @@ export const CatalogSettingsView = () => {
           {catalogs?.vehicles.map(v => (
             <div key={v.id} className="flex items-center justify-between p-4 hover:bg-gray-50 border border-gray-100 rounded-lg transition-colors">
               <div>
-                <p className="font-bold text-gray-800">{v.name} <span className="text-xs font-mono text-blue-600 bg-blue-50 px-2 py-0.5 rounded ml-2">{v.plate}</span></p>
+                <p className="font-bold text-gray-800">{v.name} <span className="text-xs font-mono text-blue-600 bg-blue-50 px-2 py-0.5 rounded ml-2">{v.vehicle_key || 'Sin clave'}</span> <span className="text-xs font-mono text-gray-600 bg-gray-100 px-2 py-0.5 rounded ml-1">{v.plate}</span></p>
+                <p className="text-xs text-gray-500 mt-1">Modelo: {v.model_name || 'No especificado'}</p>
                 <p className="text-xs text-gray-500 mt-1">📦 {v.useful_tonnage} Ton | {v.volume_m3} m³ ({v.drum_capacity} tambores) | ⛽ {v.fuel_efficiency_km_l} km/L</p>
                 <p className="text-xs text-gray-600 mt-0.5">💵 x Hora: ${v.price_per_day} | x Ton: ${v.price_per_ton} | x m³: ${v.price_per_m3}</p>
               </div>
@@ -230,7 +244,7 @@ export const CatalogSettingsView = () => {
         </div>
 
         <div className="grid gap-2">
-          {catalogs?.supplies.map(s => (
+          {regularSupplies.map(s => (
             <div key={s.id} className="flex items-center justify-between p-3 hover:bg-gray-50 border-b last:border-0 transition-colors">
               <div>
                 <p className="font-medium text-gray-800">{s.name}</p>
@@ -239,6 +253,52 @@ export const CatalogSettingsView = () => {
               <div className="flex gap-1">
                 <button onClick={() => handleEditSupply(s)} className="text-gray-400 hover:text-blue-600 p-2"><Edit2 className="w-4 h-4" /></button>
                 <button onClick={() => { if(window.confirm('¿Eliminar insumo?')) executeAction('delete', 'supply', { id: s.id })}} className="text-gray-400 hover:text-red-500 p-2"><Trash2 className="w-4 h-4" /></button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <h3 className="flex items-center gap-2 font-semibold text-gray-800 mb-6"><ShieldCheck /> Equipo de Seguridad Especializado (EPP)</h3>
+
+        <div className={`${editingEppId ? 'bg-yellow-50 border-yellow-300' : 'bg-red-50/50 border-red-100'} p-4 rounded-lg mb-6 border transition-colors`}>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+            <div className="md:col-span-2">
+              <label className="block text-xs font-medium text-gray-600 mb-1">Nombre del Equipo</label>
+              <input type="text" value={newEpp.name} onChange={e => setNewEpp({...newEpp, name: e.target.value})} className="w-full p-2 border rounded text-sm" placeholder="Ej. Traje Tyvek especializado" />
+            </div>
+            <div className="md:col-span-1">
+              <label className="block text-xs font-medium text-gray-600 mb-1">Unidad</label>
+              <input type="text" value={newEpp.unit} onChange={e => setNewEpp({...newEpp, unit: e.target.value})} className="w-full p-2 border rounded text-sm" placeholder="Ej. kit" />
+            </div>
+            <div className="md:col-span-1">
+              <label className="block text-xs font-medium text-gray-600 mb-1">Precio ($)</label>
+              <input type="number" step="0.01" value={newEpp.suggestedPrice} onChange={e => setNewEpp({...newEpp, suggestedPrice: Number(e.target.value)})} className="w-full p-2 border rounded text-sm" />
+            </div>
+            <div className="md:col-span-1 flex justify-end gap-2">
+              {editingEppId && <button onClick={() => { setEditingEppId(null); setNewEpp(defaultEpp); }} className="px-3 py-2 text-gray-500 hover:bg-gray-200 rounded text-sm font-medium">Cancelar</button>}
+              <button
+                disabled={!newEpp.name}
+                onClick={() => executeAction(editingEppId ? 'edit' : 'add', 'supply', { ...newEpp, category: 'specialized_epp', id: editingEppId })}
+                className={`${editingEppId ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-red-600 hover:bg-red-700'} text-white px-6 py-2 rounded font-medium disabled:opacity-50 flex items-center gap-2`}
+              >
+                {editingEppId ? 'Actualizar' : <><Plus className="w-4 h-4" /> Agregar</>}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid gap-2">
+          {specializedEpp.map(s => (
+            <div key={s.id} className="flex items-center justify-between p-3 hover:bg-gray-50 border-b last:border-0 transition-colors">
+              <div>
+                <p className="font-medium text-gray-800">{s.name}</p>
+                <p className="text-xs text-gray-500"><span className="font-semibold text-red-700">EPP especializado</span> | Se usa por: {s.unit} | Precio: ${s.suggested_price.toLocaleString()}</p>
+              </div>
+              <div className="flex gap-1">
+                <button onClick={() => handleEditEpp(s)} className="text-gray-400 hover:text-blue-600 p-2"><Edit2 className="w-4 h-4" /></button>
+                <button onClick={() => { if(window.confirm('¿Eliminar EPP especializado?')) executeAction('delete', 'supply', { id: s.id })}} className="text-gray-400 hover:text-red-500 p-2"><Trash2 className="w-4 h-4" /></button>
               </div>
             </div>
           ))}

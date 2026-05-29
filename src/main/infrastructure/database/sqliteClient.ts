@@ -4,12 +4,33 @@ import { app } from 'electron';
 import path from 'path';
 import { runSepomexSeeder } from './seeders/sepomexSeeder';
 import residuosCatalog from './catalogo_residuos.json';
+import { logger } from '../logging/SafeLogger';
 
 const dbPath = path.join(app.getPath('userData'), 'gestor_residuos.sqlite');
 const db: DatabaseType = new Database(dbPath, {});
 
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
+
+const addColumnIfMissing = (tableName: string, columnName: string, definition: string) => {
+    const columns = db.prepare(`PRAGMA table_info(${tableName})`).all() as Array<{ name: string }>;
+    const columnExists = columns.some((column) => column.name === columnName);
+
+    if (!columnExists) {
+        db.exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`);
+    }
+};
+
+const runMigrations = () => {
+    addColumnIfMissing('quotes', 'person_type', 'VARCHAR');
+    addColumnIfMissing('quotes', 'commercial_name', 'VARCHAR');
+    addColumnIfMissing('quotes', 'contact_position', 'VARCHAR');
+    addColumnIfMissing('catalog_vehicles', 'vehicle_key', 'VARCHAR');
+    addColumnIfMissing('catalog_vehicles', 'model_name', 'VARCHAR');
+
+    db.prepare(`UPDATE quotes SET status = 'en_proceso' WHERE status = 'draft'`).run();
+    db.prepare(`UPDATE quotes SET status = 'emitida' WHERE status = 'issued'`).run();
+};
 
 export const initDatabase = () => {
     const schema = `
@@ -32,11 +53,12 @@ export const initDatabase = () => {
             email VARCHAR
         );
 
-        -- 👇 NUEVA ESTRUCTURA TÉCNICA DE VEHÍCULOS
         CREATE TABLE IF NOT EXISTS catalog_vehicles (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            vehicle_key VARCHAR,
             plate VARCHAR UNIQUE,
             name VARCHAR,
+            model_name VARCHAR,
             vehicle_type VARCHAR,
             useful_tonnage DECIMAL,
             volume_m3 DECIMAL,
@@ -48,11 +70,10 @@ export const initDatabase = () => {
             is_active BOOLEAN DEFAULT 1
         );
 
-        -- 👇 NUEVA ESTRUCTURA DE INSUMOS CON CATEGORÍA
         CREATE TABLE IF NOT EXISTS catalog_supplies (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name VARCHAR,
-            category VARCHAR, -- 'supply', 'material', 'equipment'
+            category VARCHAR,
             unit VARCHAR,
             suggested_price DECIMAL,
             is_active BOOLEAN DEFAULT 1
@@ -77,13 +98,16 @@ export const initDatabase = () => {
         CREATE TABLE IF NOT EXISTS quotes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             folio VARCHAR UNIQUE,
-            status VARCHAR DEFAULT 'draft',
+            status VARCHAR DEFAULT 'en_proceso',
             customer_id INTEGER,
             seller_id INTEGER,
             replaces_quote_id INTEGER,
+            person_type VARCHAR,
+            commercial_name VARCHAR,
             client_name VARCHAR,
             client_rfc VARCHAR,
             contact_name VARCHAR,
+            contact_position VARCHAR,
             contact_phone VARCHAR,
             contact_email VARCHAR,
             validity_days INTEGER,
@@ -193,51 +217,48 @@ export const initDatabase = () => {
     `;
 
     db.exec(schema);
+    runMigrations();
 
     try {
         const seedTransaction = db.transaction(() => {
             const userCount = (db.prepare('SELECT COUNT(*) as count FROM users').get() as any).count;
             if (userCount === 0) {
-                console.log('🌱 Sembrando usuario administrador por defecto...');
+                logger.warn('Sembrando usuario administrador por defecto');
                 const insertUser = db.prepare(`INSERT INTO users (email, password_hash, full_name, role) VALUES (?, ?, ?, ?)`);
                 insertUser.run('admin@simar.com', '123456', 'Administrador SIMAR', 'admin');
             }
 
             const vehicleCount = (db.prepare('SELECT COUNT(*) as count FROM catalog_vehicles').get() as any).count;
             if (vehicleCount === 0) {
-                console.log('🌱 Sembrando catálogo de vehículos con datos técnicos...');
+                logger.warn('Sembrando catálogo de vehículos con datos técnicos');
                 const insertVehicle = db.prepare(`
                     INSERT INTO catalog_vehicles 
-                    (plate, name, vehicle_type, useful_tonnage, volume_m3, drum_capacity, fuel_efficiency_km_l, price_per_day, price_per_ton, price_per_m3) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    (vehicle_key, plate, name, model_name, vehicle_type, useful_tonnage, volume_m3, drum_capacity, fuel_efficiency_km_l, price_per_day, price_per_ton, price_per_m3) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 `);
-                // Ejemplos técnicos listos para la Fase 3
-                insertVehicle.run('XY-1234-A', 'Camioneta 3.5 Toneladas', 'Ligero', 3.0, 15.0, 12, 8.5, 1500.00, 500.00, 100.00);
-                insertVehicle.run('AB-9876-Z', 'Tractocamión con Tolva', 'Pesado', 30.0, 60.0, 0, 3.2, 8500.00, 280.00, 140.00);
-                insertVehicle.run('TR-5555-C', 'Camión Recolector Compactador', 'Mediano', 8.0, 25.0, 0, 5.5, 4200.00, 525.00, 168.00);
+                insertVehicle.run('VH-001', 'XY-1234-A', 'Camioneta 3.5 Toneladas', '3.5 toneladas', 'Ligero', 3.0, 15.0, 12, 8.5, 1500.00, 500.00, 100.00);
+                insertVehicle.run('VH-002', 'AB-9876-Z', 'Tractocamión con Tolva', 'Tolva', 'Pesado', 30.0, 60.0, 0, 3.2, 8500.00, 280.00, 140.00);
+                insertVehicle.run('VH-003', 'TR-5555-C', 'Camión Recolector Compactador', 'Compactador', 'Mediano', 8.0, 25.0, 0, 5.5, 4200.00, 525.00, 168.00);
             }
 
             const supplyCount = (db.prepare('SELECT COUNT(*) as count FROM catalog_supplies').get() as any).count;
             if (supplyCount === 0) {
-                console.log('🌱 Sembrando catálogo de insumos categorizados...');
+                logger.warn('Sembrando catálogo de insumos categorizados');
                 const insertSupply = db.prepare(`INSERT INTO catalog_supplies (name, category, unit, suggested_price) VALUES (?, ?, ?, ?)`);
                 
-                // Categoría Insumo
                 insertSupply.run('Bolsas de plástico grueso (Paquete 100)', 'supply', 'Paquete', 250.00);
                 insertSupply.run('Etiquetas de RME', 'supply', 'Unidad', 5.00);
-                
-                // Categoría Material
+                insertSupply.run('Kit de herramienta manual', 'tool', 'Kit', 300.00);
                 insertSupply.run('Contenedor de 200L (Préstamo)', 'material', 'Unidad', 50.00);
                 insertSupply.run('Supersaco 1 Tonelada', 'material', 'Unidad', 180.00);
-                
-                // Categoría Maquinaria/Equipo
                 insertSupply.run('Equipo de Protección Personal (Desechable)', 'equipment', 'Kit', 120.00);
                 insertSupply.run('Bomba extractora (Renta día)', 'equipment', 'Día', 850.00);
+                insertSupply.run('EPP especializado para residuos peligrosos', 'specialized_epp', 'Kit', 450.00);
             }
 
             const warehouseCount = (db.prepare('SELECT COUNT(*) as count FROM catalog_warehouses').get() as any).count;
             if (warehouseCount === 0) {
-                console.log('🌱 Sembrando catálogo de almacenes...');
+                logger.warn('Sembrando catálogo de almacenes');
                 const insertWarehouse = db.prepare(`INSERT INTO catalog_warehouses (name, address) VALUES (?, ?)`);
                 insertWarehouse.run('Almacén Central SIMAR', 'Av. de las Industrias S/N, Zona Industrial');
                 insertWarehouse.run('Planta de Tratamiento Norte', 'Carretera Federal Km 15');
@@ -245,7 +266,7 @@ export const initDatabase = () => {
 
             const residueCount = (db.prepare('SELECT COUNT(*) as count FROM catalog_residues').get() as any).count;
             if (residueCount === 0) {
-                console.log(`🌱 Sembrando catálogo con ${residuosCatalog.length} residuos especiales...`);
+                logger.warn('Sembrando catálogo de residuos especiales', { count: residuosCatalog.length });
                 
                 const insertResidue = db.prepare(`
                   INSERT INTO catalog_residues (name, residue_type, classification, clave, unit, base_price) 
@@ -262,10 +283,10 @@ export const initDatabase = () => {
 
         seedTransaction();
     } catch (error) {
-        console.error('❌ Error al inyectar datos semilla:', error);
+        logger.error('Error al inyectar datos semilla', { error });
     }
 
-    console.log('Base de datos SQLite inicializada correctamente en:', dbPath);
+    logger.warn('Base de datos SQLite inicializada', { dbPath });
 };
 
 export default db;

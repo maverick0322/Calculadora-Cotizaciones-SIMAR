@@ -13,6 +13,7 @@ import { IssuedQuotesTable } from './components/dashboard/IssuedQuotesTable';
 export const IssuedQuotesDashboardView = ({ onCloneRedirect }: { onCloneRedirect?: (newId: number) => void }) => {  
   const { issuedQuotes, loading, fetchIssuedQuotes } = useIssuedQuotes();
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState('');
 
   const { 
     isModalOpen, isLoading: isPdfLoading, pdfBase64, openPdfPreview, downloadPdf, closeModal 
@@ -26,7 +27,7 @@ export const IssuedQuotesDashboardView = ({ onCloneRedirect }: { onCloneRedirect
 
       const clonedPayload = {
         ...originalQuote,
-        id: undefined, folio: undefined, status: 'draft' as const, createdAt: Date.now(),
+        id: undefined, folio: undefined, status: 'en_proceso' as const, createdAt: Date.now(),
         contactName: originalQuote.contactName || '', contactPhone: originalQuote.contactPhone || '',
         contactEmail: originalQuote.contactEmail || '', replacesQuoteId: originalQuote.id,
         services: originalQuote.services.map(s => ({
@@ -39,8 +40,8 @@ export const IssuedQuotesDashboardView = ({ onCloneRedirect }: { onCloneRedirect
       const response = await window.api.saveDraft(clonedPayload);
       
       if (response.success) {
-        toast.success('Borrador de reemplazo creado', { id: loadingId });
-        const newDraftId = response.id || response.data?.id || response.data;
+        toast.success('Cotización de reemplazo creada', { id: loadingId });
+        const newDraftId = response.id || response.data;
         if (onCloneRedirect && newDraftId) onCloneRedirect(Number(newDraftId));
       } else {
         console.error("Error validación backend:", response.details);
@@ -52,15 +53,18 @@ export const IssuedQuotesDashboardView = ({ onCloneRedirect }: { onCloneRedirect
   };
 
   const filteredQuotes = useMemo(() => {
-    if (!searchTerm.trim()) return issuedQuotes;
     const lowerTerm = searchTerm.toLowerCase();
     return issuedQuotes.filter((quote: QuoteSummary) => {
+      const matchesMonth = !selectedMonth || new Date(Number(quote.createdAt)).toISOString().slice(0, 7) === selectedMonth;
+      if (!matchesMonth) return false;
+      if (!searchTerm.trim()) return true;
+
       const matchFolio = quote.folio?.toLowerCase().includes(lowerTerm) || String(quote.id).includes(lowerTerm);
       const matchLocation = quote.location?.toLowerCase().includes(lowerTerm);
       const matchWastes = quote.wastesSummary?.toLowerCase().includes(lowerTerm);
       return matchFolio || matchLocation || matchWastes;
     });
-  }, [issuedQuotes, searchTerm]);
+  }, [issuedQuotes, searchTerm, selectedMonth]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 animate-in fade-in">
@@ -75,7 +79,7 @@ export const IssuedQuotesDashboardView = ({ onCloneRedirect }: { onCloneRedirect
         </div>
 
         {/* 👇 REUTILIZAMOS EL COMPONENTE DE BÚSQUEDA */}
-        <DashboardSearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+        <DashboardSearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} selectedMonth={selectedMonth} setSelectedMonth={setSelectedMonth} />
       </div>
 
       <IssuedQuotesTable 

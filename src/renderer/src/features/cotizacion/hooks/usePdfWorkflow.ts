@@ -25,7 +25,7 @@ export const usePdfWorkflow = (onWorkflowComplete?: () => void) => {
         throw new Error('No se encontraron los datos de la cotización en la base de datos');
       }
 
-      const folioStr = quoteData.folio || `Borrador_${quoteData.id}`;
+      const folioStr = quoteData.folio || `Cotizacion_${quoteData.id}`;
 
       const cleanClientName = (quoteData.clientName || 'Cliente')
         .replace(/[^a-zA-Z0-9_ -]/g, '')

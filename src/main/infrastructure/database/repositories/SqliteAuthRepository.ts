@@ -1,5 +1,4 @@
 import { Database } from 'better-sqlite3';
-import { User } from '../../../../shared/types/Auth';
 import { IAuthRepository } from '../../../domain/repositories/IAuthRepository';
 
 export class SqliteAuthRepository implements IAuthRepository {

@@ -4,6 +4,7 @@ import * as path from 'path';
 import { QuoteDraft } from '../../../shared/types/Quote';
 import { buildQuoteHtml } from '../../infrastructure/templates/QuoteHtmlTemplate';
 import { getDetailedQuoteHtml } from '../../infrastructure/templates/DetailedQuoteHtmlTemplate'; 
+import { logger } from '../../infrastructure/logging/SafeLogger';
 
 export class GeneratePdfPreviewUseCase {
   
@@ -14,6 +15,10 @@ export class GeneratePdfPreviewUseCase {
       try {
         if (!quoteData || !quoteData.services || quoteData.services.length === 0) {
           throw new Error('Datos de cotización inválidos o incompletos.');
+        }
+
+        if (quoteData.status !== 'emitida') {
+          throw new Error('El PDF de cliente solo puede generarse cuando la cotización está emitida.');
         }
 
         printWindow = new BrowserWindow({
@@ -42,7 +47,7 @@ export class GeneratePdfPreviewUseCase {
 
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Error desconocido al generar PDF';
-        console.error('❌ Error crítico en GeneratePdfPreviewUseCase:', errorMessage);
+        logger.error('Error crítico al generar PDF', { quoteId: quoteData?.id, errorMessage });
         resolve({ success: false, error: errorMessage });
         
       } finally {
@@ -66,7 +71,7 @@ export class GeneratePdfPreviewUseCase {
         return `data:image/png;base64,${imageBuffer.toString('base64')}`;
       }
     } catch (err) {
-      console.warn('⚠️ Error al leer el logo para el PDF:', err);
+      logger.warn('No se pudo leer el logo para el PDF', { error: err });
     }
     return '';
   }

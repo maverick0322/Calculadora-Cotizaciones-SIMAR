@@ -102,7 +102,7 @@ function App() {
                       : 'text-gray-600 hover:text-blue-600'}`
                   }
                 >
-                  📝 Borradores
+                  📝 Seguimiento
                 </button>
 
                 <button

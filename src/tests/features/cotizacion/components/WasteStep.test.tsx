@@ -42,13 +42,13 @@ describe('WasteStep Component', () => {
     render(<WasteStep serviceIndex={0} />);
 
     expect(screen.getByText('Especificaciones Operativas')).toBeDefined();
-    expect(screen.getByText('Tipo de actividad')).toBeDefined();
-    expect(screen.getByText('Frecuencia Global del Contrato')).toBeDefined();
+    expect(screen.queryByText('Tipo de actividad')).toBeNull();
+    expect(screen.getByText('Frecuencia del Servicio')).toBeDefined();
     expect(screen.getByText('Residuos a recolectar en esta sucursal')).toBeDefined();
     expect(screen.getByText('Nombre del residuo')).toBeDefined();
     expect(screen.getByText('Clasificación')).toBeDefined(); 
 
-    expect(mockRegister).toHaveBeenCalledWith('services.0.activity');
+    expect(mockRegister).not.toHaveBeenCalledWith('services.0.activity');
     expect(mockRegister).toHaveBeenCalledWith('services.0.wastes.0.name');
     expect(mockRegister).toHaveBeenCalledWith('services.0.wastes.0.type');
     expect(mockRegister).toHaveBeenCalledWith('services.0.wastes.0.quantity', { valueAsNumber: true }); 
@@ -72,9 +72,9 @@ describe('WasteStep Component', () => {
 
     render(<WasteStep serviceIndex={0} />);
 
-    expect(screen.getByRole('option', { name: 'Recolección' })).toBeDefined();
-    expect(screen.getByRole('option', { name: 'Disposición Final' })).toBeDefined();
-    
+    expect(screen.queryByRole('option', { name: 'Recolección' })).toBeNull();
+    expect(screen.queryByRole('option', { name: 'Disposición Final' })).toBeNull();
+
     expect(screen.getByRole('option', { name: 'Diaria' })).toBeDefined();
     expect(screen.getByRole('option', { name: 'Evento Único' })).toBeDefined();
   });

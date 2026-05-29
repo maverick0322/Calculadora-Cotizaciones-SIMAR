@@ -1,15 +1,33 @@
+import {
+  CATALOG_SUPPLY_CATEGORIES,
+  CREW_CATEGORIES,
+  LEGACY_QUOTE_STATUS,
+  QUOTE_STATUS_FLOW,
+  SERVICE_TYPES,
+  TRAINING_EDUCATION_LEVELS,
+  TRAINING_MODALITIES
+} from '../constants/quoteConstants';
+
 export type ActivityType = 'collection' | 'transport' | 'transfer' | 'final_disposal';
 export type WasteType = 'domestic' | 'organic' | 'recyclable' | 'hazardous' | 'bulky';
 export type ServiceFrequencyType = 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'one_time' | 'custom';
-export type QuoteStatus = 'draft' | 'issued' | 'cancelled' | 'replaced';
+export type CurrentQuoteStatus = (typeof QUOTE_STATUS_FLOW)[number];
+export type LegacyQuoteStatus = (typeof LEGACY_QUOTE_STATUS)[number];
+export type QuoteStatus = CurrentQuoteStatus | LegacyQuoteStatus;
 export type RoadType = 'free' | 'toll';
+export type ServiceType = (typeof SERVICE_TYPES)[number];
+export type CatalogSupplyCategory = (typeof CATALOG_SUPPLY_CATEGORIES)[number] | 'warehouse';
+export type CrewCategory = (typeof CREW_CATEGORIES)[number] | 'driver';
+export type TrainingModality = (typeof TRAINING_MODALITIES)[number];
+export type TrainingEducationLevel = (typeof TRAINING_EDUCATION_LEVELS)[number];
 
 export interface Location {
+  cp?: string;
   street: string;
   municipality: string;
   neighborhood: string;
   state: string;
-  coordinates?: string; 
+  coordinates?: string;
 }
 
 export interface WasteItem {
@@ -25,7 +43,7 @@ export interface WasteItem {
 
 export interface ServiceFrequencyDetail {
   type: ServiceFrequencyType;
-  duration?: number; 
+  duration?: number;
   customDescription?: string;
 }
 
@@ -36,31 +54,36 @@ export interface VehicleItem {
   unitPrice: number;
 }
 
-export interface SupplyItem {
+export interface CatalogQuoteItem {
+  name: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+export interface SupplyItem extends CatalogQuoteItem {
   supplyId: number;
-  name: string;
-  quantity: number;
-  unitPrice: number; 
 }
 
-export interface MaterialItem {
+export interface MaterialItem extends CatalogQuoteItem {
   materialId: number;
-  name: string;
-  quantity: number;
-  unitPrice: number;
 }
 
-export interface EquipmentItem {
+export interface EquipmentItem extends CatalogQuoteItem {
   equipmentId: number;
-  name: string;
-  quantity: number;
-  unitPrice: number;
+}
+
+export interface ToolItem extends CatalogQuoteItem {
+  toolId: number;
+}
+
+export interface SpecializedEppItem extends CatalogQuoteItem {
+  specializedEppId: number;
 }
 
 export interface CrewItem {
-  type: 'driver' | 'technician';
+  type: CrewCategory;
   quantity: number;
-  dailySalary: number; 
+  dailySalary: number;
 }
 
 export interface ExtraCostItem {
@@ -70,53 +93,97 @@ export interface ExtraCostItem {
 
 export interface ServiceLogistics {
   origin: string;
-  primaryDestination: string; 
-  secondaryDestination?: string; 
+  primaryDestination: string;
+  secondaryDestination?: string;
   kilometers: number;
   fuelLiters: number;
-  fuelPricePerLiter: number; 
+  fuelPricePerLiter: number;
   roadType?: RoadType;
   tolls?: number;
   totalTollCost?: number;
-  viaticos: number; 
+  viaticos: number;
+}
+
+export interface EcologicalCleaningDetails {
+  gasStationName: string;
+  location: Location;
+  surfaceM2: number;
+  viaticos: number;
+  hours: number;
+  hourlyUnitPrice: number;
+  labor: ExtraCostItem[];
+  technicianCount: number;
+}
+
+export interface TrainingStationeryItem {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+export interface TrainingTravelExpenses {
+  travel: number;
+  tolls: number;
+  lodging: number;
+  food: number;
+  taxis: number;
+}
+
+export interface TrainingDetails {
+  attendeeCount: number;
+  educationLevels: TrainingEducationLevel[];
+  objective: string;
+  modality: TrainingModality;
+  location?: Location;
+  hours: number;
+  hourlyUnitPrice: number;
+  stationery: TrainingStationeryItem[];
+  travelExpenses?: TrainingTravelExpenses;
+}
+
+export interface ConditioningDetails {
+  labor: ExtraCostItem[];
 }
 
 export interface ServiceItem {
-  id: string; 
+  id: string;
+  serviceType: ServiceType;
   activity: ActivityType;
-  frequency: ServiceFrequencyDetail; 
-  location: Location; 
+  frequency: ServiceFrequencyDetail;
+  location: Location;
   wastes: WasteItem[];
   vehicles: VehicleItem[];
   crew: CrewItem[];
-  
   supplies: SupplyItem[];
-  materials: MaterialItem[];   
-  equipment: EquipmentItem[];  
-  
+  tools: ToolItem[];
+  materials: MaterialItem[];
+  equipment: EquipmentItem[];
+  specializedEpp: SpecializedEppItem[];
   logistics: ServiceLogistics;
   extraCosts: ExtraCostItem[];
-  trip?: any;
+  ecologicalCleaning?: EcologicalCleaningDetails;
+  training?: TrainingDetails;
+  conditioning?: ConditioningDetails;
+  trip?: unknown;
 }
 
-// 👇 Aquí está el QuoteDraft que se había perdido
 export interface QuoteDraft {
-  id?: string | number;  
-  folio?: string;        
+  id?: string | number;
+  folio?: string;
   replacesQuoteId?: number | string;
+  personType?: 'fisica' | 'moral';
+  commercialName?: string;
   clientName: string;
   clientRfc: string;
-  contactName?: string;  
+  contactName?: string;
+  contactPosition?: string;
   contactPhone?: string;
   contactEmail?: string;
   validityDays: number;
-  
   services: ServiceItem[];
-
   subtotal?: number;
   total?: number;
-  
-  createdAt: number;     
+  createdAt: number;
   status: QuoteStatus;
 }
 
@@ -127,4 +194,12 @@ export interface QuoteSummary {
   wastesSummary: string;
   createdAt: number;
   status: string;
+}
+
+export interface ApiResult<T = void> {
+  success: boolean;
+  id?: number | bigint;
+  data?: T;
+  error?: string;
+  details?: unknown;
 }

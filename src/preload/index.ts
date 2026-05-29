@@ -1,18 +1,19 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI, ElectronAPI } from '@electron-toolkit/preload'
-import { QuoteDraft, QuoteSummary } from '../shared/types/Quote'
+import { ApiResult, CurrentQuoteStatus, QuoteDraft, QuoteSummary } from '../shared/types/Quote'
 
 declare global {
   interface Window {
     electron: ElectronAPI
     api: {
       registerWorker: (workerData: any) => Promise<any>;
-      saveDraft: (data: QuoteDraft) => Promise<any>;
-      getDraftById: (id: number | string) => Promise<any>;
+      saveDraft: (data: QuoteDraft) => Promise<ApiResult<number | bigint>>;
+      getDraftById: (id: number | string) => Promise<ApiResult<QuoteDraft>>;
       login: (credentials: Record<string, string>) => Promise<any>;
-      getDrafts: () => Promise<any>;
+      getDrafts: () => Promise<ApiResult<QuoteSummary[]>>;
+      updateQuoteStatus: (id: number | string, nextStatus: CurrentQuoteStatus) => Promise<ApiResult>;
       issueQuote: (id: number | string) => Promise<{ success: boolean; error?: string }>;
-      getIssuedQuotes: () => Promise<QuoteSummary[]>;
+      getIssuedQuotes: () => Promise<ApiResult<QuoteSummary[]>>;
       getQuoteById: (id: number | string) => Promise<QuoteDraft | null>;
       generatePdfPreview: (payload: { quoteData: any, isDetailed: boolean }) => Promise<{ success: boolean; pdfBase64?: string; error?: string }>;
       savePdf: (pdfBase64: string, defaultFolio: string) => Promise<{ success: boolean; filePath?: string; error?: string }>;
@@ -33,6 +34,7 @@ const api = {
   getDraftById: (id: number | string) => ipcRenderer.invoke('quotes:get-draft-by-id', id),
   login: (credentials: Record<string, string>) => ipcRenderer.invoke('auth:login', credentials),
   getDrafts: () => ipcRenderer.invoke('quotes:get-drafts'),
+  updateQuoteStatus: (id: number | string, nextStatus: CurrentQuoteStatus) => ipcRenderer.invoke('quotes:update-status', { id: Number(id), nextStatus }),
   issueQuote: (id: number | string) => ipcRenderer.invoke('quotes:issue', id),
   getIssuedQuotes: () => ipcRenderer.invoke('quotes:get-issued'),
   getQuoteById: (id: number | string) => ipcRenderer.invoke('quotes:get-quote-by-id', id),

@@ -6,7 +6,7 @@ import { CatalogData } from '../NewQuoteView';
 interface CatalogItemSectionProps {
   serviceIndex: number;
   catalogs?: CatalogData['supplies'];
-  type: 'supplies' | 'materials' | 'equipment';
+  type: 'supplies' | 'tools' | 'materials' | 'equipment' | 'specializedEpp';
   title: string;
   subtitle: string;
   colorScheme: {
@@ -41,7 +41,14 @@ export const CatalogItemSection = ({
     }
   };
 
-  const idFieldName = type === 'supplies' ? 'supplyId' : type === 'materials' ? 'materialId' : 'equipmentId';
+  const idFieldNameByType = {
+    supplies: 'supplyId',
+    tools: 'toolId',
+    materials: 'materialId',
+    equipment: 'equipmentId',
+    specializedEpp: 'specializedEppId'
+  };
+  const idFieldName = idFieldNameByType[type];
 
   return (
     <div>

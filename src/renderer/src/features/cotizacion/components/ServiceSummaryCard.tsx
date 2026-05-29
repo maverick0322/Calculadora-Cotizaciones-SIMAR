@@ -64,7 +64,7 @@ export const ServiceSummaryCard = ({ service, index }: { service: any, index: nu
               ) : <p className="text-gray-400 text-xs">Sin vehículos</p>}
               
               {service.crew.length > 0 ? (
-                service.crew.map((c: any, idx: number) => <p key={`c-${idx}`} className="text-gray-700 flex justify-between mt-1"><span>👷 {c.quantity}x {c.type === 'driver' ? 'Chofer' : 'Técnico'}</span> <span className="text-gray-400">${c.dailySalary}/d</span></p>)
+                service.crew.map((c: any, idx: number) => <p key={`c-${idx}`} className="text-gray-700 flex justify-between mt-1"><span>👷 {c.quantity}x {c.type === 'coordinator' ? 'Coordinador' : c.type === 'technician' ? 'Técnico' : 'Operador'}</span> <span className="text-gray-400">${c.dailySalary}/d</span></p>)
               ) : <p className="text-gray-400 text-xs mt-1">Sin personal</p>}
           </div>
         </div>

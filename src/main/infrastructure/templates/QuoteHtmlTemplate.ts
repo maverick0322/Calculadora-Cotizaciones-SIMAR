@@ -1,4 +1,5 @@
 import { QuoteDraft } from '../../../shared/types/Quote';
+import { IVA_RATE, SERVICE_TYPE_LABELS } from '../../../shared/constants/quoteConstants';
 
 export const buildQuoteHtml = (quoteData: QuoteDraft, logoBase64: string): string => {
   const createdAt = new Date(quoteData.createdAt);
@@ -10,24 +11,11 @@ export const buildQuoteHtml = (quoteData: QuoteDraft, logoBase64: string): strin
     ? `<img src="${logoBase64}" alt="Logo SIMAR" style="max-height: 70px;">`
     : `<h1 style="color: #1e3a5f; margin: 0;">SIMAR</h1>`;
 
-  const activityMap: Record<string, string> = {
-    collection: 'Recolección',
-    transport: 'Transporte',
-    transfer: 'Transferencia',
-    final_disposal: 'Disposición Final'
-  };
-
-  const frequencyMap: Record<string, string> = {
-    one_time: 'Evento Único', daily: 'Diaria', weekly: 'Semanal', biweekly: 'Quincenal', monthly: 'Mensual'
-  };
-  const freqString = quoteData.frequency.type === 'custom' 
-    ? quoteData.frequency.customDescription 
-    : frequencyMap[quoteData.frequency.type] || quoteData.frequency.type;
-
   const servicesHtmlBlocks = quoteData.services.map((service, index) => {
     const loc = service.location;
-    const fullLocation = `${loc.street}, ${loc.neighborhood}, ${loc.municipality}, ${loc.state}`;
-    const activityName = activityMap[service.activity] || service.activity;
+    const locationParts = [loc?.street, loc?.neighborhood, loc?.municipality, loc?.state].filter(Boolean);
+    const fullLocation = locationParts.length > 0 ? locationParts.join(', ') : 'Ubicación no requerida';
+    const serviceName = SERVICE_TYPE_LABELS[service.serviceType] || service.serviceType;
 
     const wasteRows = service.wastes.length > 0 ? service.wastes.map((waste, wIdx) => `
       <tr>
@@ -42,7 +30,7 @@ export const buildQuoteHtml = (quoteData: QuoteDraft, logoBase64: string): strin
       <div class="service-block">
         <h3 class="service-title">Sucursal / Servicio ${index + 1}: ${fullLocation}</h3>
         <p style="margin: 5px 0 10px 0; font-size: 0.9em; color: #444;">
-          <strong>Actividad:</strong> ${activityName} | 
+          <strong>Servicio:</strong> ${serviceName} | 
           <strong>Logística:</strong> Origen: ${service.logistics.origin || 'N/A'} ➔ Destino: ${service.logistics.primaryDestination || 'N/A'} (${service.logistics.kilometers} km)
         </p>
         
@@ -60,7 +48,7 @@ export const buildQuoteHtml = (quoteData: QuoteDraft, logoBase64: string): strin
 
   // Cálculos financieros globales
   const subtotal = quoteData.subtotal || 0;
-  const iva = subtotal * 0.16;
+  const iva = subtotal * IVA_RATE;
   const total = quoteData.total || 0;
 
   const formatCurrency = (amount: number) => 
@@ -110,11 +98,11 @@ export const buildQuoteHtml = (quoteData: QuoteDraft, logoBase64: string): strin
               </div>
           </div>
           <div style="text-align: right;">
-              <div class="ref">REF: ${quoteData.folio || `Borrador #${quoteData.id}`}</div>
+              <div class="ref">REF: ${quoteData.folio || `Cotización #${quoteData.id}`}</div>
               <div class="date-line">${dateStr}</div>
               <div style="font-size: 0.85em; color: #555;">
                 <strong>Vigencia:</strong> ${quoteData.validityDays} días<br>
-                <strong>Frecuencia Global:</strong> ${freqString}
+                <strong>Documento para cliente</strong>
               </div>
           </div>
       </div>

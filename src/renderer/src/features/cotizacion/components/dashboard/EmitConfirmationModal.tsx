@@ -19,7 +19,7 @@ export const EmitConfirmationModal = ({ isOpen, onCancel, onConfirm }: EmitConfi
           <div>
             <h3 className="text-lg font-bold text-gray-900">¿Emitir Cotización Oficial?</h3>
             <p className="text-sm text-gray-500 mt-1">
-              Al emitir este documento, se generará el PDF final, se le asignará un folio oficial y <strong>el borrador quedará bloqueado</strong>.
+              Al emitir este documento, se generará el PDF final, se le asignará un folio oficial y <strong>la cotización quedará bloqueada</strong>.
             </p>
           </div>
         </div>

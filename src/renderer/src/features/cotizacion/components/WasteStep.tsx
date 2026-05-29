@@ -20,17 +20,7 @@ export const WasteStep = ({ serviceIndex }: { serviceIndex: number }) => {
       <h3 className="text-lg font-medium text-gray-800 mb-4 border-b pb-2">Especificaciones Operativas</h3>
       
       <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de actividad</label>
-            <select className="w-full px-3 py-2 border rounded-md bg-white" {...register(`services.${serviceIndex}.activity` as const)}>
-              <option value="collection">Recolección</option>
-              <option value="transport">Transporte</option>
-              <option value="transfer">Transferencia</option>
-              <option value="final_disposal">Disposición Final</option>
-            </select>
-          </div>
-          
+        <div className="grid grid-cols-1 gap-4">
           <div className="space-y-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Frecuencia del Servicio</label>
