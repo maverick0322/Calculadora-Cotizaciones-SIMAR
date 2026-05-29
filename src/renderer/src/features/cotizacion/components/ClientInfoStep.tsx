@@ -55,7 +55,7 @@ export const ClientInfoStep = ({ saveClient, setSaveClient }: ClientInfoStepProp
           <input 
             {...register('contactName')} 
             className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none" 
-            placeholder="Ej. Ing. Juan Pérez - Compras" 
+            placeholder="Ej. Juan Pérez - Compras" 
           />
           {errors.contactName && <p className="text-red-500 text-xs mt-1">{errors.contactName.message}</p>}
         </div>
