@@ -72,7 +72,7 @@ export const ClientInfoStep = ({ saveClient, setSaveClient }: ClientInfoStepProp
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Correo del Responsable</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Correo del Contacto</label>
           <input 
             type="email"
             {...register('contactEmail')} 
