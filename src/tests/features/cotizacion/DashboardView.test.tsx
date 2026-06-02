@@ -16,6 +16,16 @@ vi.mock('@renderer/features/cotizacion/hooks/usePdfWorkflow', () => ({
 
 describe('DashboardView Component', () => {
   const mockOnEditClick = vi.fn();
+  const currentUser = {
+    id: 1,
+    central_id: 'ADM',
+    full_name: 'Administrador SIMAR',
+    employee_key: 'ADM',
+    initials: 'ADM',
+    email: 'admin@simar.com',
+    role: 'admin',
+    is_active: true
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -29,7 +39,7 @@ describe('DashboardView Component', () => {
       fetchDrafts: vi.fn()
     } as any);
 
-    render(<DashboardView onEditClick={mockOnEditClick} />);
+    render(<DashboardView onEditClick={mockOnEditClick} currentUser={currentUser} />);
 
     expect(screen.getByText('Cargando borradores...')).toBeDefined();
   });
@@ -42,7 +52,7 @@ describe('DashboardView Component', () => {
       fetchDrafts: vi.fn()
     } as any);
 
-    render(<DashboardView onEditClick={mockOnEditClick} />);
+    render(<DashboardView onEditClick={mockOnEditClick} currentUser={currentUser} />);
 
     expect(screen.getByText(/No se encontraron borradores/i)).toBeDefined();
   });
@@ -67,7 +77,7 @@ describe('DashboardView Component', () => {
       fetchDrafts: vi.fn()
     } as any);
 
-    render(<DashboardView onEditClick={mockOnEditClick} />);
+    render(<DashboardView onEditClick={mockOnEditClick} currentUser={currentUser} />);
 
     expect(screen.getByText('#100')).toBeDefined();
     expect(screen.getByText('Centro Histórico')).toBeDefined();
@@ -89,7 +99,7 @@ describe('DashboardView Component', () => {
       fetchDrafts: vi.fn()
     } as any);
 
-    render(<DashboardView onEditClick={mockOnEditClick} />);
+    render(<DashboardView onEditClick={mockOnEditClick} currentUser={currentUser} />);
 
     const editButton = screen.getByTitle('Editar Borrador');
     fireEvent.click(editButton);

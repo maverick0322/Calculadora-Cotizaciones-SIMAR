@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach, beforeAll, afterAll } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import Database from 'better-sqlite3';
 import { SqliteWorkerRepository } from '../../../../main/infrastructure/database/repositories/SqliteWorkerRepository';
+import { WorkerData } from '../../../../shared/types/Worker';
 
 describe('SqliteWorkerRepository', () => {
   let db: Database.Database;
@@ -8,22 +9,28 @@ describe('SqliteWorkerRepository', () => {
 
   beforeAll(() => {
     db = new Database(':memory:');
-    
-    // Creamos la tabla users simulando el esquema principal
     db.exec(`
       CREATE TABLE users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        full_name TEXT,
         central_id TEXT UNIQUE,
+        rfc TEXT,
+        first_name TEXT,
+        last_name TEXT,
+        maternal_last_name TEXT,
+        full_name TEXT,
+        employee_key TEXT,
+        initials TEXT,
+        address TEXT,
         email TEXT UNIQUE,
         password_hash TEXT,
-        role TEXT
+        role TEXT,
+        is_active INTEGER DEFAULT 1
       );
     `);
   });
 
   afterAll(() => {
-    db?.close();
+    db.close();
   });
 
   beforeEach(() => {
@@ -31,49 +38,58 @@ describe('SqliteWorkerRepository', () => {
     repository = new SqliteWorkerRepository(db);
   });
 
-  it('should successfully save a new worker into the database', () => {
-    // [ ARRANGE ]
-    const workerData = {
-      fullName: 'Juan Perez',
-      employeeId: 'EMP-001',
-      email: 'juan.perez@simar.com',
-      password: 'hashed_password_123',
-      role: 'technician'
-    } as any;
-
-    // [ ACT ]
-    repository.save(workerData);
-
-    // [ ASSERT ]
-    const rows = db.prepare('SELECT * FROM users').all() as any[];
-    
-    expect(rows).toHaveLength(1);
-    expect(rows[0].full_name).toBe('Juan Perez');
-    expect(rows[0].central_id).toBe('EMP-001');
-    expect(rows[0].email).toBe('juan.perez@simar.com');
-    expect(rows[0].password_hash).toBe('hashed_password_123');
-    expect(rows[0].role).toBe('technician');
+  const buildWorker = (overrides: Partial<WorkerData> = {}): WorkerData => ({
+    rfc: 'PEPJ800101ABC',
+    firstName: 'Juan',
+    lastName: 'Perez',
+    maternalLastName: 'Lopez',
+    fullName: 'Juan Perez Lopez',
+    employeeId: 'EMP-001',
+    employeeKey: 'EVL',
+    initials: 'EVL',
+    address: 'Calle 1',
+    email: 'juan.perez@simar.com',
+    password: 'hashed_password_123',
+    role: 'sales',
+    isActive: true,
+    ...overrides
   });
 
-  it('should throw an error if a unique constraint is violated (e.g., duplicate email)', () => {
-    // [ ARRANGE ]
-    const workerData = {
-      fullName: 'Ana Gomez',
-      employeeId: 'EMP-002',
-      email: 'ana@simar.com',
-      password: 'hash',
-      role: 'admin'
-    } as any;
+  it('saves a new worker with identity and access fields', () => {
+    repository.save(buildWorker());
 
-    repository.save(workerData);
+    const rows = db.prepare('SELECT * FROM users').all() as any[];
 
-    // Intentamos guardar un segundo trabajador con el MISMO correo
-    const duplicateWorker = { 
-      ...workerData, 
-      employeeId: 'EMP-003' 
-    };
+    expect(rows).toHaveLength(1);
+    expect(rows[0].rfc).toBe('PEPJ800101ABC');
+    expect(rows[0].full_name).toBe('Juan Perez Lopez');
+    expect(rows[0].central_id).toBe('EMP-001');
+    expect(rows[0].employee_key).toBe('EVL');
+    expect(rows[0].initials).toBe('EVL');
+    expect(rows[0].password_hash).toBe('hashed_password_123');
+    expect(rows[0].role).toBe('sales');
+  });
 
-    // [ ACT & ASSERT ]
-    expect(() => repository.save(duplicateWorker)).toThrow();
+  it('lists workers without returning password hashes', () => {
+    repository.save(buildWorker());
+
+    const workers = repository.listActive();
+
+    expect(workers).toEqual([expect.objectContaining({
+      fullName: 'Juan Perez Lopez',
+      employeeId: 'EMP-001',
+      employeeKey: 'EVL',
+      initials: 'EVL',
+      role: 'sales',
+      isActive: true
+    })]);
+    expect(workers[0]).not.toHaveProperty('password');
+    expect(workers[0]).not.toHaveProperty('password_hash');
+  });
+
+  it('throws an error when a unique email constraint is violated', () => {
+    repository.save(buildWorker());
+
+    expect(() => repository.save(buildWorker({ employeeId: 'EMP-002' }))).toThrow();
   });
 });

@@ -1,97 +1,101 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { RegisterWorkerUseCase } from '../../../main/application/useCases/RegisterWorkerUseCase';
-import { SqliteWorkerRepository } from '../../../main/infrastructure/database/repositories/SqliteWorkerRepository';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import bcrypt from 'bcryptjs';
+import { RegisterWorkerUseCase } from '../../../main/application/useCases/RegisterWorkerUseCase';
+import { IWorkerRepository } from '../../../main/domain/repositories/IWorkerRepository';
+import { WorkerData } from '../../../shared/types/Worker';
 
 vi.mock('bcryptjs', () => ({
   default: {
     genSaltSync: vi.fn().mockReturnValue('fake_salt'),
-    hashSync: vi.fn().mockReturnValue('hashed_password_123'),
+    hashSync: vi.fn().mockReturnValue('hashed_password_123')
   }
 }));
 
 describe('RegisterWorkerUseCase', () => {
-  let mockWorkerRepo: any;
+  let mockWorkerRepo: IWorkerRepository;
   let useCase: RegisterWorkerUseCase;
 
   beforeEach(() => {
     mockWorkerRepo = {
-      save: vi.fn()
+      save: vi.fn(),
+      listActive: vi.fn()
     };
-    useCase = new RegisterWorkerUseCase(mockWorkerRepo as unknown as SqliteWorkerRepository);
+    useCase = new RegisterWorkerUseCase(mockWorkerRepo);
     vi.clearAllMocks();
-    vi.spyOn(console, 'error').mockImplementation(() => {}); // Ocultar console.errors esperados
   });
 
-  // --- AC 1: HAPPY PATH CON LIMPIEZA DE DATOS ---
-  it('should clean data, hash password, and return success with ID', async () => {
-    // [ ARRANGE ]
-    mockWorkerRepo.save.mockReturnValue({ lastInsertRowid: 10 });
-    
-    // Inyectamos datos sucios con espacios extra y mayúsculas
-    const rawWorker = {
-      fullName: ' Juan Perez  ',
-      employeeId: ' EMP-01 ',
-      email: ' Juan.Perez@SIMAR.COM ',
-      password: 'mypassword',
-      role: 'technician'
-    } as any;
+  const buildValidWorker = (overrides: Partial<WorkerData> = {}): WorkerData => ({
+    rfc: 'PEPJ800101ABC',
+    firstName: ' Juan ',
+    lastName: ' Perez ',
+    maternalLastName: ' Lopez ',
+    employeeId: ' EMP-01 ',
+    employeeKey: ' evl ',
+    initials: ' evl ',
+    address: ' Calle 1 ',
+    email: ' Juan.Perez@SIMAR.COM ',
+    password: 'mypassword',
+    superUserKey: 'SIMAR-ADMIN-2026',
+    role: 'sales',
+    ...overrides
+  });
 
-    // [ ACT ]
-    const result = await useCase.execute(rawWorker);
+  it('cleans worker data, hashes password and returns the new worker id', async () => {
+    vi.mocked(mockWorkerRepo.save).mockReturnValue({ lastInsertRowid: 10 });
 
-    // [ ASSERT ]
+    const result = await useCase.execute(buildValidWorker());
+
     expect(bcrypt.genSaltSync).toHaveBeenCalledWith(10);
     expect(bcrypt.hashSync).toHaveBeenCalledWith('mypassword', 'fake_salt');
-    
-    // Verificamos que al repositorio le lleguen los datos perfectamente limpios
     expect(mockWorkerRepo.save).toHaveBeenCalledWith({
-      fullName: 'Juan Perez',
+      rfc: 'PEPJ800101ABC',
+      firstName: 'Juan',
+      lastName: 'Perez',
+      maternalLastName: 'Lopez',
+      fullName: 'Juan Perez Lopez',
       employeeId: 'EMP-01',
+      employeeKey: 'EVL',
+      initials: 'EVL',
+      address: 'Calle 1',
       email: 'juan.perez@simar.com',
-      password: 'hashed_password_123', // Guarda el hash, no la contraseña plana
-      role: 'technician'
+      password: 'hashed_password_123',
+      superUserKey: 'SIMAR-ADMIN-2026',
+      role: 'sales',
+      isActive: true
     });
-
     expect(result).toEqual({ success: true, id: 10 });
   });
 
-  // --- AC 2: ERROR SIN CONTRASEÑA ---
-  it('should return an error if the password is missing', async () => {
-    const rawWorker = { fullName: 'Juan', email: 'j@s.com', employeeId: '1', role: 'admin' } as any;
+  it('returns a specific error when the password is missing', async () => {
+    const result = await useCase.execute(buildValidWorker({ password: '' }));
 
-    const result = await useCase.execute(rawWorker);
-
-    expect(result).toEqual({ success: false, error: 'La contraseña es obligatoria para el registro.' });
+    expect(result).toEqual({
+      success: false,
+      error: 'La contraseña temporal debe tener al menos 8 caracteres.'
+    });
     expect(mockWorkerRepo.save).not.toHaveBeenCalled();
   });
 
-  // --- AC 3: MANEJO DE RESTRICCIONES UNIQUE (SQLITE) ---
-  it('should map SQLite UNIQUE constraint errors to a user-friendly message', async () => {
-    mockWorkerRepo.save.mockImplementation(() => {
+  it('returns a specific error when the super user key is invalid', async () => {
+    const result = await useCase.execute(buildValidWorker({ superUserKey: 'wrong-key' }));
+
+    expect(result).toEqual({
+      success: false,
+      error: 'La clave de superusuario no es válida.'
+    });
+    expect(mockWorkerRepo.save).not.toHaveBeenCalled();
+  });
+
+  it('maps SQLite unique constraint errors to a user friendly message', async () => {
+    vi.mocked(mockWorkerRepo.save).mockImplementation(() => {
       throw new Error('UNIQUE constraint failed: users.email');
     });
 
-    const rawWorker = { fullName: 'Juan', email: 'j@s.com', employeeId: '1', role: 'admin', password: '123' } as any;
+    const result = await useCase.execute(buildValidWorker());
 
-    const result = await useCase.execute(rawWorker);
-
-    expect(result).toEqual({ 
-      success: false, 
-      error: 'El ID Central o el Correo ya están registrados en el sistema.' 
+    expect(result).toEqual({
+      success: false,
+      error: 'La clave del empleado o el correo ya están registrados.'
     });
-  });
-
-  // --- AC 4: ERRORES GENERALES ---
-  it('should return a generic error message for other database failures', async () => {
-    mockWorkerRepo.save.mockImplementation(() => {
-      throw new Error('Database locked');
-    });
-
-    const rawWorker = { fullName: 'Juan', email: 'j@s.com', employeeId: '1', role: 'admin', password: '123' } as any;
-
-    const result = await useCase.execute(rawWorker);
-
-    expect(result).toEqual({ success: false, error: 'Database locked' });
   });
 });

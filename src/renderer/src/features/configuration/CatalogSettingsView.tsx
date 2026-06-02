@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { CatalogData } from '../cotizacion/NewQuoteView';
 import { Settings, Plus, Trash2, Truck, Package, MapPin, Edit2, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { ConditionCatalogSection } from './ConditionCatalogSection';
 
 const SUPPLY_CATEGORIES = [
   { value: 'supply', label: 'Insumo (Consumible)' },
@@ -105,6 +106,8 @@ export const CatalogSettingsView = () => {
         <Settings className="w-6 h-6 text-gray-600" />
         Configuración de Catálogos Maestros
       </h2>
+
+      <ConditionCatalogSection />
 
       {/* ========================================== */}
       {/* SECCIÓN VEHÍCULOS */}

@@ -3,7 +3,11 @@ import {
   CATALOG_SUPPLY_CATEGORIES,
   CREW_CATEGORIES,
   DEFAULT_VALIDITY_DAYS,
+  FOLIO_ALLOWED_PATTERN,
+  MAX_FOLIO_LENGTH,
+  MIN_FOLIO_LENGTH,
   MIN_CUSTOM_VALIDITY_DAYS,
+  QUOTE_TYPE_CODES,
   RESIDUE_SERVICE_TYPES,
   SERVICE_TYPES,
   TRAINING_EDUCATION_LEVELS,
@@ -209,6 +213,27 @@ export const quoteSchema = z.object({
     .min(MIN_CUSTOM_VALIDITY_DAYS, 'La vigencia debe ser de al menos un día')
     .default(DEFAULT_VALIDITY_DAYS),
   services: z.array(serviceSchema).min(1, 'La cotización debe tener al menos un servicio configurado')
+});
+
+export const quoteConditionSelectionSchema = z.object({
+  conditionId: z.coerce.number().int().positive().optional(),
+  type: z.enum(['commercial', 'technical']),
+  title: z.string().min(2, 'El título de la condición es obligatorio'),
+  description: z.string().min(3, 'La descripción de la condición es obligatoria'),
+  isCustom: z.boolean().default(false)
+});
+
+export const issueQuoteSchema = z.object({
+  quoteId: z.coerce.number().int().positive('La cotización es obligatoria'),
+  folio: z.string()
+    .trim()
+    .min(MIN_FOLIO_LENGTH, 'El folio es demasiado corto')
+    .max(MAX_FOLIO_LENGTH, 'El folio es demasiado largo')
+    .regex(FOLIO_ALLOWED_PATTERN, 'El folio contiene caracteres no permitidos'),
+  preparedByUserId: z.coerce.number().int().positive('El empleado que elaboró es obligatorio'),
+  preparedByInitials: z.string().trim().min(2, 'Las iniciales son obligatorias').max(12, 'Las iniciales son demasiado largas'),
+  quoteTypeCode: z.enum(QUOTE_TYPE_CODES),
+  conditions: z.array(quoteConditionSelectionSchema).default([])
 });
 
 export const catalogSupplyCategorySchema = z.enum(CATALOG_SUPPLY_CATEGORIES);

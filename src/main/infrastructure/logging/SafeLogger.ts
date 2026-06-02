@@ -1,6 +1,21 @@
 type LogContext = Record<string, unknown>;
 
-const SENSITIVE_KEYS = ['password', 'password_hash', 'email', 'clientName', 'clientRfc', 'contactName', 'contactPhone', 'contactEmail'];
+const SENSITIVE_KEYS = [
+  'password',
+  'password_hash',
+  'email',
+  'rfc',
+  'clientName',
+  'clientRfc',
+  'contactName',
+  'contactPhone',
+  'contactEmail',
+  'fullName',
+  'firstName',
+  'lastName',
+  'maternalLastName',
+  'address'
+];
 
 export interface ILogger {
   warn(message: string, context?: LogContext): void;

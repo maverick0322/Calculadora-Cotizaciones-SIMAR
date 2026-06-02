@@ -29,10 +29,9 @@ describe('usePdfWorkflow Hook', () => {
   });
 
   // --- AC 1: HAPPY PATH ---
-  it('should process a draft: issue it, fetch data, and generate PDF base64', async () => {
+  it('should fetch quote data and generate PDF base64', async () => {
     // [ ARRANGE ]
     const mockQuote = { id: 1, folio: 'FOLIO-001', clientName: 'Cliente Prueba' } as any; 
-    vi.mocked(window.api.issueQuote).mockResolvedValue({ success: true });
     vi.mocked(window.api.getQuoteById).mockResolvedValue(mockQuote);
     vi.mocked(window.api.generatePdfPreview).mockResolvedValue({ success: true, pdfBase64: 'abc_base64_xyz' });
 
@@ -44,9 +43,8 @@ describe('usePdfWorkflow Hook', () => {
     });
 
     // [ ASSERT ]
-    expect(window.api.issueQuote).toHaveBeenCalledWith(1);
+    expect(window.api.issueQuote).not.toHaveBeenCalled();
     expect(window.api.getQuoteById).toHaveBeenCalledWith(1);
-    // 👇 CORRECCIÓN: Ajustamos el objeto a la nueva estructura que creamos hoy
     expect(window.api.generatePdfPreview).toHaveBeenCalledWith({ quoteData: mockQuote, isDetailed: true });
     
     expect(result.current.pdfBase64).toBe('abc_base64_xyz');
@@ -74,10 +72,9 @@ describe('usePdfWorkflow Hook', () => {
   });
 
   // --- AC 3: ERROR HANDLING ---
-  it('should catch error, show toast, and close modal if issuing fails', async () => {
+  it('should catch error, show toast, and close modal when quote data is missing', async () => {
     // [ ARRANGE ]
-    vi.mocked(window.api.issueQuote).mockResolvedValue({ success: false, error: 'Database locked' });
-    vi.spyOn(console, 'error').mockImplementation(() => {}); 
+    vi.mocked(window.api.getQuoteById).mockResolvedValue(null);
 
     const { result } = renderHook(() => usePdfWorkflow());
 
@@ -87,7 +84,7 @@ describe('usePdfWorkflow Hook', () => {
     });
 
     // [ ASSERT ]
-    expect(toast.error).toHaveBeenCalledWith('Database locked');
+    expect(toast.error).toHaveBeenCalledWith('No se encontraron los datos de la cotización en la base de datos');
     expect(result.current.isModalOpen).toBe(false);
     expect(window.api.generatePdfPreview).not.toHaveBeenCalled();
   });

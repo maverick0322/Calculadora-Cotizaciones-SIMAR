@@ -42,6 +42,39 @@ export const SERVICE_TYPE_LABELS: Record<(typeof SERVICE_TYPES)[number], string>
 
 export const RESIDUE_SERVICE_TYPES = ['rme', 'hazardous_waste', 'rpbi'] as const;
 
+export const QUOTE_TYPE_CODES = [
+  'GIR',
+  'MR',
+  'RME',
+  'RPBI',
+  'RP',
+  'MAT',
+  'CAP',
+  'AGA',
+  'LE',
+  'AC'
+] as const;
+
+export const QUOTE_TYPE_LABELS: Record<(typeof QUOTE_TYPE_CODES)[number], string> = {
+  GIR: 'Gestión integral de residuos',
+  MR: 'Manejo de residuos',
+  RME: 'Recolección de RME',
+  RPBI: 'Recolección de RPBI',
+  RP: 'Recolección de RP',
+  MAT: 'Venta de material, equipo e insumos',
+  CAP: 'Capacitación',
+  AGA: 'Asesoría y gestión ambiental',
+  LE: 'Limpiezas ecológicas',
+  AC: 'Acondicionamiento'
+};
+
+export const FOLIO_SEQUENCE_WIDTH = 3;
+export const DEFAULT_CLIENT_INITIALS = 'CLI';
+export const DEFAULT_WORKER_INITIALS = 'SIMAR';
+export const MIN_FOLIO_LENGTH = 6;
+export const MAX_FOLIO_LENGTH = 64;
+export const FOLIO_ALLOWED_PATTERN = /^[A-Z0-9Ñ&._-]+$/i;
+
 export const CATALOG_SUPPLY_CATEGORIES = ['supply', 'tool', 'material', 'equipment', 'specialized_epp'] as const;
 
 export const CREW_CATEGORIES = ['coordinator', 'operator', 'technician'] as const;

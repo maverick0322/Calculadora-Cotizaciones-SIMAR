@@ -5,6 +5,7 @@ import path from 'path';
 import { runSepomexSeeder } from './seeders/sepomexSeeder';
 import residuosCatalog from './catalogo_residuos.json';
 import { logger } from '../logging/SafeLogger';
+import { SERVICE_TYPES } from '../../../shared/constants/quoteConstants';
 
 const dbPath = path.join(app.getPath('userData'), 'gestor_residuos.sqlite');
 const db: DatabaseType = new Database(dbPath, {});
@@ -25,6 +26,17 @@ const runMigrations = () => {
     addColumnIfMissing('quotes', 'person_type', 'VARCHAR');
     addColumnIfMissing('quotes', 'commercial_name', 'VARCHAR');
     addColumnIfMissing('quotes', 'contact_position', 'VARCHAR');
+    addColumnIfMissing('quotes', 'issued_at', 'INTEGER');
+    addColumnIfMissing('quotes', 'prepared_by_initials', 'VARCHAR');
+    addColumnIfMissing('quotes', 'quote_type_code', 'VARCHAR');
+    addColumnIfMissing('quotes', 'conditions_json', 'TEXT');
+    addColumnIfMissing('users', 'rfc', 'VARCHAR');
+    addColumnIfMissing('users', 'first_name', 'VARCHAR');
+    addColumnIfMissing('users', 'last_name', 'VARCHAR');
+    addColumnIfMissing('users', 'maternal_last_name', 'VARCHAR');
+    addColumnIfMissing('users', 'employee_key', 'VARCHAR');
+    addColumnIfMissing('users', 'initials', 'VARCHAR');
+    addColumnIfMissing('users', 'address', 'TEXT');
     addColumnIfMissing('catalog_vehicles', 'vehicle_key', 'VARCHAR');
     addColumnIfMissing('catalog_vehicles', 'model_name', 'VARCHAR');
 
@@ -32,12 +44,47 @@ const runMigrations = () => {
     db.prepare(`UPDATE quotes SET status = 'emitida' WHERE status = 'issued'`).run();
 };
 
+const seedDefaultConditions = () => {
+    const count = (db.prepare('SELECT COUNT(*) as count FROM catalog_conditions').get() as { count: number }).count;
+    if (count > 0) return;
+
+    logger.warn('Sembrando condiciones comerciales y técnicas iniciales');
+    const insertCondition = db.prepare(`
+        INSERT INTO catalog_conditions (type, title, description, applies_to_service_types_json, is_active)
+        VALUES (?, ?, ?, ?, 1)
+    `);
+    const allServiceTypes = JSON.stringify([...SERVICE_TYPES]);
+    const residueServiceTypes = JSON.stringify(['rme', 'hazardous_waste', 'rpbi']);
+
+    [
+        ['commercial', 'Impuestos', 'Los precios indicados son más 16% de IVA.', allServiceTypes],
+        ['commercial', 'Términos de pago', 'Pago por adelantado del concepto de transporte al 100% para la programación del servicio.', allServiceTypes],
+        ['commercial', 'Vigencia', 'La cotización mantiene la vigencia indicada en el documento y no cuenta con financiamiento.', allServiceTypes],
+        ['commercial', 'Aceptación del servicio', 'La aceptación debe confirmarse por escrito con firma de recibido.', allServiceTypes],
+        ['commercial', 'Programación del servicio', 'La programación deberá solicitarse por escrito al área comercial.', allServiceTypes],
+        ['commercial', 'Suministro de insumos', 'Los insumos adicionales se cotizan conforme al catálogo vigente.', allServiceTypes],
+        ['commercial', 'Prestación del servicio', 'El servicio se realizará conforme al alcance descrito en la propuesta.', allServiceTypes],
+        ['technical', 'Envasado y etiquetado', 'Los residuos deberán entregarse correctamente envasados, identificados y etiquetados.', residueServiceTypes],
+        ['technical', 'Acceso operativo', 'El sitio deberá permitir acceso seguro para personal y unidades autorizadas.', residueServiceTypes],
+        ['technical', 'Seguridad en sitio', 'El cliente deberá informar condiciones de riesgo previo a la ejecución del servicio.', allServiceTypes]
+    ].forEach(([type, title, description, appliesTo]) => {
+        insertCondition.run(type, title, description, appliesTo);
+    });
+};
+
 export const initDatabase = () => {
     const schema = `
         CREATE TABLE IF NOT EXISTS users (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           central_id VARCHAR UNIQUE,
+          rfc VARCHAR,
+          first_name VARCHAR,
+          last_name VARCHAR,
+          maternal_last_name VARCHAR,
           full_name VARCHAR,
+          employee_key VARCHAR,
+          initials VARCHAR,
+          address TEXT,
           email VARCHAR UNIQUE,
           password_hash VARCHAR,
           role VARCHAR,
@@ -116,6 +163,10 @@ export const initDatabase = () => {
             subtotal DECIMAL,
             total DECIMAL,
             created_at INTEGER,
+            issued_at INTEGER,
+            prepared_by_initials VARCHAR,
+            quote_type_code VARCHAR,
+            conditions_json TEXT,
             FOREIGN KEY (customer_id) REFERENCES customers(id),
             FOREIGN KEY (seller_id) REFERENCES users(id),
             FOREIGN KEY (replaces_quote_id) REFERENCES quotes(id)
@@ -211,9 +262,32 @@ export const initDatabase = () => {
             last_used_at INTEGER NOT NULL
         );
 
+        CREATE TABLE IF NOT EXISTS catalog_conditions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            type VARCHAR NOT NULL,
+            title VARCHAR NOT NULL,
+            description TEXT NOT NULL,
+            applies_to_service_types_json TEXT NOT NULL,
+            is_active INTEGER DEFAULT 1
+        );
+
+        CREATE TABLE IF NOT EXISTS quote_conditions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            quote_id INTEGER NOT NULL,
+            condition_id INTEGER,
+            type VARCHAR NOT NULL,
+            title VARCHAR NOT NULL,
+            description TEXT NOT NULL,
+            is_custom INTEGER DEFAULT 0,
+            FOREIGN KEY (quote_id) REFERENCES quotes(id),
+            FOREIGN KEY (condition_id) REFERENCES catalog_conditions(id)
+        );
+
         CREATE INDEX IF NOT EXISTS idx_locations_cp ON catalog_locations(cp);
         CREATE INDEX IF NOT EXISTS idx_municipalities_state ON catalog_municipalities(state_id);
         CREATE INDEX IF NOT EXISTS idx_clients_name ON user_clients_directory(client_name);
+        CREATE INDEX IF NOT EXISTS idx_quotes_issued_at ON quotes(issued_at);
+        CREATE INDEX IF NOT EXISTS idx_conditions_type_active ON catalog_conditions(type, is_active);
     `;
 
     db.exec(schema);
@@ -224,8 +298,11 @@ export const initDatabase = () => {
             const userCount = (db.prepare('SELECT COUNT(*) as count FROM users').get() as any).count;
             if (userCount === 0) {
                 logger.warn('Sembrando usuario administrador por defecto');
-                const insertUser = db.prepare(`INSERT INTO users (email, password_hash, full_name, role) VALUES (?, ?, ?, ?)`);
-                insertUser.run('admin@simar.com', '123456', 'Administrador SIMAR', 'admin');
+                const insertUser = db.prepare(`
+                    INSERT INTO users (email, password_hash, full_name, first_name, last_name, employee_key, initials, role)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                `);
+                insertUser.run('admin@simar.com', '123456', 'Administrador SIMAR', 'Administrador', 'SIMAR', 'ADM', 'ADM', 'admin');
             }
 
             const vehicleCount = (db.prepare('SELECT COUNT(*) as count FROM catalog_vehicles').get() as any).count;
@@ -279,6 +356,7 @@ export const initDatabase = () => {
             }
 
             runSepomexSeeder(db);
+            seedDefaultConditions();
         });
 
         seedTransaction();

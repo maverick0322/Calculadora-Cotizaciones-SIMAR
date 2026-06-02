@@ -3,6 +3,7 @@ import {
   CREW_CATEGORIES,
   LEGACY_QUOTE_STATUS,
   QUOTE_STATUS_FLOW,
+  QUOTE_TYPE_CODES,
   SERVICE_TYPES,
   TRAINING_EDUCATION_LEVELS,
   TRAINING_MODALITIES
@@ -14,6 +15,7 @@ export type ServiceFrequencyType = 'daily' | 'weekly' | 'biweekly' | 'monthly' |
 export type CurrentQuoteStatus = (typeof QUOTE_STATUS_FLOW)[number];
 export type LegacyQuoteStatus = (typeof LEGACY_QUOTE_STATUS)[number];
 export type QuoteStatus = CurrentQuoteStatus | LegacyQuoteStatus;
+export type QuoteTypeCode = (typeof QUOTE_TYPE_CODES)[number];
 export type RoadType = 'free' | 'toll';
 export type ServiceType = (typeof SERVICE_TYPES)[number];
 export type CatalogSupplyCategory = (typeof CATALOG_SUPPLY_CATEGORIES)[number] | 'warehouse';
@@ -170,6 +172,11 @@ export interface ServiceItem {
 export interface QuoteDraft {
   id?: string | number;
   folio?: string;
+  quoteTypeCode?: QuoteTypeCode;
+  issuedAt?: number;
+  preparedByUserId?: number;
+  preparedByInitials?: string;
+  conditions?: QuoteConditionSelection[];
   replacesQuoteId?: number | string;
   personType?: 'fisica' | 'moral';
   commercialName?: string;
@@ -194,6 +201,42 @@ export interface QuoteSummary {
   wastesSummary: string;
   createdAt: number;
   status: string;
+}
+
+export type ConditionType = 'commercial' | 'technical';
+
+export interface QuoteCondition {
+  id: number;
+  type: ConditionType;
+  title: string;
+  description: string;
+  appliesToServiceTypes: ServiceType[];
+  isActive: boolean;
+}
+
+export interface QuoteConditionSelection {
+  conditionId?: number;
+  type: ConditionType;
+  title: string;
+  description: string;
+  isCustom: boolean;
+}
+
+export interface QuoteFolioSuggestion {
+  folio: string;
+  sequence: number;
+  quoteTypeCode: QuoteTypeCode;
+  preparedByInitials: string;
+  clientInitials: string;
+}
+
+export interface IssueQuoteRequest {
+  quoteId: number;
+  folio: string;
+  preparedByUserId: number;
+  preparedByInitials: string;
+  quoteTypeCode: QuoteTypeCode;
+  conditions: QuoteConditionSelection[];
 }
 
 export interface ApiResult<T = void> {

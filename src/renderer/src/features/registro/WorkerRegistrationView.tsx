@@ -1,244 +1,338 @@
-import { useState } from 'react';
-import { UserPlus, Eye, EyeOff } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Eye, EyeOff, RefreshCw, UserPlus, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
-
+import { WorkerData, WorkerSummary } from '../../../../shared/types/Worker';
 
 interface WorkerRegistrationProps {
   onBack: () => void;
 }
 
+interface WorkerFormState {
+  rfc: string;
+  firstName: string;
+  lastName: string;
+  maternalLastName: string;
+  employeeId: string;
+  employeeKey: string;
+  initials: string;
+  address: string;
+  email: string;
+  password: string;
+  superUserKey: string;
+}
+
+const INITIAL_FORM_STATE: WorkerFormState = {
+  rfc: '',
+  firstName: '',
+  lastName: '',
+  maternalLastName: '',
+  employeeId: '',
+  employeeKey: '',
+  initials: '',
+  address: '',
+  email: '',
+  password: '',
+  superUserKey: ''
+};
+
+const MIN_PASSWORD_LENGTH = 8;
+const RFC_PATTERN = /^[A-Z&Ñ]{3,4}\d{6}[A-Z\d]{3}$/i;
+
+const buildSuggestedInitials = (formData: WorkerFormState): string => {
+  const words = [formData.firstName, formData.lastName, formData.maternalLastName].filter(Boolean);
+  return words.map((word) => word.trim()[0]).join('').toUpperCase();
+};
+
+const buildSuggestedEmployeeKey = (formData: WorkerFormState): string => {
+  const initials = buildSuggestedInitials(formData);
+  return initials ? `EMP-${initials}` : '';
+};
+
 export default function WorkerRegistrationView({ onBack }: WorkerRegistrationProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [workers, setWorkers] = useState<WorkerSummary[]>([]);
+  const [isLoadingWorkers, setIsLoadingWorkers] = useState(false);
+  const [formData, setFormData] = useState<WorkerFormState>(INITIAL_FORM_STATE);
 
-  // Estado inicial del formulario
-  const [formData, setFormData] = useState({
-    central_id: '',
-    full_name: '',
-    email: '',
-    password: '',
-    role: 'sales' as const,
-    is_active: true
-  });
+  const suggestedInitials = useMemo(() => buildSuggestedInitials(formData), [
+    formData.firstName,
+    formData.lastName,
+    formData.maternalLastName
+  ]);
 
-  /**
-   * Maneja los cambios en los inputs del formulario.
-   */
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-
-    // Limpia el mensaje de error del campo cuando el usuario empieza a escribir
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
-  };
-
-  /**
-   * Realiza validaciones básicas de frontend antes de enviar al Main Process.
-   */
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.central_id.trim()) {
-      newErrors.central_id = 'El ID central es requerido';
-    }
-    if (!formData.full_name.trim()) {
-      newErrors.full_name = 'El nombre completo es requerido';
-    }
-    if (!formData.email.trim()) {
-      newErrors.email = 'El correo electrónico es requerido';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Ingresa un correo electrónico válido';
-    }
-    if (!formData.password) {
-      newErrors.password = 'La contraseña es requerida';
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'La contraseña debe tener al menos 8 caracteres';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (validateForm()) {
-      const toastId = toast.loading('Registrando empleado...');
-      try {
-        const cleanEmail = formData.email.trim().toLowerCase();
-
-        const response = await window.api.registerWorker({
-          fullName: formData.full_name.trim(),
-          employeeId: formData.central_id.trim(),
-          email: cleanEmail,
-          password: formData.password, 
-          role: 'sales'
-        });
-
-        if (response.success) {
-          toast.success('Empleado registrado exitosamente', { id: toastId });
-          handleCancel();
-        } else {
-          toast.error(response.error || 'Error al registrar', { id: toastId });
-        }
-      } catch (error) {
-        console.error('Error de comunicación con el sistema:', error);
-        toast.error('Hubo un fallo crítico al intentar registrar al empleado.', { id: toastId });
+  const fetchWorkers = async () => {
+    setIsLoadingWorkers(true);
+    try {
+      const response = await window.api.listWorkers();
+      if (response.success && response.data) {
+        setWorkers(response.data);
+        return;
       }
+
+      toast.error(response.error || 'No se pudo cargar el listado de empleados');
+    } catch {
+      toast.error('Error de comunicación al cargar empleados');
+    } finally {
+      setIsLoadingWorkers(false);
     }
   };
 
-  const handleCancel = () => {
-    setFormData({
-      central_id: '',
-      full_name: '',
-      email: '',
-      password: '',
-      role: 'sales',
-      is_active: true
+  useEffect(() => {
+    fetchWorkers();
+  }, []);
+
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = event.target;
+    setFormData((current) => {
+      const next = { ...current, [name]: value };
+      if (['firstName', 'lastName', 'maternalLastName'].includes(name)) {
+        next.initials = current.initials || buildSuggestedInitials(next);
+        next.employeeKey = current.employeeKey || buildSuggestedEmployeeKey(next);
+      }
+
+      return next;
     });
-    setErrors({});
-    onBack(); // Regresa al Login o Dashboard según App.tsx
+
+    if (errors[name]) {
+      setErrors((current) => ({ ...current, [name]: '' }));
+    }
   };
+
+  const validateForm = () => {
+    const nextErrors: Record<string, string> = {};
+
+    if (!RFC_PATTERN.test(formData.rfc.trim())) nextErrors.rfc = 'Ingresa un RFC válido';
+    if (!formData.firstName.trim()) nextErrors.firstName = 'El nombre es requerido';
+    if (!formData.lastName.trim()) nextErrors.lastName = 'El apellido paterno es requerido';
+    if (!formData.employeeId.trim()) nextErrors.employeeId = 'El ID del empleado es requerido';
+    if (!formData.employeeKey.trim()) nextErrors.employeeKey = 'La clave del empleado es requerida';
+    if (!formData.initials.trim()) nextErrors.initials = 'Las iniciales son requeridas';
+    if (!formData.email.trim()) nextErrors.email = 'El correo es requerido';
+    if (formData.password.length < MIN_PASSWORD_LENGTH) nextErrors.password = 'La contraseña debe tener al menos 8 caracteres';
+    if (!formData.superUserKey.trim()) nextErrors.superUserKey = 'La clave de superusuario es requerida';
+
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
+  const resetForm = () => {
+    setFormData(INITIAL_FORM_STATE);
+    setErrors({});
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!validateForm()) return;
+
+    const toastId = toast.loading('Registrando empleado...');
+    const payload: WorkerData = {
+      rfc: formData.rfc.trim().toUpperCase(),
+      firstName: formData.firstName.trim(),
+      lastName: formData.lastName.trim(),
+      maternalLastName: formData.maternalLastName.trim(),
+      employeeId: formData.employeeId.trim(),
+      employeeKey: formData.employeeKey.trim().toUpperCase(),
+      initials: formData.initials.trim().toUpperCase(),
+      address: formData.address.trim(),
+      email: formData.email.trim().toLowerCase(),
+      password: formData.password,
+      superUserKey: formData.superUserKey,
+      role: 'sales',
+      isActive: true
+    };
+
+    try {
+      const response = await window.api.registerWorker(payload);
+      if (response.success) {
+        toast.success('Empleado registrado exitosamente', { id: toastId });
+        resetForm();
+        fetchWorkers();
+        return;
+      }
+
+      toast.error(response.error || 'Error al registrar empleado', { id: toastId });
+    } catch {
+      toast.error('Error de comunicación al registrar empleado', { id: toastId });
+    }
+  };
+
+  const inputClass = (field: keyof WorkerFormState) =>
+    `w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+      errors[field] ? 'border-red-300' : 'border-gray-300'
+    }`;
+
+  const renderError = (field: keyof WorkerFormState) =>
+    errors[field] ? <p className="mt-1 text-sm text-red-600 font-medium">{errors[field]}</p> : null;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-      <div className="w-full max-w-2xl bg-white rounded-lg shadow-md">
-
-        {/* Encabezado del Módulo */}
-        <div className="border-b border-gray-200 px-8 py-6">
-          <div className="flex items-center gap-3 mb-2">
-            <UserPlus className="w-6 h-6 text-gray-700" />
-            <h1 className="text-2xl font-bold text-gray-900">
-              Registrar Nuevo Empleado
-            </h1>
-          </div>
-          <p className="text-sm text-gray-500">
-            Ingresa los datos personales y de acceso para el módulo de ventas de SIMAR.
-          </p>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 animate-in fade-in">
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900 mb-1 flex items-center gap-2">
+            Empleados <Users className="w-6 h-6 text-blue-600" />
+          </h1>
+          <p className="text-sm text-gray-500">Administra usuarios locales del sistema de cotizaciones.</p>
         </div>
+        <button
+          type="button"
+          onClick={fetchWorkers}
+          className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+        >
+          <RefreshCw className={`h-4 w-4 ${isLoadingWorkers ? 'animate-spin' : ''}`} />
+          Actualizar
+        </button>
+      </div>
 
-        {/* Formulario de Registro */}
-        <form onSubmit={handleSubmit} className="px-8 py-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-6">
+        <section className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+          <div className="border-b border-gray-200 px-5 py-4">
+            <h2 className="text-base font-semibold text-gray-900">Usuarios registrados</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">Clave</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">Empleado</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">Iniciales</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">Rol</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-500">Estatus</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 bg-white">
+                {workers.map((worker) => (
+                  <tr key={worker.id}>
+                    <td className="px-4 py-3 text-sm font-medium text-gray-900">{worker.employeeKey || worker.employeeId}</td>
+                    <td className="px-4 py-3 text-sm text-gray-700">{worker.fullName}</td>
+                    <td className="px-4 py-3 text-sm text-gray-700">{worker.initials || 'N/D'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-700">{worker.role === 'admin' ? 'Administrador' : 'Ventas'}</td>
+                    <td className="px-4 py-3">
+                      <span className="rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">
+                        {worker.isActive ? 'Activo' : 'Inactivo'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+                {workers.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-500">
+                      {isLoadingWorkers ? 'Cargando empleados...' : 'No hay empleados registrados.'}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
 
-            {/* ID Central / EmployeeId */}
+        <section className="rounded-lg border border-gray-200 bg-white">
+          <div className="border-b border-gray-200 px-5 py-4">
+            <div className="flex items-center gap-3">
+              <UserPlus className="w-5 h-5 text-gray-700" />
+              <h2 className="text-base font-semibold text-gray-900">Registrar empleado</h2>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="px-5 py-5 space-y-4">
             <div>
-              <label htmlFor="central_id" className="block text-sm font-medium text-gray-700 mb-2">
-                ID Central
-              </label>
-              <input
-                type="text"
-                id="central_id"
-                name="central_id"
-                value={formData.central_id}
-                onChange={handleInputChange}
-                className={`w-full px-4 py-2 border ${
-                  errors.central_id ? 'border-red-300' : 'border-gray-300'
-                } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all`}
-                placeholder="Ej: EMP-12345"
-              />
-              {errors.central_id && (
-                <p className="mt-1 text-sm text-red-600 font-medium">{errors.central_id}</p>
-              )}
+              <label htmlFor="rfc" className="block text-sm font-medium text-gray-700 mb-1">RFC</label>
+              <input id="rfc" name="rfc" value={formData.rfc} onChange={handleInputChange} className={inputClass('rfc')} />
+              {renderError('rfc')}
             </div>
 
-            {/* Nombre Completo / FullName */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                <input id="firstName" name="firstName" value={formData.firstName} onChange={handleInputChange} className={inputClass('firstName')} />
+                {renderError('firstName')}
+              </div>
+              <div>
+                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">Apellido paterno</label>
+                <input id="lastName" name="lastName" value={formData.lastName} onChange={handleInputChange} className={inputClass('lastName')} />
+                {renderError('lastName')}
+              </div>
+            </div>
+
             <div>
-              <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 mb-2">
-                Nombre Completo
-              </label>
-              <input
-                type="text"
-                id="full_name"
-                name="full_name"
-                value={formData.full_name}
-                onChange={handleInputChange}
-                className={`w-full px-4 py-2 border ${
-                  errors.full_name ? 'border-red-300' : 'border-gray-300'
-                } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all`}
-                placeholder="Ej: Juan Pérez García"
-              />
-              {errors.full_name && (
-                <p className="mt-1 text-sm text-red-600 font-medium">{errors.full_name}</p>
-              )}
+              <label htmlFor="maternalLastName" className="block text-sm font-medium text-gray-700 mb-1">Apellido materno</label>
+              <input id="maternalLastName" name="maternalLastName" value={formData.maternalLastName} onChange={handleInputChange} className={inputClass('maternalLastName')} />
             </div>
 
-            {/* Correo Electrónico */}
-            <div className="md:col-span-2">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Correo Electrónico
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                className={`w-full px-4 py-2 border ${
-                  errors.email ? 'border-red-300' : 'border-gray-300'
-                } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all`}
-                placeholder="Ej: [email protected]"
-              />
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600 font-medium">{errors.email}</p>
-              )}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label htmlFor="employeeId" className="block text-sm font-medium text-gray-700 mb-1">ID</label>
+                <input id="employeeId" name="employeeId" value={formData.employeeId} onChange={handleInputChange} className={inputClass('employeeId')} />
+                {renderError('employeeId')}
+              </div>
+              <div>
+                <label htmlFor="employeeKey" className="block text-sm font-medium text-gray-700 mb-1">Clave</label>
+                <input id="employeeKey" name="employeeKey" value={formData.employeeKey} onChange={handleInputChange} placeholder={buildSuggestedEmployeeKey(formData)} className={inputClass('employeeKey')} />
+                {renderError('employeeKey')}
+              </div>
+              <div>
+                <label htmlFor="initials" className="block text-sm font-medium text-gray-700 mb-1">Iniciales</label>
+                <input id="initials" name="initials" value={formData.initials} onChange={handleInputChange} placeholder={suggestedInitials} className={inputClass('initials')} />
+                {renderError('initials')}
+              </div>
             </div>
 
-            {/* Contraseña con Toggle de Visibilidad */}
-            <div className="md:col-span-2">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Contraseña Temporal
-              </label>
+            <div>
+              <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">Domicilio</label>
+              <textarea id="address" name="address" value={formData.address} onChange={handleInputChange} className={`${inputClass('address')} min-h-20 resize-none`} />
+            </div>
+
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Correo</label>
+              <input id="email" name="email" type="email" value={formData.email} onChange={handleInputChange} className={inputClass('email')} />
+              {renderError('email')}
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Contraseña temporal</label>
               <div className="relative">
                 <input
-                  type={showPassword ? 'text' : 'password'}
                   id="password"
                   name="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={formData.password}
                   onChange={handleInputChange}
-                  className={`w-full px-4 py-2 border ${
-                    errors.password ? 'border-red-300' : 'border-gray-300'
-                  } rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-12 transition-all`}
-                  placeholder="Mínimo 8 caracteres"
+                  className={`${inputClass('password')} pr-12`}
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                  onClick={() => setShowPassword((current) => !current)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                 >
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-              {errors.password && (
-                <p className="mt-1 text-sm text-red-600 font-medium">{errors.password}</p>
-              )}
+              {renderError('password')}
             </div>
-          </div>
 
-          {/* Botones de Acción */}
-          <div className="flex flex-col-reverse sm:flex-row gap-3 mt-8 sm:justify-end">
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
-            >
-              Registrar Empleado
-            </button>
-          </div>
-        </form>
+            <div>
+              <label htmlFor="superUserKey" className="block text-sm font-medium text-gray-700 mb-1">Clave de superusuario</label>
+              <input id="superUserKey" name="superUserKey" type="password" value={formData.superUserKey} onChange={handleInputChange} className={inputClass('superUserKey')} />
+              {renderError('superUserKey')}
+            </div>
+
+            <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2 sm:justify-end">
+              <button
+                type="button"
+                onClick={onBack}
+                className="px-5 py-2 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50"
+              >
+                Volver
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 shadow-sm"
+              >
+                Registrar
+              </button>
+            </div>
+          </form>
+        </section>
       </div>
     </div>
   );

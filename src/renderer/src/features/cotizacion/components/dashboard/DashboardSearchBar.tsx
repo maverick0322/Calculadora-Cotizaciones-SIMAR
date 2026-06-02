@@ -24,29 +24,28 @@ export const DashboardSearchBar = ({ searchTerm, setSearchTerm, selectedMonth, s
         />
       </div>
       {setSelectedMonth && (
-        <div className="flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50/60 px-3 py-2 shadow-sm">
-          <CalendarDays className="h-4 w-4 text-blue-600" />
-          <label className="text-xs font-semibold text-blue-900 whitespace-nowrap" htmlFor="quote-month-filter">
-            Mes
-          </label>
+        <div className="relative flex items-center rounded-lg border border-gray-200 bg-white shadow-sm ring-1 ring-transparent transition-all focus-within:border-blue-500 focus-within:ring-blue-100">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+            <CalendarDays className="h-4 w-4 text-blue-600" />
+          </div>
           <input
             id="quote-month-filter"
             type="month"
-            className="w-full sm:w-36 bg-white/80 border border-blue-100 rounded-md px-2 py-1 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="h-10 w-full min-w-40 rounded-lg border-0 bg-transparent pl-10 pr-10 text-sm font-medium text-gray-700 outline-none placeholder:text-gray-400 sm:w-44"
             value={selectedMonth || ''}
             onChange={(e) => setSelectedMonth(e.target.value)}
             aria-label="Filtrar por mes"
           />
-          {selectedMonth && (
-            <button
-              type="button"
-              onClick={() => setSelectedMonth('')}
-              className="p-1 rounded-md text-blue-700 hover:bg-blue-100 transition-colors"
-              title="Limpiar filtro de mes"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => setSelectedMonth('')}
+            className={`absolute right-2 rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 ${
+              selectedMonth ? 'opacity-100' : 'pointer-events-none opacity-0'
+            }`}
+            title="Limpiar filtro de mes"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
       )}
     </div>

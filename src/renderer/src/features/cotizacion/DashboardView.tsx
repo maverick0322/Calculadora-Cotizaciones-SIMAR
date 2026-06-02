@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import toast from 'react-hot-toast';
-import { CurrentQuoteStatus, QuoteSummary } from '../../../../shared/types/Quote';
+import { CurrentQuoteStatus, IssueQuoteRequest, QuoteSummary } from '../../../../shared/types/Quote';
+import { User } from '../../../../shared/types/Auth';
 import { useDrafts } from './hooks/useDrafts';
 import { usePdfWorkflow } from './hooks/usePdfWorkflow';
 import { PdfPreviewModal } from './components/PdfPreviewModal';
@@ -8,7 +9,15 @@ import { DashboardSearchBar } from './components/dashboard/DashboardSearchBar';
 import { EmitConfirmationModal } from './components/dashboard/EmitConfirmationModal';
 import { DraftsTable } from './components/dashboard/DraftsTable';
 
-export const DashboardView = ({ onEditClick, onQuoteIssued }: { onEditClick: (id: number) => void, onQuoteIssued?: () => void }) => {  
+export const DashboardView = ({
+  onEditClick,
+  onQuoteIssued,
+  currentUser
+}: {
+  onEditClick: (id: number) => void;
+  onQuoteIssued?: () => void;
+  currentUser: User;
+}) => {  
   const { drafts, loading, fetchDrafts } = useDrafts();
   const [quoteToEmit, setQuoteToEmit] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -54,6 +63,25 @@ export const DashboardView = ({ onEditClick, onQuoteIssued }: { onEditClick: (id
     });
   }, [drafts, searchTerm, selectedMonth]);
 
+  const handleEmitConfirm = async (payload: IssueQuoteRequest) => {
+    const toastId = toast.loading('Emitiendo cotización...');
+
+    try {
+      const response = await window.api.issueQuote(payload);
+
+      if (!response.success) {
+        toast.error(response.error || 'No se pudo emitir la cotización', { id: toastId });
+        return;
+      }
+
+      toast.success('Cotización emitida correctamente', { id: toastId });
+      setQuoteToEmit(null);
+      openPdfPreview(payload.quoteId, false);
+    } catch {
+      toast.error('Error de comunicación al emitir la cotización', { id: toastId });
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
@@ -76,13 +104,10 @@ export const DashboardView = ({ onEditClick, onQuoteIssued }: { onEditClick: (id
 
       <EmitConfirmationModal 
         isOpen={quoteToEmit !== null}
+        quoteId={quoteToEmit}
+        currentUser={currentUser}
         onCancel={() => setQuoteToEmit(null)}
-        onConfirm={() => {
-          if (quoteToEmit !== null) { 
-            openPdfPreview(quoteToEmit, false, true);
-            setQuoteToEmit(null); 
-          }
-        }}
+        onConfirm={handleEmitConfirm}
       />
 
       <PdfPreviewModal 

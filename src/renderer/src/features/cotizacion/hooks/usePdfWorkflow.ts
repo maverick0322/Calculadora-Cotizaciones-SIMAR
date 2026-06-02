@@ -7,19 +7,12 @@ export const usePdfWorkflow = (onWorkflowComplete?: () => void) => {
   const [pdfBase64, setPdfBase64] = useState<string | null>(null);
   const [currentFolio, setCurrentFolio] = useState<string>('');
 
-  const openPdfPreview = async (id: number | string, isDetailed: boolean = false, isDraft: boolean = false) => {
+  const openPdfPreview = async (id: number | string, isDetailed: boolean = false) => {
     setIsModalOpen(true);
     setIsLoading(true);
     setPdfBase64(null);
 
     try {
-      if (isDraft) {
-        const issueResult = await window.api.issueQuote(id);
-        if (!issueResult.success) {
-          throw new Error(issueResult.error || 'No se pudo emitir la cotización');
-        }
-      }
-
       const quoteData = await window.api.getQuoteById(id);
       if (!quoteData) {
         throw new Error('No se encontraron los datos de la cotización en la base de datos');
@@ -43,7 +36,6 @@ export const usePdfWorkflow = (onWorkflowComplete?: () => void) => {
       setPdfBase64(pdfResult.pdfBase64);
 
     } catch (error) {
-      console.error('Error en el flujo de PDF:', error);
       toast.error((error as Error).message || 'Ocurrió un error inesperado al procesar el documento');
       setIsModalOpen(false);
     } finally {

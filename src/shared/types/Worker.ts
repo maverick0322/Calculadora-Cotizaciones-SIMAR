@@ -1,7 +1,28 @@
 export interface WorkerData {
-  fullName: string;
+  rfc: string;
+  firstName: string;
+  lastName: string;
+  maternalLastName?: string;
+  fullName?: string;
   employeeId: string;
+  employeeKey: string;
+  initials: string;
+  address?: string;
   email: string;
   password?: string;
-  role: 'sales';
+  superUserKey?: string;
+  role: 'admin' | 'sales';
+  isActive?: boolean;
+}
+
+export interface WorkerSummary {
+  id: number;
+  rfc: string;
+  fullName: string;
+  employeeId: string;
+  employeeKey: string;
+  initials: string;
+  email: string;
+  role: 'admin' | 'sales';
+  isActive: boolean;
 }

@@ -1,5 +1,10 @@
 // src/domain/repositories/IQuoteRepository.ts
-import { CurrentQuoteStatus, QuoteDraft, QuoteSummary } from '../../../shared/types/Quote';
+import {
+  CurrentQuoteStatus,
+  IssueQuoteRequest,
+  QuoteDraft,
+  QuoteSummary
+} from '../../../shared/types/Quote';
 
 export interface IQuoteRepository {
   /**
@@ -44,7 +49,11 @@ export interface IQuoteRepository {
    * @param id The unique identifier of the draft to issue.
    * @returns A boolean indicating whether the operation was successful.
    */
-  issueQuote(id: number): boolean;
+  issueQuote(payload: IssueQuoteRequest): boolean;
+
+  countIssuedQuotesByYear(year: number): number;
+
+  folioExists(folio: string, excludeQuoteId?: number): boolean;
 
   /**
    * Retrieves a summary list of all quotes that have been issued (status 'issued').

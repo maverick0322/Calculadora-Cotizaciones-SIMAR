@@ -1,18 +1,30 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI, ElectronAPI } from '@electron-toolkit/preload'
-import { ApiResult, CurrentQuoteStatus, QuoteDraft, QuoteSummary } from '../shared/types/Quote'
+import {
+  ApiResult,
+  CurrentQuoteStatus,
+  IssueQuoteRequest,
+  QuoteCondition,
+  QuoteDraft,
+  QuoteFolioSuggestion,
+  QuoteSummary
+} from '../shared/types/Quote'
+import { User } from '../shared/types/Auth'
+import { WorkerData, WorkerSummary } from '../shared/types/Worker'
 
 declare global {
   interface Window {
     electron: ElectronAPI
     api: {
-      registerWorker: (workerData: any) => Promise<any>;
+      registerWorker: (workerData: WorkerData) => Promise<ApiResult<number | bigint>>;
+      listWorkers: () => Promise<ApiResult<WorkerSummary[]>>;
       saveDraft: (data: QuoteDraft) => Promise<ApiResult<number | bigint>>;
       getDraftById: (id: number | string) => Promise<ApiResult<QuoteDraft>>;
-      login: (credentials: Record<string, string>) => Promise<any>;
+      login: (credentials: Record<string, string>) => Promise<{ success: boolean; data?: User; error?: string }>;
       getDrafts: () => Promise<ApiResult<QuoteSummary[]>>;
       updateQuoteStatus: (id: number | string, nextStatus: CurrentQuoteStatus) => Promise<ApiResult>;
-      issueQuote: (id: number | string) => Promise<{ success: boolean; error?: string }>;
+      suggestQuoteFolio: (payload: { quoteId: number; preparedByInitials?: string }) => Promise<ApiResult<QuoteFolioSuggestion>>;
+      issueQuote: (payload: IssueQuoteRequest) => Promise<{ success: boolean; error?: string }>;
       getIssuedQuotes: () => Promise<ApiResult<QuoteSummary[]>>;
       getQuoteById: (id: number | string) => Promise<QuoteDraft | null>;
       generatePdfPreview: (payload: { quoteData: any, isDetailed: boolean }) => Promise<{ success: boolean; pdfBase64?: string; error?: string }>;
@@ -23,19 +35,22 @@ declare global {
       addCustomLocation: (data: any) => Promise<{ success: boolean, id?: number, error?: string }>;
       manageResidues: (action: 'add' | 'delete' | 'updatePrice' | 'get', payload?: any) => Promise<any>;
       manageClientDirectory: (action: 'search' | 'upsert', payload?: any) => Promise<any>;
+      manageConditions: (action: 'list' | 'add' | 'edit' | 'delete', payload?: any) => Promise<ApiResult<QuoteCondition[]>>;
     }
   }
 }
 
 // Custom APIs for renderer
 const api = {
-  registerWorker: (workerData: any) => ipcRenderer.invoke('workers:register', workerData),
+  registerWorker: (workerData: WorkerData) => ipcRenderer.invoke('workers:register', workerData),
+  listWorkers: () => ipcRenderer.invoke('workers:list'),
   saveDraft: (data: QuoteDraft) => ipcRenderer.invoke('quotes:save-draft', data),
   getDraftById: (id: number | string) => ipcRenderer.invoke('quotes:get-draft-by-id', id),
   login: (credentials: Record<string, string>) => ipcRenderer.invoke('auth:login', credentials),
   getDrafts: () => ipcRenderer.invoke('quotes:get-drafts'),
   updateQuoteStatus: (id: number | string, nextStatus: CurrentQuoteStatus) => ipcRenderer.invoke('quotes:update-status', { id: Number(id), nextStatus }),
-  issueQuote: (id: number | string) => ipcRenderer.invoke('quotes:issue', id),
+  suggestQuoteFolio: (payload: { quoteId: number; preparedByInitials?: string }) => ipcRenderer.invoke('quotes:suggest-folio', payload),
+  issueQuote: (payload: IssueQuoteRequest) => ipcRenderer.invoke('quotes:issue', payload),
   getIssuedQuotes: () => ipcRenderer.invoke('quotes:get-issued'),
   getQuoteById: (id: number | string) => ipcRenderer.invoke('quotes:get-quote-by-id', id),
   generatePdfPreview: (payload: { quoteData: any, isDetailed: boolean }) => ipcRenderer.invoke('pdf:generate-preview', payload),
@@ -46,6 +61,7 @@ const api = {
   addCustomLocation: (data: any) => ipcRenderer.invoke('add-custom-location', data),
   manageResidues: (action, payload) => ipcRenderer.invoke('residues:manage', { action, payload }),
   manageClientDirectory: (action, payload) => ipcRenderer.invoke('clients:manage', { action, payload }),
+  manageConditions: (action, payload) => ipcRenderer.invoke('conditions:manage', { action, payload }),
 };
 
 if (process.contextIsolated) {

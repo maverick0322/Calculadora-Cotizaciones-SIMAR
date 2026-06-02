@@ -12,10 +12,14 @@ describe('SaveDraftUseCase', () => {
     mockRepository = {
       saveDraft: vi.fn(),
       getDrafts: vi.fn(),
+      getQuotesByStatus: vi.fn(),
       getDraftById: vi.fn(),
       issueQuote: vi.fn(),
       getIssuedQuotes: vi.fn(),
-      getQuoteById: vi.fn()
+      getQuoteById: vi.fn(),
+      updateQuoteStatus: vi.fn(),
+      countIssuedQuotesByYear: vi.fn(),
+      folioExists: vi.fn()
     };
     
     mockAuditUseCase = {
@@ -53,12 +57,12 @@ describe('SaveDraftUseCase', () => {
     const result = saveDraftUseCase.execute(newDraftPayload);
 
     expect(mockRepository.saveDraft).toHaveBeenCalledTimes(1);
-    expect(mockRepository.saveDraft).toHaveBeenCalledWith(newDraftPayload);
+    expect(mockRepository.saveDraft).toHaveBeenCalledWith({ ...newDraftPayload, status: 'en_proceso' });
     expect(mockAuditUseCase.execute).toHaveBeenCalledTimes(1);
     expect(result).toEqual({ 
       success: true, 
       id: expectedGeneratedId, 
-      message: 'Draft saved successfully' 
+      message: 'Cotización en proceso guardada correctamente' 
     });
   });
 
@@ -70,12 +74,12 @@ describe('SaveDraftUseCase', () => {
     const result = saveDraftUseCase.execute(existingDraftPayload);
 
     expect(mockRepository.saveDraft).toHaveBeenCalledTimes(1);
-    expect(mockRepository.saveDraft).toHaveBeenCalledWith(existingDraftPayload);
+    expect(mockRepository.saveDraft).toHaveBeenCalledWith({ ...existingDraftPayload, status: 'en_proceso' });
     expect(mockAuditUseCase.execute).toHaveBeenCalledTimes(1);
     expect(result).toEqual({ 
       success: true, 
       id: 5, 
-      message: 'Draft saved successfully' 
+      message: 'Cotización en proceso guardada correctamente' 
     });
   });
 

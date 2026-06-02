@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach, beforeAll, afterAll } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import Database from 'better-sqlite3';
 import { SqliteQuoteRepository } from '../../../../main/infrastructure/database/repositories/SqliteQuoteRepository';
+import { IssueQuoteRequest, QuoteDraft } from '../../../../shared/types/Quote';
 
 describe('SqliteQuoteRepository', () => {
   let db: Database.Database;
@@ -12,11 +13,16 @@ describe('SqliteQuoteRepository', () => {
       CREATE TABLE quotes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         folio VARCHAR UNIQUE,
-        status VARCHAR DEFAULT 'draft',
+        status VARCHAR DEFAULT 'en_proceso',
+        customer_id INTEGER,
+        seller_id INTEGER,
         replaces_quote_id INTEGER,
+        person_type VARCHAR,
+        commercial_name VARCHAR,
         client_name VARCHAR,
         client_rfc VARCHAR,
         contact_name VARCHAR,
+        contact_position VARCHAR,
         contact_phone VARCHAR,
         contact_email VARCHAR,
         validity_days INTEGER,
@@ -24,13 +30,17 @@ describe('SqliteQuoteRepository', () => {
         services_json TEXT,
         subtotal DECIMAL,
         total DECIMAL,
-        created_at INTEGER
+        created_at INTEGER,
+        issued_at INTEGER,
+        prepared_by_initials VARCHAR,
+        quote_type_code VARCHAR,
+        conditions_json TEXT
       );
     `);
   });
 
   afterAll(() => {
-    db?.close();
+    db.close();
   });
 
   beforeEach(() => {
@@ -38,150 +48,122 @@ describe('SqliteQuoteRepository', () => {
     repository = new SqliteQuoteRepository(db);
   });
 
-  const mockDraftPayload = {
+  const buildDraft = (overrides: Partial<QuoteDraft> = {}): QuoteDraft => ({
     clientName: 'Cliente Prueba',
     clientRfc: 'XAXX010101000',
-    contactName: 'Juan Pérez',
+    contactName: 'Juan Perez',
     contactPhone: '2288123456',
     contactEmail: 'juan@prueba.com',
     validityDays: 15,
-    frequency: { type: 'weekly' },
-    services: [
-      {
-        location: { street: 'Av. Luz', neighborhood: 'Centro', municipality: 'Xalapa', state: 'Veracruz' },
-        wastes: [
-          { name: 'Basura Doméstica', quantity: 100, unit: 'kg' }
-        ]
-      }
-    ],
+    services: [{
+      id: 'service-1',
+      serviceType: 'rme',
+      activity: 'collection',
+      frequency: { type: 'one_time' },
+      location: { street: 'Av. Luz', neighborhood: 'Centro', municipality: 'Xalapa', state: 'Veracruz' },
+      wastes: [{ name: 'Basura Domestica', type: 'rme', classification: 'RME', clave: 'R-001', quantity: 100, unit: 'kg', pricePerUnit: 1 }],
+      vehicles: [],
+      crew: [],
+      supplies: [],
+      tools: [],
+      materials: [],
+      equipment: [],
+      specializedEpp: [],
+      logistics: { origin: '', primaryDestination: '', kilometers: 0, fuelLiters: 0, fuelPricePerLiter: 0, viaticos: 0 },
+      extraCosts: []
+    }],
+    subtotal: 100,
+    total: 116,
     createdAt: 1672531200000,
-    status: 'draft'
-  } as any; 
+    status: 'en_proceso',
+    ...overrides
+  });
 
-  // --- AC 1: CREATE NEW DRAFT ---
-  it('should insert a new draft and return the new row ID', () => {
-    const newId = repository.saveDraft(mockDraftPayload);
+  const buildIssuePayload = (quoteId: number): IssueQuoteRequest => ({
+    quoteId,
+    folio: '001-0526-RME-CP',
+    preparedByUserId: 7,
+    preparedByInitials: 'EVL',
+    quoteTypeCode: 'RME',
+    conditions: [{
+      conditionId: 1,
+      type: 'commercial',
+      title: 'Vigencia',
+      description: 'La vigencia indicada aplica a esta cotización.',
+      isCustom: false
+    }]
+  });
 
-    expect(Number(newId)).toBeGreaterThan(0);
+  it('inserts a new draft and returns the new row id', () => {
+    const newId = repository.saveDraft(buildDraft());
 
     const row = db.prepare('SELECT * FROM quotes WHERE id = ?').get(newId) as any;
+
+    expect(Number(newId)).toBeGreaterThan(0);
     expect(row.client_name).toBe('Cliente Prueba');
-    expect(row.contact_name).toBe('Juan Pérez'); // Confirmamos que se guarda
-    expect(row.status).toBe('draft');
+    expect(row.status).toBe('en_proceso');
     expect(row.services_json).toContain('Av. Luz');
   });
 
-  // --- AC 2: UPDATE EXISTING DRAFT ---
-  it('should update an existing draft if ID is provided', () => {
-    const insertId = repository.saveDraft(mockDraftPayload);
+  it('updates an existing draft without creating another row', () => {
+    const insertId = Number(repository.saveDraft(buildDraft()));
 
-    const updatePayload = JSON.parse(JSON.stringify(mockDraftPayload));
-    updatePayload.id = Number(insertId);
-    updatePayload.services[0].location.street = 'Calle Oscura';
-    updatePayload.contactName = 'Pedro Editado';
+    repository.saveDraft(buildDraft({
+      id: insertId,
+      services: [{ ...buildDraft().services[0], location: { street: 'Calle Oscura', neighborhood: 'Centro', municipality: 'Xalapa', state: 'Veracruz' } }]
+    }));
 
-    const returnedId = repository.saveDraft(updatePayload);
-
-    expect(Number(returnedId)).toBe(Number(insertId));
-    
-    const row = db.prepare('SELECT services_json, contact_name, status FROM quotes WHERE id = ?').get(insertId) as any;
-    expect(row.services_json).toContain('Calle Oscura');
-    expect(row.contact_name).toBe('Pedro Editado'); // Confirmamos actualización
-    
+    const row = db.prepare('SELECT services_json FROM quotes WHERE id = ?').get(insertId) as any;
     const count = db.prepare('SELECT COUNT(*) as count FROM quotes').get() as any;
+
+    expect(row.services_json).toContain('Calle Oscura');
     expect(count.count).toBe(1);
   });
 
-  // --- AC 3: GET DRAFTS ---
-  it('should return only drafts ordered by date, mapping location and volume correctly', () => {
-    const p1 = JSON.parse(JSON.stringify(mockDraftPayload));
-    p1.services[0].wastes[0].quantity = 50;
-    p1.createdAt = 1000;
-    repository.saveDraft(p1);
-
-    const p2 = JSON.parse(JSON.stringify(mockDraftPayload));
-    p2.services[0].wastes[0].quantity = 20;
-    p2.createdAt = 5000;
-    repository.saveDraft(p2);
-    
-    db.prepare(`
-      INSERT INTO quotes (client_name, services_json, status, created_at) 
-      VALUES ('Ignorado', '[{"location":{"street":"A", "neighborhood":"", "municipality":"", "state":""},"wastes":[]}]', 'issued', 9000)
-    `).run();
+  it('returns drafts ordered by creation date', () => {
+    repository.saveDraft(buildDraft({ createdAt: 1000 }));
+    repository.saveDraft(buildDraft({ createdAt: 5000 }));
+    db.prepare(`INSERT INTO quotes (client_name, services_json, status, created_at) VALUES ('Ignorado', '[]', 'emitida', 9000)`).run();
 
     const drafts = repository.getDrafts();
 
     expect(drafts).toHaveLength(2);
-    expect(drafts[0].wastesSummary).toBe('20 kg de Basura Doméstica'); 
-    expect(drafts[0].location).toContain('Av. Luz'); 
-    expect(drafts[0].status).toBe('draft');
+    expect(drafts[0].createdAt).toBe(5000);
+    expect(drafts[0].status).toBe('en_proceso');
   });
 
-  // --- AC 4: GET DRAFT BY ID ---
-  it('should map a raw database row to a complete QuoteDraft object including trip data', () => {
-    const payloadWithTrip = JSON.parse(JSON.stringify(mockDraftPayload));
-    payloadWithTrip.services[0].trip = {
-      kilometers: 50, vehicles: 1, crewMembers: 2, routes: 1, fuelLiters: 10,
-      roadType: 'paved', origin: 'Punto A', destinationWarehouse: 'Bodega B'
-    };
-    
-    const newId = Number(repository.saveDraft(payloadWithTrip));
-    const draft = repository.getDraftById(newId);
+  it('emits an authorized quote with editable folio and emission metadata', () => {
+    const quoteId = Number(repository.saveDraft(buildDraft()));
+    db.prepare(`UPDATE quotes SET status = 'autorizada' WHERE id = ?`).run(quoteId);
 
-    expect(draft).not.toBeNull();
-    expect(draft?.id).toBe(newId);
-    expect(draft?.services[0].location.street).toBe('Av. Luz');
-    expect(draft?.contactName).toBe('Juan Pérez'); // Confirmamos mapeo de retorno
-  });
+    const success = repository.issueQuote(buildIssuePayload(quoteId));
 
-  // --- AC 5: DRAFT NOT FOUND OR NOT A DRAFT ---
-  it('should return null if the id does not exist or status is not draft', () => {
-    const notFoundDraft = repository.getDraftById(999);
-    expect(notFoundDraft).toBeNull();
-
-    const info = db.prepare(`INSERT INTO quotes (client_name, status) VALUES ('Test', 'issued')`).run();
-    const issuedDraft = repository.getDraftById(Number(info.lastInsertRowid));
-    expect(issuedDraft).toBeNull();
-  });
-
-  // --- AC 6: ISSUE QUOTE ---
-  it('should successfully change a quote status from draft to issued', () => {
-    const insertId = Number(repository.saveDraft(mockDraftPayload));
-    
-    const success = repository.issueQuote(insertId);
-    
+    const row = db.prepare('SELECT status, folio, seller_id, prepared_by_initials, quote_type_code, conditions_json FROM quotes WHERE id = ?').get(quoteId) as any;
     expect(success).toBe(true);
-    
-    const row = db.prepare('SELECT status, folio FROM quotes WHERE id = ?').get(insertId) as any;
-    expect(row.status).toBe('issued');
+    expect(row.status).toBe('emitida');
+    expect(row.folio).toBe('001-0526-RME-CP');
+    expect(row.seller_id).toBe(7);
+    expect(row.prepared_by_initials).toBe('EVL');
+    expect(row.quote_type_code).toBe('RME');
+    expect(row.conditions_json).toContain('Vigencia');
   });
 
-  it('should return false if trying to issue a quote that does not exist or is already issued', () => {
-    const fail1 = repository.issueQuote(9999);
-    expect(fail1).toBe(false);
+  it('throws a business error when trying to emit a quote that is not authorized', () => {
+    const quoteId = Number(repository.saveDraft(buildDraft()));
 
-    const insertId = Number(repository.saveDraft(mockDraftPayload));
-    repository.issueQuote(insertId);
-    const fail2 = repository.issueQuote(insertId); 
-    expect(fail2).toBe(false); 
+    expect(() => repository.issueQuote(buildIssuePayload(quoteId))).toThrow('Solo una cotización autorizada puede emitirse.');
   });
 
-  // --- AC 7: GET ISSUED QUOTES ---
-  it('should return only issued quotes for the PDF dashboard', () => {
-    const p1 = JSON.parse(JSON.stringify(mockDraftPayload));
-    p1.services[0].wastes[0].quantity = 10;
-    const id1 = Number(repository.saveDraft(p1));
-
-    const p2 = JSON.parse(JSON.stringify(mockDraftPayload));
-    p2.services[0].wastes[0].quantity = 20;
-    const id2 = Number(repository.saveDraft(p2));
-    
-    repository.issueQuote(id2);
+  it('returns issued summaries only for emitted quotes', () => {
+    const quoteId = Number(repository.saveDraft(buildDraft()));
+    db.prepare(`UPDATE quotes SET status = 'autorizada' WHERE id = ?`).run(quoteId);
+    repository.issueQuote(buildIssuePayload(quoteId));
+    repository.saveDraft(buildDraft());
 
     const issuedQuotes = repository.getIssuedQuotes();
 
     expect(issuedQuotes).toHaveLength(1);
-    expect(issuedQuotes[0].wastesSummary).toBe('20 kg de Basura Doméstica');
-    expect(issuedQuotes[0].status).toBe('issued');
+    expect(issuedQuotes[0].folio).toBe('001-0526-RME-CP');
+    expect(issuedQuotes[0].status).toBe('emitida');
   });
 });

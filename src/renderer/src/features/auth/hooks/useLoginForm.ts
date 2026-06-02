@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { User } from '../../../../../shared/types/Auth';
 
 export type LoginFormValues = {
   email: string;
   password: string;
 };
 
-export const useLoginForm = (onLoginSuccess: () => void) => {
+export const useLoginForm = (onLoginSuccess: (user: User) => void) => {
   const form = useForm<LoginFormValues>();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -19,13 +20,11 @@ export const useLoginForm = (onLoginSuccess: () => void) => {
       const response = await window.api.login(data);
 
       if (response.success && response.data) {
-        console.log("¡Bienvenido!", response.data.full_name);
-        onLoginSuccess();
+        onLoginSuccess(response.data);
       } else {
         setErrorMsg(response.error || 'Correo o contraseña incorrectos.');
       }
-    } catch (error) {
-      console.error('Error IPC:', error);
+    } catch {
       setErrorMsg('Error de conexión con la base de datos local.');
     } finally {
       setIsLoading(false);

@@ -6,7 +6,7 @@ export class SqliteAuthRepository implements IAuthRepository {
 
   getUserByEmail(email: string): any | null {
     const stmt = this.db.prepare(`
-      SELECT id, central_id, full_name, email, role, is_active, password_hash
+      SELECT id, central_id, full_name, email, role, is_active, password_hash, employee_key, initials
       FROM users
       WHERE email = ?
     `);

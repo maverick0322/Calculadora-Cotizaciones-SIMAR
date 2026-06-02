@@ -3,6 +3,8 @@ import { IQuoteRepository } from '../../../domain/repositories/IQuoteRepository'
 import { QUOTE_STATUS_FLOW, SERVICE_TYPE_LABELS } from '../../../../shared/constants/quoteConstants';
 import {
   CurrentQuoteStatus,
+  IssueQuoteRequest,
+  QuoteConditionSelection,
   QuoteDraft,
   QuoteStatus,
   QuoteSummary,
@@ -26,6 +28,10 @@ interface RawQuoteRow {
   subtotal: number;
   total: number;
   created_at: number;
+  issued_at: number | null;
+  prepared_by_initials: string | null;
+  quote_type_code: string | null;
+  conditions_json: string | null;
   status: string;
   replaces_quote_id: number | null;
 }
@@ -61,6 +67,7 @@ export class SqliteQuoteRepository implements IQuoteRepository {
       subtotal: quote.subtotal ?? 0,
       total: quote.total ?? 0,
       createdAt: quote.createdAt || Date.now(),
+      conditionsJson: JSON.stringify(quote.conditions ?? []),
       replacesQuoteId: quote.replacesQuoteId ?? null
     };
 
@@ -80,6 +87,7 @@ export class SqliteQuoteRepository implements IQuoteRepository {
           services_json = @servicesJson,
           subtotal = @subtotal,
           total = @total,
+          conditions_json = @conditionsJson,
           replaces_quote_id = @replacesQuoteId
         WHERE id = @id AND status IN ('en_proceso', 'draft')
       `);
@@ -91,10 +99,10 @@ export class SqliteQuoteRepository implements IQuoteRepository {
     const stmt = this.db.prepare(`
       INSERT INTO quotes (
         person_type, commercial_name, client_name, client_rfc, contact_name, contact_position, contact_phone, contact_email,
-        validity_days, frequency_json, services_json, subtotal, total, created_at, status, replaces_quote_id
+        validity_days, frequency_json, services_json, subtotal, total, created_at, status, conditions_json, replaces_quote_id
       ) VALUES (
         @personType, @commercialName, @clientName, @clientRfc, @contactName, @contactPosition, @contactPhone, @contactEmail,
-        @validityDays, @frequencyJson, @servicesJson, @subtotal, @total, @createdAt, 'en_proceso', @replacesQuoteId
+        @validityDays, @frequencyJson, @servicesJson, @subtotal, @total, @createdAt, 'en_proceso', @conditionsJson, @replacesQuoteId
       )
     `);
 
@@ -157,23 +165,47 @@ export class SqliteQuoteRepository implements IQuoteRepository {
     return info.changes > 0;
   }
 
-  issueQuote(id: number): boolean {
-    const currentStatus = this.getCurrentStatus(id);
+  issueQuote(payload: IssueQuoteRequest): boolean {
+    const currentStatus = this.getCurrentStatus(payload.quoteId);
     if (currentStatus !== 'autorizada') {
       throw new AppError('INVALID_STATUS_TRANSITION', 'Solo una cotización autorizada puede emitirse.', {
-        quoteId: id,
+        quoteId: payload.quoteId,
         currentStatus
       });
     }
 
-    const currentYear = new Date().getFullYear();
-    const folio = this.getOrCreateFolio(id, currentYear);
-    const issueStmt = this.db.prepare(`UPDATE quotes SET status = 'emitida', folio = ? WHERE id = ? AND status = 'autorizada'`);
+    if (this.folioExists(payload.folio, payload.quoteId)) {
+      throw new AppError('DUPLICATED_FOLIO', 'El folio indicado ya está asignado a otra cotización.', {
+        quoteId: payload.quoteId
+      });
+    }
+
+    const issuedAt = Date.now();
+    const conditionsJson = JSON.stringify(payload.conditions);
+    const issueStmt = this.db.prepare(`
+      UPDATE quotes
+      SET status = 'emitida',
+          folio = ?,
+          seller_id = ?,
+          issued_at = ?,
+          prepared_by_initials = ?,
+          quote_type_code = ?,
+          conditions_json = ?
+      WHERE id = ? AND status = 'autorizada'
+    `);
     const replaceStmt = this.db.prepare(`UPDATE quotes SET status = 'replaced' WHERE id = ?`);
-    const quote = this.db.prepare(`SELECT replaces_quote_id FROM quotes WHERE id = ?`).get(id) as { replaces_quote_id: number | null };
+    const quote = this.db.prepare(`SELECT replaces_quote_id FROM quotes WHERE id = ?`).get(payload.quoteId) as { replaces_quote_id: number | null };
 
     const transaction = this.db.transaction(() => {
-      const info = issueStmt.run(folio, id);
+      const info = issueStmt.run(
+        payload.folio,
+        payload.preparedByUserId,
+        issuedAt,
+        payload.preparedByInitials,
+        payload.quoteTypeCode,
+        conditionsJson,
+        payload.quoteId
+      );
       if (info.changes > 0 && quote.replaces_quote_id) {
         replaceStmt.run(quote.replaces_quote_id);
       }
@@ -184,6 +216,26 @@ export class SqliteQuoteRepository implements IQuoteRepository {
     return transaction();
   }
 
+  countIssuedQuotesByYear(year: number): number {
+    const startOfYear = new Date(year, 0, 1).getTime();
+    const startOfNextYear = new Date(year + 1, 0, 1).getTime();
+    const stmt = this.db.prepare(`
+      SELECT COUNT(*) as count
+      FROM quotes
+      WHERE status = 'emitida' AND COALESCE(issued_at, created_at) >= ? AND COALESCE(issued_at, created_at) < ?
+    `);
+    const row = stmt.get(startOfYear, startOfNextYear) as { count: number };
+    return row.count;
+  }
+
+  folioExists(folio: string, excludeQuoteId?: number): boolean {
+    const stmt = excludeQuoteId
+      ? this.db.prepare(`SELECT id FROM quotes WHERE folio = ? AND id != ? LIMIT 1`)
+      : this.db.prepare(`SELECT id FROM quotes WHERE folio = ? LIMIT 1`);
+    const row = excludeQuoteId ? stmt.get(folio, excludeQuoteId) : stmt.get(folio);
+    return Boolean(row);
+  }
+
   private getCurrentStatus(id: number): CurrentQuoteStatus {
     const row = this.db.prepare(`SELECT status FROM quotes WHERE id = ?`).get(id) as { status: string } | undefined;
 
@@ -192,21 +244,6 @@ export class SqliteQuoteRepository implements IQuoteRepository {
     }
 
     return normalizeStatus(row.status) as CurrentQuoteStatus;
-  }
-
-  private getOrCreateFolio(id: number, year: number): string {
-    const row = this.db.prepare(`SELECT folio FROM quotes WHERE id = ?`).get(id) as { folio: string | null } | undefined;
-    if (!row) {
-      throw new AppError('NOT_FOUND', 'No se encontró la cotización para generar folio.', { quoteId: id });
-    }
-
-    if (row.folio) return row.folio;
-
-    const folioPrefix = `COT-${year}-`;
-    const countStmt = this.db.prepare(`SELECT COUNT(*) as count FROM quotes WHERE folio LIKE ?`);
-    const { count } = countStmt.get(`${folioPrefix}%`) as { count: number };
-    const nextSequence = String(count + 1).padStart(3, '0');
-    return `${folioPrefix}${nextSequence}`;
   }
 
   private mapRowsToSummaries(rows: unknown[]): QuoteSummary[] {
@@ -245,6 +282,11 @@ export class SqliteQuoteRepository implements IQuoteRepository {
       subtotal: row.subtotal,
       total: row.total,
       createdAt: row.created_at,
+      issuedAt: row.issued_at ?? undefined,
+      preparedByInitials: row.prepared_by_initials ?? undefined,
+      preparedByUserId: undefined,
+      quoteTypeCode: (row.quote_type_code as QuoteDraft['quoteTypeCode']) ?? undefined,
+      conditions: this.parseConditions(row.conditions_json),
       status: normalizeStatus(row.status)
     };
   }
@@ -259,6 +301,16 @@ export class SqliteQuoteRepository implements IQuoteRepository {
       equipment: service.equipment ?? [],
       specializedEpp: service.specializedEpp ?? []
     }));
+  }
+
+  private parseConditions(conditionsJson: string | null): QuoteConditionSelection[] {
+    if (!conditionsJson) return [];
+
+    try {
+      return JSON.parse(conditionsJson) as QuoteConditionSelection[];
+    } catch {
+      return [];
+    }
   }
 
   private buildFirstLocation(services: ServiceItem[]): string {

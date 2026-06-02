@@ -8,6 +8,7 @@ import { LoginView } from './features/auth/LoginView';
 import { CatalogSettingsView } from './features/configuration/CatalogSettingsView';
 import WorkerRegistrationView from './features/registro/WorkerRegistrationView';
 import { ResiduesCatalogView } from './features/catalogs/ResiduesCatalogView';
+import { User } from '../../shared/types/Auth';
 
 type View = 'splash' | 'newQuote' | 'dashboard' | 'issuedQuotes' | 'settings' | 'registerWorker' | 'residues';
 
@@ -15,7 +16,7 @@ function App() {
   const [currentView, setCurrentView] = useState<View>('splash');
   const [fadeStatus, setFadeStatus] = useState<'in' | 'out'>('in');
   const [editDraftId, setEditDraftId] = useState<number | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
     if (currentView !== 'splash') return;
@@ -64,12 +65,12 @@ function App() {
     <>
       <Toaster position="top-right" />
 
-      {!isAuthenticated ? (
+      {!currentUser ? (
         currentView === 'registerWorker' ? (
           <WorkerRegistrationView onBack={() => setCurrentView('dashboard')} />
         ) : (
           <LoginView
-            onLoginSuccess={() => setIsAuthenticated(true)}
+            onLoginSuccess={(user) => setCurrentUser(user)}
             onGoToRegister={() => setCurrentView('registerWorker')}
           />
         )
@@ -150,7 +151,7 @@ function App() {
                 </button>
 
                 <button
-                  onClick={() => setIsAuthenticated(false)}
+                  onClick={() => setCurrentUser(null)}
                   className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-full transition-colors ml-2 border-l border-gray-300 rounded-none"
                 >
                   Salir
@@ -170,6 +171,7 @@ function App() {
               <DashboardView 
                 onEditClick={handleEditDraft} 
                 onQuoteIssued={() => setCurrentView('issuedQuotes')} 
+                currentUser={currentUser}
               />
             )}
             {currentView === 'issuedQuotes' && (
