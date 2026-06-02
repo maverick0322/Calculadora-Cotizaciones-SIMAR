@@ -19,11 +19,11 @@ export const CrewSection = ({ serviceIndex }: CrewSectionProps) => {
       <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-4">
         <div>
           <h3 className="text-lg font-medium text-gray-900">Personal Operativo</h3>
-          <p className="text-sm text-gray-500">Choferes y técnicos asignados al viaje</p>
+          <p className="text-sm text-gray-500">Coordinadores, operadores y técnicos asignados al servicio</p>
         </div>
         <button
           type="button"
-          onClick={() => appendCrew({ type: 'driver', quantity: 1, dailySalary: 400 })}
+          onClick={() => appendCrew({ type: 'operator', quantity: 1, dailySalary: 400 })}
           className="inline-flex items-center gap-1 px-3 py-1.5 text-sm bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100 transition-colors"
         >
           <Plus className="w-4 h-4" /> Agregar Personal
@@ -32,7 +32,7 @@ export const CrewSection = ({ serviceIndex }: CrewSectionProps) => {
 
       {crewFields.length === 0 && (
         <div className="text-center py-6 bg-gray-50 rounded-lg border border-dashed border-gray-300 text-gray-500 text-sm">
-          No has asignado personal. Recuerda que se necesita al menos un chofer.
+          No has asignado personal operativo.
         </div>
       )}
 
@@ -45,8 +45,9 @@ export const CrewSection = ({ serviceIndex }: CrewSectionProps) => {
                 className="w-full px-3 py-2 border rounded-md bg-white"
                 {...register(`services.${serviceIndex}.crew.${index}.type` as const)}
               >
-                <option value="driver">Chofer</option>
-                <option value="technician">Técnico / Auxiliar</option>
+                <option value="coordinator">Coordinador</option>
+                <option value="operator">Operador</option>
+                <option value="technician">Técnico</option>
               </select>
             </div>
 

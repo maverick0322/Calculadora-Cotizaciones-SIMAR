@@ -28,7 +28,6 @@ export const ClientInfoStep = ({ saveClient, setSaveClient }: ClientInfoStepProp
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         
-        {/* Componente Modularizado del Buscador */}
         <ClientNameAutocomplete />
 
         <div>
@@ -36,7 +35,7 @@ export const ClientInfoStep = ({ saveClient, setSaveClient }: ClientInfoStepProp
           <input 
             {...register('commercialName')} 
             className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none" 
-            placeholder="Ej. Restaurante El Fogón" 
+            placeholder="Ej. Comercial del Centro" 
           />
         </div>
 
@@ -51,13 +50,23 @@ export const ClientInfoStep = ({ saveClient, setSaveClient }: ClientInfoStepProp
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Contacto y Cargo *</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Contacto *</label>
           <input 
             {...register('contactName')} 
             className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none" 
-            placeholder="Ej. Ing. Juan Pérez - Compras" 
+            placeholder="Ej. Nombre de contacto" 
           />
           {errors.contactName && <p className="text-red-500 text-xs mt-1">{errors.contactName.message}</p>}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Cargo *</label>
+          <input
+            {...register('contactPosition')}
+            className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
+            placeholder="Ej. Compras"
+          />
+          {errors.contactPosition && <p className="text-red-500 text-xs mt-1">{errors.contactPosition.message}</p>}
         </div>
 
         <div>
@@ -72,18 +81,17 @@ export const ClientInfoStep = ({ saveClient, setSaveClient }: ClientInfoStepProp
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Correo del Responsable</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Correo del Contacto</label>
           <input 
             type="email"
             {...register('contactEmail')} 
             className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none" 
-            placeholder="Ej. juan.perez@empresa.com" 
+            placeholder="contacto@empresa.com" 
           />
           {errors.contactEmail && <p className="text-red-500 text-xs mt-1">{errors.contactEmail.message}</p>}
         </div>
       </div>
 
-      {/* Checkbox para auto-guardar */}
       <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-end">
         <label className="flex items-center gap-2 cursor-pointer group">
           <input 

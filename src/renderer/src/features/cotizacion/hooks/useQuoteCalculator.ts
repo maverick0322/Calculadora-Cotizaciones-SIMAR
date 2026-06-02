@@ -1,58 +1,62 @@
 import { useWatch, Control } from 'react-hook-form';
+import { IVA_RATE } from '../../../../../shared/constants/quoteConstants';
 import { QuoteFormValues } from '../../../../../shared/schemas/quoteSchema';
+
+const multiply = (quantity?: number, unitPrice?: number) => Number(quantity || 0) * Number(unitPrice || 0);
+const sumAmounts = (items: Array<{ amount?: number }> = []) => items.reduce((total, item) => total + Number(item.amount || 0), 0);
+const sumCatalogItems = (items: Array<{ quantity?: number; unitPrice?: number }> = []) => items.reduce((total, item) => total + multiply(item.quantity, item.unitPrice), 0);
 
 export const useQuoteCalculator = (control: Control<QuoteFormValues>) => {
   const services = useWatch({ control, name: 'services' }) || [];
 
-  let treatment = 0;
-  let transport = 0;
-  let conditioning = 0;
-  let supplies = 0;
+  const breakdown = services.reduce(
+    (totals, service) => {
+      const treatment = sumCatalogItems(service.wastes?.map((waste) => ({ quantity: waste.quantity, unitPrice: waste.pricePerUnit })) || []);
+      const vehicleCost = sumCatalogItems(service.vehicles || []);
+      const fuel = multiply(service.logistics?.fuelLiters, service.logistics?.fuelPricePerLiter);
+      const tolls = service.logistics?.roadType === 'toll' ? Number(service.logistics?.totalTollCost || 0) : 0;
+      const viaticos = Number(service.logistics?.viaticos || 0);
+      const crew = sumCatalogItems(service.crew?.map((member) => ({ quantity: member.quantity, unitPrice: member.dailySalary })) || []);
+      const supplies = sumCatalogItems(service.supplies || []) + sumCatalogItems(service.tools || []) + sumCatalogItems(service.materials || []);
+      const equipment = sumCatalogItems(service.equipment || []) + sumCatalogItems(service.specializedEpp || []);
+      const extraCosts = sumAmounts(service.extraCosts || []);
 
-  services.forEach((service: any) => {
-    // 1. TRATAMIENTO (Residuos)
-    if (service.wastes) {
-      service.wastes.forEach((w: any) => treatment += (Number(w.quantity || 0) * Number(w.pricePerUnit || 0)));
-    }
+      const cleaning = service.ecologicalCleaning
+        ? multiply(service.ecologicalCleaning.hours, service.ecologicalCleaning.hourlyUnitPrice)
+          + Number(service.ecologicalCleaning.viaticos || 0)
+          + sumAmounts(service.ecologicalCleaning.labor || [])
+        : 0;
 
-    // 2. TRANSPORTE Y RECOLECCIÓN (Vehículos + Gasolina + Casetas + Viáticos logísticos)
-    if (service.vehicles) {
-      service.vehicles.forEach((v: any) => transport += (Number(v.quantity || 0) * Number(v.unitPrice || 0)));
-    }
-    if (service.logistics) {
-      const fuel = Number(service.logistics.fuelLiters || 0) * Number(service.logistics.fuelPricePerLiter || 0);
-      const tolls = Number(service.logistics.totalTollCost || 0);
-      transport += (fuel + tolls);
-    }
+      const training = service.training
+        ? multiply(service.training.hours, service.training.hourlyUnitPrice)
+          + sumCatalogItems(service.training.stationery || [])
+          + Object.values(service.training.travelExpenses || {}).reduce((total, amount) => total + Number(amount || 0), 0)
+        : 0;
 
-    // 3. ACONDICIONAMIENTO (Personal + Maquinaria/Equipo + Costos Extra/Maniobras)
-    if (service.crew) {
-      service.crew.forEach((c: any) => conditioning += (Number(c.quantity || 0) * Number(c.dailySalary || 0)));
-    }
-    if (service.equipment) {
-      service.equipment.forEach((e: any) => conditioning += (Number(e.quantity || 0) * Number(e.unitPrice || 0)));
-    }
-    if (service.extraCosts) {
-      service.extraCosts.forEach((e: any) => conditioning += Number(e.amount || 0));
-    }
+      const conditioningLabor = sumAmounts(service.conditioning?.labor || []);
 
-    // 4. INSUMOS (Venta de tambores, bolsas, supersacos)
-    if (service.supplies) {
-      service.supplies.forEach((s: any) => supplies += (Number(s.quantity || 0) * Number(s.unitPrice || 0)));
-    }
-    if (service.materials) {
-      service.materials.forEach((m: any) => supplies += (Number(m.quantity || 0) * Number(m.unitPrice || 0)));
-    }
-  });
+      return {
+        treatment: totals.treatment + treatment,
+        transport: totals.transport + vehicleCost + fuel + tolls + viaticos,
+        conditioning: totals.conditioning + crew + equipment + extraCosts + cleaning + conditioningLabor + training,
+        supplies: totals.supplies + supplies,
+        logistics: totals.logistics + fuel + tolls + viaticos,
+        vehicles: totals.vehicles + vehicleCost,
+        crew: totals.crew + crew,
+        extras: totals.extras + extraCosts
+      };
+    },
+    { treatment: 0, transport: 0, conditioning: 0, supplies: 0, logistics: 0, vehicles: 0, crew: 0, extras: 0 }
+  );
 
-  const subtotal = treatment + transport + conditioning + supplies;
-  const iva = subtotal * 0.16;
+  const subtotal = breakdown.treatment + breakdown.transport + breakdown.conditioning + breakdown.supplies;
+  const iva = subtotal * IVA_RATE;
   const total = subtotal + iva;
 
   return {
     total,
     subtotal,
     iva,
-    breakdown: { treatment, transport, conditioning, supplies } // 👈 El objeto que lee la barra inferior
+    breakdown
   };
 };

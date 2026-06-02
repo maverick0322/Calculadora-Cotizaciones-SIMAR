@@ -4,6 +4,40 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import toast from 'react-hot-toast';
 import { quoteSchema, QuoteFormValues } from '../../../../../shared/schemas/quoteSchema';
 import { QuoteDraft, RoadType, ServiceItem } from '../../../../../shared/types/Quote';
+import { DEFAULT_VALIDITY_DAYS } from '../../../../../shared/constants/quoteConstants';
+
+const createDefaultService = (): ServiceItem => ({
+  id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
+  serviceType: 'rme',
+  activity: 'collection',
+  frequency: {
+    type: 'one_time',
+    duration: undefined,
+    customDescription: ''
+  },
+  location: { street: '', cp: '', municipality: '', neighborhood: '', state: '' },
+  wastes: [{ name: '', type: 'Residuo de Manejo Especial (RME)', classification: 'N/A', clave: 'N/A', quantity: 1, unit: 'Kilogramo', pricePerUnit: 0 }],
+  vehicles: [],
+  crew: [],
+  supplies: [],
+  tools: [],
+  materials: [],
+  equipment: [],
+  specializedEpp: [],
+  logistics: {
+    origin: '',
+    primaryDestination: '',
+    secondaryDestination: '',
+    kilometers: 0,
+    fuelLiters: 0,
+    fuelPricePerLiter: 0,
+    roadType: undefined,
+    tolls: 0,
+    totalTollCost: 0,
+    viaticos: 0
+  },
+  extraCosts: []
+});
 
 export const useQuoteForm = (editId?: number | null) => {
   const form = useForm<QuoteFormValues>({
@@ -14,40 +48,11 @@ export const useQuoteForm = (editId?: number | null) => {
       clientName: '',
       clientRfc: '',
       contactName: '',  
+      contactPosition: '',
       contactPhone: '',
       contactEmail: '',
-      validityDays: 15,
-      services: [
-        {
-          id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
-          activity: 'collection',
-          frequency: {
-            type: 'one_time',
-            duration: undefined,
-            customDescription: ''
-          },
-          location: { street: '', municipality: '', neighborhood: '', state: '' },
-          wastes: [{ name: '', type: 'Residuo de Manejo Especial (RME)', classification: 'N/A', clave: 'N/A', quantity: 1, unit: 'Kilogramo', pricePerUnit: 0 }],
-          vehicles: [],
-          crew: [],
-          supplies: [],
-          materials: [], // 👇 AGREGADO
-          equipment: [], // 👇 AGREGADO
-          logistics: {
-            origin: '',
-            primaryDestination: '',
-            secondaryDestination: '',
-            kilometers: 0,
-            fuelLiters: 0,
-            fuelPricePerLiter: 0,
-            roadType: undefined,
-            tolls: 0,
-            totalTollCost: 0,
-            viaticos: 0
-          },
-          extraCosts: []
-        }
-      ]
+      validityDays: DEFAULT_VALIDITY_DAYS,
+      services: [createDefaultService()]
     }
   });
 
@@ -57,35 +62,7 @@ export const useQuoteForm = (editId?: number | null) => {
   });
 
   const addNewService = () => {
-    appendService({
-      id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
-      activity: 'collection',
-      frequency: {
-        type: 'one_time',
-        duration: undefined,
-        customDescription: ''
-      },  
-      location: { street: '', municipality: '', neighborhood: '', state: '' },
-      wastes: [{ name: '', type: 'Residuo de Manejo Especial (RME)', classification: 'N/A', clave: 'N/A', quantity: 1, unit: 'Kilogramo', pricePerUnit: 0 }],
-      vehicles: [],
-      crew: [],
-      supplies: [],
-      materials: [], // 👇 AGREGADO
-      equipment: [], // 👇 AGREGADO
-      logistics: {
-        origin: '',
-        primaryDestination: '',
-        secondaryDestination: '',
-        kilometers: 0,
-        fuelLiters: 0,
-        fuelPricePerLiter: 0,
-        roadType: undefined,
-        tolls: 0,
-        totalTollCost: 0,
-        viaticos: 0
-      },
-      extraCosts: []
-    } as ServiceItem);
+    appendService(createDefaultService());
     toast.success('Nueva pestaña de servicio agregada');
   };
 
@@ -96,7 +73,7 @@ export const useQuoteForm = (editId?: number | null) => {
     }
 
     const fetchDraftData = async () => {
-      const toastId = toast.loading('Cargando borrador...');
+      const toastId = toast.loading('Cargando cotización...');
       try {
         const response = await window.api.getDraftById(editId);
         if (response.success && response.data) {
@@ -105,16 +82,19 @@ export const useQuoteForm = (editId?: number | null) => {
           form.reset({
             clientName: draft.clientName,
             clientRfc: draft.clientRfc,
+            personType: draft.personType ?? 'moral',
+            commercialName: draft.commercialName ?? '',
             contactName: draft.contactName || '',
+            contactPosition: draft.contactPosition || '',
             contactPhone: draft.contactPhone || '',
             contactEmail: draft.contactEmail || '',
             validityDays: draft.validityDays,
             services: draft.services 
           } as unknown as QuoteFormValues);
           
-          toast.success('Borrador listo para editar', { id: toastId });
+          toast.success('Cotización lista para editar', { id: toastId });
         } else {
-          toast.error('No se pudo cargar el borrador', { id: toastId });
+          toast.error('No se pudo cargar la cotización', { id: toastId });
         }
       } catch (error) {
         console.error('Failed to fetch draft:', error);
@@ -128,9 +108,7 @@ export const useQuoteForm = (editId?: number | null) => {
   const submitDraft = async (data: QuoteFormValues, subtotal: number = 0, total: number = 0): Promise<boolean> => {
     try {
       const cleanedServices = data.services.map(service => {
-        const cleanRoadType = (service.logistics.roadType === '' || service.logistics.roadType === null) 
-          ? undefined 
-          : service.logistics.roadType as RoadType;
+        const cleanRoadType = service.logistics.roadType as RoadType | undefined;
 
         return {
           ...service,
@@ -143,11 +121,14 @@ export const useQuoteForm = (editId?: number | null) => {
 
       const payload: QuoteDraft = {
         id: editId || undefined,
-        status: 'draft',
+        status: 'en_proceso',
+        personType: data.personType,
+        commercialName: data.commercialName,
         createdAt: Date.now(),
         clientName: data.clientName,
         clientRfc: data.clientRfc,
         contactName: data.contactName,   
+        contactPosition: data.contactPosition,
         contactPhone: data.contactPhone,
         contactEmail: data.contactEmail,
         validityDays: data.validityDays,
@@ -161,7 +142,7 @@ export const useQuoteForm = (editId?: number | null) => {
       return response.success;
     } catch (error) {
       console.error('Failed to save draft:', error);
-      toast.error('No se pudo guardar el borrador');
+      toast.error('No se pudo guardar la cotización');
       return false;
     }
   };

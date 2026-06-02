@@ -1,10 +1,11 @@
-import { Pencil, FileText } from 'lucide-react';
+import { ArrowRight, FileText, Pencil } from 'lucide-react';
+import { QUOTE_STATUS_LABELS } from '../../../../../../shared/constants/quoteConstants';
 import { QuoteSummary } from '../../../../../../shared/types/Quote';
 
-const statusTranslations: Record<string, string> = {
-  draft: 'Borrador',
-  issued: 'Emitida',
-  cancelled: 'Cancelada'
+const nextStatusLabels: Record<string, string> = {
+  en_proceso: 'Marcar terminada',
+  terminada: 'Autorizar',
+  autorizada: 'Emitir PDF'
 };
 
 const formatDate = (timestamp: number) => {
@@ -20,9 +21,10 @@ interface DraftsTableProps {
   isPdfLoading: boolean;
   onEditClick: (id: number) => void;
   onEmitRequest: (id: number) => void;
+  onAdvanceStatus: (id: number, status: string) => void;
 }
 
-export const DraftsTable = ({ drafts, loading, searchTerm, isPdfLoading, onEditClick, onEmitRequest }: DraftsTableProps) => {
+export const DraftsTable = ({ drafts, loading, searchTerm, isPdfLoading, onEditClick, onEmitRequest, onAdvanceStatus }: DraftsTableProps) => {
   return (
     <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
@@ -40,11 +42,11 @@ export const DraftsTable = ({ drafts, loading, searchTerm, isPdfLoading, onEditC
           <tbody className="divide-y divide-gray-200">
 
             {loading && (
-              <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">Cargando borradores...</td></tr>
+              <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">Cargando cotizaciones...</td></tr>
             )}
             
             {!loading && drafts.length === 0 && !searchTerm && (
-              <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">No se encontraron borradores. ¡Crea uno nuevo!</td></tr>
+              <tr><td colSpan={6} className="px-6 py-8 text-center text-gray-500">No se encontraron cotizaciones en seguimiento. Crea una nueva para iniciar.</td></tr>
             )}
 
             {!loading && drafts.length === 0 && searchTerm && (
@@ -55,7 +57,9 @@ export const DraftsTable = ({ drafts, loading, searchTerm, isPdfLoading, onEditC
               const dateToShow = draft.createdAt ? formatDate(Number(draft.createdAt)) : 'Fecha desconocida';
               const locationToShow = draft.location || 'Sin dirección';
               const wastesToShow = draft.wastesSummary || 'No especificado';
-              const statusToShow = statusTranslations[draft.status] || draft.status || 'Borrador';
+              const statusToShow = QUOTE_STATUS_LABELS[draft.status] || draft.status || 'En proceso';
+              const canEdit = draft.status === 'en_proceso' || draft.status === 'draft';
+              const nextStatusLabel = nextStatusLabels[draft.status];
 
               return (
                 <tr key={draft.id} className="hover:bg-gray-50/50 transition-colors">
@@ -80,20 +84,21 @@ export const DraftsTable = ({ drafts, loading, searchTerm, isPdfLoading, onEditC
                     <div className="flex items-center justify-end gap-2">
                       <button 
                         onClick={() => onEditClick(Number(draft.id))} 
-                        disabled={isPdfLoading}
+                        disabled={isPdfLoading || !canEdit}
                         className="inline-flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 text-gray-600 hover:text-blue-600 transition-colors disabled:opacity-50" 
-                        title="Editar Borrador"
+                        title={canEdit ? 'Editar cotización en proceso' : 'Solo se editan cotizaciones en proceso'}
                       >
                         <Pencil className="w-4 h-4" />
                       </button>
 
                       <button 
-                        onClick={() => onEmitRequest(Number(draft.id))}
-                        disabled={isPdfLoading}
-                        className="inline-flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 text-gray-600 hover:text-red-600 transition-colors disabled:opacity-50" 
-                        title="Emitir y Generar PDF Oficial"
+                        onClick={() => draft.status === 'autorizada' ? onEmitRequest(Number(draft.id)) : onAdvanceStatus(Number(draft.id), draft.status)}
+                        disabled={isPdfLoading || !nextStatusLabel}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md hover:bg-gray-100 text-gray-600 hover:text-blue-600 transition-colors disabled:opacity-50 text-xs font-medium"
+                        title={nextStatusLabel}
                       >
-                        <FileText className="w-4 h-4" />
+                        {draft.status === 'autorizada' ? <FileText className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
+                        {nextStatusLabel}
                       </button>
                     </div>
                   </td>

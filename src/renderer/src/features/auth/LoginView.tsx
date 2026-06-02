@@ -1,9 +1,10 @@
 import logoImg from '../../assets/logo.png';
 import { useLoginForm } from './hooks/useLoginForm';
+import { User } from '../../../../shared/types/Auth';
 
 // 1. Agregamos 'onGoToRegister' a las propiedades (Props)
 interface LoginProps {
-  onLoginSuccess: () => void;
+  onLoginSuccess: (user: User) => void;
   onGoToRegister: () => void;
 }
 

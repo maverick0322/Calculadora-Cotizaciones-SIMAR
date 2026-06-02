@@ -53,6 +53,7 @@ describe('GeneratePdfPreviewUseCase', () => {
   });
 
   const validQuoteData = {
+    status: 'emitida',
     services: [{ activity: 'collection' }]
   } as any;
 

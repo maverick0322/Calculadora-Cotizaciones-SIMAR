@@ -45,9 +45,10 @@ export const PdfPreviewModal = ({
       return () => {
         if (objectUrl) URL.revokeObjectURL(objectUrl);
       };
-    } else {
-      setPdfUrl(null);
     }
+
+    setPdfUrl(null);
+    return undefined;
   }, [pdfBase64]);
 
   if (!isOpen) return null;
@@ -82,7 +83,7 @@ export const PdfPreviewModal = ({
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <Loader2 className="w-10 h-10 text-blue-600 animate-spin mb-4" />
               <p className="text-gray-700 font-medium">Generando documento oficial inviolable...</p>
-              <p className="text-sm text-gray-500 mt-2">Este proceso bloquea la edición del borrador.</p>
+              <p className="text-sm text-gray-500 mt-2">Este proceso bloquea la edición de la cotización emitida.</p>
             </div>
           ) : pdfUrl ? (
             <iframe

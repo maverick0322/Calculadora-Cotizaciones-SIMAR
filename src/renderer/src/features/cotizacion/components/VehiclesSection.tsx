@@ -81,7 +81,7 @@ export const VehiclesSection = ({ serviceIndex, catalogs }: VehiclesSectionProps
                 <option value="0">Seleccione un vehículo...</option>
                 {catalogs?.vehicles.map((v: any) => (
                   <option key={v.id} value={v.id}>
-                    {v.name} ({v.useful_tonnage} Ton | {v.drum_capacity} Tambores)
+                    {v.vehicle_key ? `${v.vehicle_key} - ` : ''}{v.name} ({v.plate} | {v.model_name || 'modelo no especificado'})
                   </option>
                 ))}
               </select>

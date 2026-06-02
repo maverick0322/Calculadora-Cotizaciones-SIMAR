@@ -14,6 +14,8 @@ describe('SqliteAuthRepository', () => {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         central_id TEXT,
         full_name TEXT,
+        employee_key TEXT,
+        initials TEXT,
         email TEXT UNIQUE,
         password_hash TEXT,
         role TEXT,
@@ -30,8 +32,8 @@ describe('SqliteAuthRepository', () => {
     db.exec('DELETE FROM users;');
     
     db.prepare(`
-      INSERT INTO users (central_id, full_name, email, password_hash, role, is_active)
-      VALUES ('C-123', 'John Doe', 'admin@simar.com', '$2a$10$hashed_pass_123', 'admin', 1)
+      INSERT INTO users (central_id, full_name, employee_key, initials, email, password_hash, role, is_active)
+      VALUES ('C-123', 'John Doe', 'ADM', 'JD', 'admin@simar.com', '$2a$10$hashed_pass_123', 'admin', 1)
     `).run();
 
     repository = new SqliteAuthRepository(db);
@@ -47,6 +49,8 @@ describe('SqliteAuthRepository', () => {
     expect(user?.full_name).toBe('John Doe');
     expect(user?.email).toBe('admin@simar.com');
     expect(user?.role).toBe('admin');
+    expect(user?.employee_key).toBe('ADM');
+    expect(user?.initials).toBe('JD');
     expect(user?.is_active).toBe(1);
     expect(user?.password_hash).toBe('$2a$10$hashed_pass_123'); 
   });
@@ -60,8 +64,8 @@ describe('SqliteAuthRepository', () => {
   // --- AC 3: INACTIVE USER ---
   it('should return the user data even if is_active is 0', () => {
     db.prepare(`
-      INSERT INTO users (central_id, full_name, email, password_hash, role, is_active)
-      VALUES ('C-999', 'Inactive User', 'inactive@simar.com', 'hash_456', 'viewer', 0)
+      INSERT INTO users (central_id, full_name, employee_key, initials, email, password_hash, role, is_active)
+      VALUES ('C-999', 'Inactive User', 'INA', 'IU', 'inactive@simar.com', 'hash_456', 'viewer', 0)
     `).run();
 
     const user = repository.getUserByEmail('inactive@simar.com');

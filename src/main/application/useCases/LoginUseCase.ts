@@ -1,6 +1,7 @@
 import { IAuthRepository } from '../../domain/repositories/IAuthRepository';
 import { User } from '../../../shared/types/Auth';
 import bcrypt from 'bcryptjs'; 
+import { logger } from '../../infrastructure/logging/SafeLogger';
 
 export class LoginUseCase {
   constructor(private readonly authRepository: IAuthRepository) {}
@@ -14,12 +15,10 @@ export class LoginUseCase {
 
     try {
       const cleanEmail = email.trim().toLowerCase();
-      console.log(`[LOGIN] Intentando ingresar con: '${cleanEmail}'`);
-
       const userRecord = this.authRepository.getUserByEmail(cleanEmail);
 
       if (!userRecord) {
-        console.warn(`[LOGIN] Usuario no encontrado en BD: '${cleanEmail}'`);
+        logger.warn('Intento de inicio de sesión con usuario inexistente');
         return { success: false, error: 'Correo o contraseña inválidos.' };
       }
 
@@ -32,21 +31,20 @@ export class LoginUseCase {
       }
 
       if (!isPasswordValid) {
-        console.warn(`[LOGIN] Contraseña incorrecta para: '${cleanEmail}'`);
+        logger.warn('Intento de inicio de sesión con contraseña inválida', { userId: userRecord.id });
         return { success: false, error: 'Correo o contraseña inválidos.' };
       }
 
       if (userRecord.is_active === 0 || userRecord.is_active === false) {
-        console.warn(`[LOGIN] Cuenta deshabilitada para: '${cleanEmail}'`);
+        logger.warn('Intento de inicio de sesión con cuenta deshabilitada', { userId: userRecord.id });
         return { success: false, error: 'Cuenta deshabilitada. Contacte al administrador.' };
       }
 
-      console.log(`[LOGIN] Acceso concedido a: '${cleanEmail}'`);
       const { password_hash, ...safeUser } = userRecord;
 
       return { success: true, data: safeUser as User };
     } catch (error) {
-      console.error('Login Error in UseCase:', error);
+      logger.error('Error inesperado al iniciar sesión', { error });
       return { success: false, error: 'Error interno de la base de datos.' };
     }
   }

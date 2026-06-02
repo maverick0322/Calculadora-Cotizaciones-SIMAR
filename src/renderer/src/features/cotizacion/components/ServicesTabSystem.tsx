@@ -1,10 +1,18 @@
 import { Trash2, Plus } from 'lucide-react';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { LocationStep } from './LocationStep';
 import { WasteStep } from './WasteStep';
 import { TripStep } from './TripStep';
 import { VehiclesAndCrewStep } from './VehiclesAndCrewStep';
 import { SuppliesStep } from './SuppliesStep';
 import { CatalogData } from '../NewQuoteView';
+import { ServiceTypeSelector } from './ServiceTypeSelector';
+import { RESIDUE_SERVICE_TYPES, SERVICE_TYPE_LABELS } from '../../../../../shared/constants/quoteConstants';
+import { QuoteFormValues } from '../../../../../shared/schemas/quoteSchema';
+import { TrainingStep } from './TrainingStep';
+import { EcologicalCleaningStep } from './EcologicalCleaningStep';
+import { ConditioningLaborSection } from './ConditioningLaborSection';
+import { ExtraCostsSection } from './ExtraCostsSection';
 
 interface ServicesTabSystemProps {
   serviceFields: Record<"id", string>[];
@@ -18,6 +26,8 @@ interface ServicesTabSystemProps {
 export const ServicesTabSystem = ({ 
   serviceFields, activeTab, setActiveTab, removeService, addNewService, catalogs 
 }: ServicesTabSystemProps) => {
+  const { control } = useFormContext<QuoteFormValues>();
+  const services = useWatch({ control, name: 'services' }) || [];
   
   return (
     <div className="mt-8">
@@ -67,11 +77,46 @@ export const ServicesTabSystem = ({
               Configuración del Servicio {index + 1}
             </h2>
             
-            <LocationStep serviceIndex={index} />
-            <WasteStep serviceIndex={index} />
-            <TripStep serviceIndex={index} catalogs={catalogs} />
-            <VehiclesAndCrewStep serviceIndex={index} catalogs={catalogs} />
-            <SuppliesStep serviceIndex={index} catalogs={catalogs} />
+            <ServiceTypeSelector serviceIndex={index} />
+
+            {RESIDUE_SERVICE_TYPES.includes(services[index]?.serviceType as any) && (
+              <>
+                <LocationStep serviceIndex={index} />
+                <WasteStep serviceIndex={index} />
+                <TripStep serviceIndex={index} catalogs={catalogs} />
+                <VehiclesAndCrewStep serviceIndex={index} catalogs={catalogs} />
+                <SuppliesStep serviceIndex={index} catalogs={catalogs} />
+              </>
+            )}
+
+            {services[index]?.serviceType === 'material_sale' && (
+              <SuppliesStep serviceIndex={index} catalogs={catalogs} />
+            )}
+
+            {services[index]?.serviceType === 'conditioning' && (
+              <>
+                <SuppliesStep serviceIndex={index} catalogs={catalogs} />
+                <ConditioningLaborSection serviceIndex={index} />
+              </>
+            )}
+
+            {services[index]?.serviceType === 'training' && (
+              <TrainingStep serviceIndex={index} />
+            )}
+
+            {services[index]?.serviceType === 'ecological_cleaning' && (
+              <EcologicalCleaningStep serviceIndex={index} />
+            )}
+
+            {services[index]?.serviceType === 'environmental_consulting' && (
+              <div className="space-y-8">
+                <div className="bg-slate-50 border border-slate-200 rounded-lg p-5">
+                  <h3 className="text-lg font-medium text-gray-900">{SERVICE_TYPE_LABELS.environmental_consulting}</h3>
+                  <p className="text-sm text-gray-500">Captura el alcance económico como conceptos específicos.</p>
+                </div>
+                <ExtraCostsSection serviceIndex={index} />
+              </div>
+            )}
           </div>
         ))}
       </div>

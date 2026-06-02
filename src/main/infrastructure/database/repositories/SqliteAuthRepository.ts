@@ -1,5 +1,4 @@
 import { Database } from 'better-sqlite3';
-import { User } from '../../../../shared/types/Auth';
 import { IAuthRepository } from '../../../domain/repositories/IAuthRepository';
 
 export class SqliteAuthRepository implements IAuthRepository {
@@ -7,7 +6,7 @@ export class SqliteAuthRepository implements IAuthRepository {
 
   getUserByEmail(email: string): any | null {
     const stmt = this.db.prepare(`
-      SELECT id, central_id, full_name, email, role, is_active, password_hash
+      SELECT id, central_id, full_name, email, role, is_active, password_hash, employee_key, initials
       FROM users
       WHERE email = ?
     `);

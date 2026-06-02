@@ -1,45 +1,91 @@
 import bcrypt from 'bcryptjs';
-import { SqliteWorkerRepository } from '../../infrastructure/database/repositories/SqliteWorkerRepository';
+import { IWorkerRepository } from '../../domain/repositories/IWorkerRepository';
 import { WorkerData } from '../../../shared/types/Worker';
+import { logger } from '../../infrastructure/logging/SafeLogger';
+
+const ADMIN_REGISTRATION_KEY = 'SIMAR-ADMIN-2026';
+const PASSWORD_SALT_ROUNDS = 10;
+const MIN_PASSWORD_LENGTH = 8;
+const RFC_PATTERN = /^[A-Z&Ñ]{3,4}\d{6}[A-Z\d]{3}$/i;
 
 export class RegisterWorkerUseCase {
-  constructor(private workerRepo: SqliteWorkerRepository) {}
+  constructor(private readonly workerRepo: IWorkerRepository) {}
 
   async execute(worker: WorkerData) {
     try {
-      if (!worker.password) {
-        throw new Error('La contraseña es obligatoria para el registro.');
-      }
+      const normalizedWorker = this.normalizeAndValidate(worker);
+      const salt = bcrypt.genSaltSync(PASSWORD_SALT_ROUNDS);
+      const hashedPassword = bcrypt.hashSync(normalizedWorker.password!, salt);
 
-      // 1. Encriptación segura de la contraseña
-      const salt = bcrypt.genSaltSync(10);
-      const hashedPassword = bcrypt.hashSync(worker.password, salt);
-
-      const cleanEmail = worker.email.trim().toLowerCase();
-      const cleanEmployeeId = worker.employeeId.trim();
-      const cleanFullName = worker.fullName.trim();
-
-      // 3. Guardado en base de datos
       const result = this.workerRepo.save({
-        ...worker,
-        email: cleanEmail,
-        employeeId: cleanEmployeeId,
-        fullName: cleanFullName,
+        ...normalizedWorker,
         password: hashedPassword
       });
 
       return { success: true, id: result.lastInsertRowid };
-    } catch (error: any) {
-      console.error('Error en RegisterWorkerUseCase:', error.message);
-
-      if (error.message.includes('UNIQUE constraint failed')) {
+    } catch (error) {
+      if (this.isUniqueConstraintError(error)) {
+        logger.warn('Registro de empleado rechazado por duplicidad lógica');
         return {
           success: false,
-          error: 'El ID Central o el Correo ya están registrados en el sistema.'
+          error: 'La clave del empleado o el correo ya están registrados.'
         };
       }
 
-      return { success: false, error: error.message };
+      if (error instanceof Error) {
+        logger.warn('Registro de empleado rechazado por validación');
+        return { success: false, error: error.message };
+      }
+
+      logger.error('Error inesperado al registrar empleado');
+      return { success: false, error: 'Error inesperado al registrar el empleado.' };
     }
+  }
+
+  private normalizeAndValidate(worker: WorkerData): WorkerData {
+    if (worker.superUserKey !== ADMIN_REGISTRATION_KEY) {
+      throw new Error('La clave de superusuario no es válida.');
+    }
+
+    if (!worker.password || worker.password.length < MIN_PASSWORD_LENGTH) {
+      throw new Error('La contraseña temporal debe tener al menos 8 caracteres.');
+    }
+
+    const cleanWorker: WorkerData = {
+      ...worker,
+      rfc: worker.rfc.trim().toUpperCase(),
+      firstName: worker.firstName.trim(),
+      lastName: worker.lastName.trim(),
+      maternalLastName: worker.maternalLastName?.trim() ?? '',
+      employeeId: worker.employeeId.trim(),
+      employeeKey: worker.employeeKey.trim().toUpperCase(),
+      initials: worker.initials.trim().toUpperCase(),
+      address: worker.address?.trim() ?? '',
+      email: worker.email.trim().toLowerCase(),
+      role: worker.role ?? 'sales',
+      isActive: worker.isActive !== false
+    };
+
+    cleanWorker.fullName = [cleanWorker.firstName, cleanWorker.lastName, cleanWorker.maternalLastName]
+      .filter(Boolean)
+      .join(' ');
+
+    if (!RFC_PATTERN.test(cleanWorker.rfc)) {
+      throw new Error('El RFC del empleado no tiene un formato válido.');
+    }
+
+    if (!cleanWorker.firstName || !cleanWorker.lastName) {
+      throw new Error('El nombre y apellido paterno del empleado son obligatorios.');
+    }
+
+    if (!cleanWorker.employeeId || !cleanWorker.employeeKey || !cleanWorker.initials) {
+      throw new Error('La clave, ID e iniciales del empleado son obligatorias.');
+    }
+
+    return cleanWorker;
+  }
+
+  private isUniqueConstraintError(error: unknown): boolean {
+    return error instanceof Error && error.message.includes('UNIQUE constraint failed');
   }
 }

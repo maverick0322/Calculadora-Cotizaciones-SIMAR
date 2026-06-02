@@ -15,8 +15,8 @@ import { SummaryStep } from './components/SummaryStep';
 
 export interface CatalogData {
   warehouses: { id: number; name: string; address: string; }[];
-  vehicles: { id: number; plate: string; name: string; vehicle_type: string; useful_tonnage: number; volume_m3: number; drum_capacity: number; fuel_efficiency_km_l: number; price_per_day: number; price_per_ton: number; price_per_m3: number; }[];
-  supplies: { id: number; name: string; category: 'supply' | 'material' | 'equipment'; unit: string; suggested_price: number; }[];
+  vehicles: { id: number; vehicle_key?: string; plate: string; name: string; model_name?: string; vehicle_type?: string; useful_tonnage: number; volume_m3: number; drum_capacity: number; fuel_efficiency_km_l: number; price_per_day: number; price_per_ton: number; price_per_m3: number; }[];
+  supplies: { id: number; name: string; category: 'supply' | 'tool' | 'material' | 'equipment' | 'specialized_epp'; unit: string; suggested_price: number; }[];
 }
 
 interface INewQuoteViewProps {
@@ -45,16 +45,16 @@ export const NewQuoteView = ({ editId, onSaveSuccess }: INewQuoteViewProps) => {
     fetchCatalogs();
   }, []);
 
-  const handleGoToReview = (data: QuoteFormValues) => setIsReviewMode(true);
+  const handleGoToReview = () => setIsReviewMode(true);
 
   const handleConfirmSave = async () => {
     const data = form.getValues(); 
-    const toastId = toast.loading(editId ? 'Actualizando borrador...' : 'Guardando borrador...');
+    const toastId = toast.loading(editId ? 'Actualizando cotización...' : 'Guardando cotización...');
 
     try {
       const isSuccess = await submitDraft(data, subtotal, total);
       if (!isSuccess) {
-        toast.error('Error al guardar el borrador. Revisa tu conexión.', { id: toastId });
+        toast.error('Error al guardar la cotización. Revisa tu conexión.', { id: toastId });
         return;
       }
 
@@ -64,7 +64,7 @@ export const NewQuoteView = ({ editId, onSaveSuccess }: INewQuoteViewProps) => {
         });
       }
 
-      toast.success(editId ? '¡Borrador actualizado!' : '¡Borrador guardado exitosamente!', { id: toastId });
+      toast.success(editId ? '¡Cotización actualizada!' : '¡Cotización guardada exitosamente!', { id: toastId });
       
       if (!editId) { form.reset(); setIsReviewMode(false); }
       if (onSaveSuccess) onSaveSuccess();
@@ -85,7 +85,7 @@ export const NewQuoteView = ({ editId, onSaveSuccess }: INewQuoteViewProps) => {
       <h1 className="text-2xl font-bold mb-6 text-gray-800 border-b pb-4 flex items-center gap-2">
         {isReviewMode && <CheckCircle className="text-green-600" />}
         {editId 
-          ? (isReviewMode ? `Revisando Borrador #${editId}` : `Editando Borrador #${editId}`)
+          ? (isReviewMode ? `Revisando Cotización #${editId}` : `Editando Cotización #${editId}`)
           : (isReviewMode ? 'Confirmar Nueva Cotización' : 'Nueva Cotización')}
       </h1>
 

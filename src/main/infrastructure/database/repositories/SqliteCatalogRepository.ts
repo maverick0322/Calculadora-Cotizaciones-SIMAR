@@ -1,13 +1,13 @@
 import { Database } from 'better-sqlite3';
+import { CatalogSupplyCategory } from '../../../../shared/types/Quote';
 
 export class SqliteCatalogRepository {
   constructor(private readonly db: Database) {}
 
   getAllVehicles() {
-    // 👇 Limpio y directo con las nuevas columnas
     const stmt = this.db.prepare(`
       SELECT 
-        id, plate, name, vehicle_type, 
+        id, vehicle_key, plate, name, model_name, vehicle_type, 
         useful_tonnage, volume_m3, drum_capacity, fuel_efficiency_km_l, 
         price_per_day, price_per_ton, price_per_m3 
       FROM catalog_vehicles 
@@ -19,16 +19,18 @@ export class SqliteCatalogRepository {
   addVehicle(payload: any) {
     const stmt = this.db.prepare(`
       INSERT INTO catalog_vehicles 
-      (plate, name, vehicle_type, useful_tonnage, volume_m3, drum_capacity, fuel_efficiency_km_l, price_per_day, price_per_ton, price_per_m3) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (vehicle_key, plate, name, model_name, vehicle_type, useful_tonnage, volume_m3, drum_capacity, fuel_efficiency_km_l, price_per_day, price_per_ton, price_per_m3) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     
     const finalPlate = payload.plate || `TMP-${Date.now().toString().slice(-4)}`;
 
     return stmt.run(
+      payload.vehicleKey,
       finalPlate, 
       payload.name, 
-      payload.vehicleType || 'Mediano', 
+      payload.modelName || payload.name,
+      payload.vehicleType || null, 
       payload.usefulTonnage || 0, 
       payload.volumeM3 || 0, 
       payload.drumCapacity || 0, 
@@ -42,12 +44,12 @@ export class SqliteCatalogRepository {
   editVehicle(payload: any) {
     const stmt = this.db.prepare(`
       UPDATE catalog_vehicles SET
-        plate = ?, name = ?, vehicle_type = ?, useful_tonnage = ?, volume_m3 = ?, 
+        vehicle_key = ?, plate = ?, name = ?, model_name = ?, vehicle_type = ?, useful_tonnage = ?, volume_m3 = ?, 
         drum_capacity = ?, fuel_efficiency_km_l = ?, price_per_day = ?, price_per_ton = ?, price_per_m3 = ?
       WHERE id = ?
     `);
     return stmt.run(
-      payload.plate, payload.name, payload.vehicleType, payload.usefulTonnage, payload.volumeM3,
+      payload.vehicleKey, payload.plate, payload.name, payload.modelName || payload.name, payload.vehicleType || null, payload.usefulTonnage, payload.volumeM3,
       payload.drumCapacity, payload.fuelEfficiencyKmL, payload.pricePerDay, payload.pricePerTon, payload.pricePerM3,
       payload.id
     );
@@ -68,14 +70,14 @@ export class SqliteCatalogRepository {
       INSERT INTO catalog_supplies (name, category, unit, suggested_price) 
       VALUES (?, ?, ?, ?)
     `);
-    return stmt.run(payload.name, payload.category || 'supply', payload.unit, payload.suggestedPrice);
+    return stmt.run(payload.name, this.normalizeSupplyCategory(payload.category), payload.unit, payload.suggestedPrice);
   }
 
   editSupply(payload: any) {
     const stmt = this.db.prepare(`
       UPDATE catalog_supplies SET name = ?, category = ?, unit = ?, suggested_price = ? WHERE id = ?
     `);
-    return stmt.run(payload.name, payload.category || 'supply', payload.unit, payload.suggestedPrice, payload.id);
+    return stmt.run(payload.name, this.normalizeSupplyCategory(payload.category), payload.unit, payload.suggestedPrice, payload.id);
   }
 
   deleteSupply(id: number) {
@@ -116,5 +118,13 @@ export class SqliteCatalogRepository {
   updateSupplyPrice(id: number, newPrice: number) {
     const stmt = this.db.prepare('UPDATE catalog_supplies SET suggested_price = ? WHERE id = ?');
     return stmt.run(newPrice, id);
+  }
+
+  private normalizeSupplyCategory(category: string | undefined): CatalogSupplyCategory {
+    if (category === 'tool') return 'tool';
+    if (category === 'material') return 'material';
+    if (category === 'equipment') return 'equipment';
+    if (category === 'specialized_epp') return 'specialized_epp';
+    return 'supply';
   }
 }

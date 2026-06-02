@@ -1,174 +1,266 @@
-import { QuoteDraft } from '../../../shared/types/Quote';
+import { QuoteDraft, ServiceItem, CatalogQuoteItem } from '../../../shared/types/Quote';
+import { IVA_RATE, QUOTE_TYPE_LABELS, SERVICE_TYPE_LABELS } from '../../../shared/constants/quoteConstants';
 
-export const buildQuoteHtml = (quoteData: QuoteDraft, logoBase64: string): string => {
-  const createdAt = new Date(quoteData.createdAt);
-  const dateStr = createdAt.toLocaleDateString('es-MX', { 
-    year: 'numeric', month: 'long', day: 'numeric' 
-  });
-  
-  const logoHtml = logoBase64 
-    ? `<img src="${logoBase64}" alt="Logo SIMAR" style="max-height: 70px;">`
-    : `<h1 style="color: #1e3a5f; margin: 0;">SIMAR</h1>`;
+const formatCurrency = (amount: number) =>
+  `$${amount.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-  const activityMap: Record<string, string> = {
-    collection: 'Recolección',
-    transport: 'Transporte',
-    transfer: 'Transferencia',
-    final_disposal: 'Disposición Final'
-  };
+const escapeHtml = (value: unknown): string =>
+  String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 
-  const frequencyMap: Record<string, string> = {
-    one_time: 'Evento Único', daily: 'Diaria', weekly: 'Semanal', biweekly: 'Quincenal', monthly: 'Mensual'
-  };
-  const freqString = quoteData.frequency.type === 'custom' 
-    ? quoteData.frequency.customDescription 
-    : frequencyMap[quoteData.frequency.type] || quoteData.frequency.type;
+const toRoman = (value: number): string => {
+  const romanMap: Array<[number, string]> = [
+    [10, 'X'],
+    [9, 'IX'],
+    [5, 'V'],
+    [4, 'IV'],
+    [1, 'I']
+  ];
+  let remaining = value;
+  let result = '';
 
-  const servicesHtmlBlocks = quoteData.services.map((service, index) => {
-    const loc = service.location;
-    const fullLocation = `${loc.street}, ${loc.neighborhood}, ${loc.municipality}, ${loc.state}`;
-    const activityName = activityMap[service.activity] || service.activity;
+  for (const [arabic, roman] of romanMap) {
+    while (remaining >= arabic) {
+      result += roman;
+      remaining -= arabic;
+    }
+  }
 
-    const wasteRows = service.wastes.length > 0 ? service.wastes.map((waste, wIdx) => `
-      <tr>
-          <td style="text-align: center;">${wIdx + 1}</td>
-          <td>${waste.name} (Clasificación: ${waste.type})</td>
-          <td style="text-align: center;">${waste.quantity}</td>
-          <td style="text-align: center;">${waste.unit}</td>
-      </tr>
-    `).join('') : `<tr><td colspan="4" style="text-align: center; color: #666;">Sin residuos listados para recolección</td></tr>`;
+  return result;
+};
+
+const buildLocation = (service: ServiceItem): string => {
+  const location = service.location;
+  const parts = [location?.street, location?.neighborhood, location?.municipality, location?.state].filter(Boolean);
+  return parts.length > 0 ? parts.join(', ') : 'Ubicación no requerida';
+};
+
+const buildResidueRows = (service: ServiceItem): string => {
+  if (service.wastes.length === 0) {
+    return `<tr><td colspan="5" class="empty">Sin residuos listados para recolección</td></tr>`;
+  }
+
+  return service.wastes.map((waste, index) => `
+    <tr>
+      <td class="center">${index + 1}</td>
+      <td>${escapeHtml(waste.clave || 'N/D')}</td>
+      <td>${escapeHtml(waste.name)}${waste.specificDescription ? `<br><span class="muted">${escapeHtml(waste.specificDescription)}</span>` : ''}</td>
+      <td>${escapeHtml(waste.classification || waste.type || 'N/D')}</td>
+      <td class="center">${escapeHtml(waste.quantity)} ${escapeHtml(waste.unit)}</td>
+    </tr>
+  `).join('');
+};
+
+const buildRpbiRows = (service: ServiceItem): string => {
+  if (service.wastes.length === 0) {
+    return `<tr><td colspan="4" class="empty">Sin residuos RPBI listados</td></tr>`;
+  }
+
+  return service.wastes.map((waste, index) => `
+    <tr>
+      <td class="center">${index + 1}</td>
+      <td>${escapeHtml(waste.name)}</td>
+      <td class="center">${escapeHtml(waste.quantity)}</td>
+      <td class="center">${escapeHtml(waste.unit)}</td>
+    </tr>
+  `).join('');
+};
+
+const getProductItems = (service: ServiceItem): CatalogQuoteItem[] => [
+  ...service.supplies,
+  ...service.tools,
+  ...service.materials,
+  ...service.equipment,
+  ...service.specializedEpp
+];
+
+const buildProductRows = (service: ServiceItem): string => {
+  const items = getProductItems(service);
+  if (items.length === 0) return '';
+
+  return `
+    <h4 class="sub-title">Materiales, herramientas, equipo e insumos</h4>
+    <table>
+      <thead>
+        <tr><th>No.</th><th>Producto</th><th>Cantidad</th><th>Total</th></tr>
+      </thead>
+      <tbody>
+        ${items.map((item, index) => `
+          <tr>
+            <td class="center">${index + 1}</td>
+            <td>${escapeHtml(item.name)}</td>
+            <td class="center">${escapeHtml(item.quantity)}</td>
+            <td class="right">${formatCurrency(item.quantity * (item.unitPrice || 0))}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+};
+
+const buildServiceTable = (service: ServiceItem): string => {
+  if (service.serviceType === 'rpbi') {
+    return `
+      <table>
+        <thead>
+          <tr><th>No.</th><th>Residuo RPBI</th><th>Cantidad</th><th>Unidad</th></tr>
+        </thead>
+        <tbody>${buildRpbiRows(service)}</tbody>
+      </table>
+    `;
+  }
+
+  if (service.serviceType === 'rme' || service.serviceType === 'hazardous_waste') {
+    return `
+      <table>
+        <thead>
+          <tr><th>No.</th><th>Clave</th><th>Descripción del residuo</th><th>Clasificación</th><th>Cantidad</th></tr>
+        </thead>
+        <tbody>${buildResidueRows(service)}</tbody>
+      </table>
+    `;
+  }
+
+  return '';
+};
+
+const buildServicesHtml = (quoteData: QuoteDraft): string =>
+  quoteData.services.map((service, index) => {
+    const serviceName = SERVICE_TYPE_LABELS[service.serviceType] || service.serviceType;
+    const serviceTable = buildServiceTable(service);
+    const productTable = buildProductRows(service);
 
     return `
       <div class="service-block">
-        <h3 class="service-title">Sucursal / Servicio ${index + 1}: ${fullLocation}</h3>
-        <p style="margin: 5px 0 10px 0; font-size: 0.9em; color: #444;">
-          <strong>Actividad:</strong> ${activityName} | 
-          <strong>Logística:</strong> Origen: ${service.logistics.origin || 'N/A'} ➔ Destino: ${service.logistics.primaryDestination || 'N/A'} (${service.logistics.kilometers} km)
-        </p>
-        
-        <table class="waste-table">
-            <thead>
-                <tr><th style="width: 5%;">No.</th><th>DESCRIPCIÓN DE RESIDUO</th><th style="width: 15%;">CANTIDAD</th><th style="width: 15%;">UNIDAD</th></tr>
-            </thead>
-            <tbody>
-                ${wasteRows}
-            </tbody>
-        </table>
+        <h3 class="service-title">Servicio ${index + 1}: ${escapeHtml(serviceName)}</h3>
+        <p class="service-meta"><strong>Ubicación:</strong> ${escapeHtml(buildLocation(service))}</p>
+        ${service.logistics?.origin || service.logistics?.primaryDestination ? `
+          <p class="service-meta"><strong>Logística:</strong> Origen: ${escapeHtml(service.logistics.origin || 'N/A')} - Destino: ${escapeHtml(service.logistics.primaryDestination || 'N/A')}</p>
+        ` : ''}
+        ${serviceTable}
+        ${productTable}
       </div>
     `;
   }).join('');
 
-  // Cálculos financieros globales
-  const subtotal = quoteData.subtotal || 0;
-  const iva = subtotal * 0.16;
-  const total = quoteData.total || 0;
+const buildConditionsHtml = (quoteData: QuoteDraft): string => {
+  const conditions = quoteData.conditions ?? [];
+  if (conditions.length === 0) return '';
 
-  const formatCurrency = (amount: number) => 
-    `$${amount.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return `
+    <h2>II. Anexos de condiciones</h2>
+    <ol class="roman-list">
+      ${conditions.map((condition, index) => `
+        <li>
+          <span class="roman">${toRoman(index + 1)}.</span>
+          <span><strong>${escapeHtml(condition.title)}:</strong> ${escapeHtml(condition.description)}</span>
+        </li>
+      `).join('')}
+    </ol>
+  `;
+};
+
+export const buildQuoteHtml = (quoteData: QuoteDraft, logoBase64: string): string => {
+  const issuedOrCreatedAt = new Date(quoteData.issuedAt ?? quoteData.createdAt);
+  const dateStr = issuedOrCreatedAt.toLocaleDateString('es-MX', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+  const quoteTypeLabel = quoteData.quoteTypeCode ? QUOTE_TYPE_LABELS[quoteData.quoteTypeCode] : 'Propuesta de servicios';
+  const logoHtml = logoBase64
+    ? `<img src="${logoBase64}" alt="Logo SIMAR" style="max-height: 70px;">`
+    : `<h1 style="color: #1e3a5f; margin: 0;">SIMAR</h1>`;
+
+  const subtotal = quoteData.subtotal || 0;
+  const iva = subtotal * IVA_RATE;
+  const total = quoteData.total || 0;
 
   return `
     <!DOCTYPE html>
     <html lang="es">
     <head>
-        <meta charset="UTF-8">
-        <style>
-            body { font-family: Arial, sans-serif; margin: 0 auto; max-width: 1000px; line-height: 1.5; color: #1a1a1a; padding: 30px 40px; background: #fff; }
-            .header { margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-start; }
-            .address { font-size: 0.95em; margin-top: 15px; }
-            .ref { font-weight: bold; margin: 15px 0 5px; color: #1e3a5f; }
-            .date-line { color: #2c3e66; margin-bottom: 20px; font-size: 0.9em; }
-            h2 { border-bottom: 2px solid #ccc; padding-bottom: 5px; color: #1e3a5f; font-size: 1.1em; margin-top: 25px; }
-            
-            /* Estilos de la iteración de servicios */
-            .service-block { margin-bottom: 25px; border-left: 3px solid #1e3a5f; padding-left: 15px; }
-            .service-title { color: #1e3a5f; font-size: 1.05em; margin: 0; padding-bottom: 3px; border-bottom: 1px dotted #e0e0e0; }
-            
-            table { width: 100%; border-collapse: collapse; font-size: 0.85em; margin-bottom: 10px;}
-            th, td { border: 1px solid #aaa; padding: 6px 10px; text-align: left; }
-            th { background-color: #eef4fc; text-align: center; }
-            
-            /* Totales */
-            .totals-container { width: 100%; display: flex; justify-content: flex-end; margin-top: 20px; }
-            .totals-table { width: 40%; border: none; }
-            .totals-table td { border: none; padding: 4px 10px; text-align: right; }
-            .totals-table .label { font-weight: bold; color: #333; }
-            .totals-table .total-row td { border-top: 1px solid #aaa; color: #1e3a5f; font-size: 1.2em; font-weight: bold; padding-top: 8px; }
-            
-            .list { margin: 15px 0; padding-left: 25px; font-size: 0.85em; }
-            .list li { margin-bottom: 8px; text-align: justify; }
-            .signature { margin-top: 40px; font-weight: bold; color: #1e3a5f; }
-            footer { margin-top: 40px; font-size: 0.8em; text-align: center; color: #666; border-top: 1px solid #ddd; padding-top: 15px; }
-        </style>
+      <meta charset="UTF-8">
+      <style>
+        body { font-family: Arial, sans-serif; margin: 0 auto; max-width: 1000px; line-height: 1.5; color: #1a1a1a; padding: 30px 40px; background: #fff; }
+        .header { margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-start; gap: 30px; }
+        .address { font-size: 0.95em; margin-top: 15px; }
+        .meta-box { min-width: 240px; text-align: right; font-size: 0.86em; color: #333; }
+        .meta-box div { margin-bottom: 5px; }
+        .ref { font-weight: bold; color: #1e3a5f; }
+        h2 { border-bottom: 2px solid #ccc; padding-bottom: 5px; color: #1e3a5f; font-size: 1.1em; margin-top: 25px; }
+        .service-block { margin-bottom: 25px; border-left: 3px solid #1e3a5f; padding-left: 15px; break-inside: avoid; }
+        .service-title { color: #1e3a5f; font-size: 1.05em; margin: 0; padding-bottom: 3px; border-bottom: 1px dotted #e0e0e0; }
+        .service-meta { margin: 5px 0 10px 0; font-size: 0.9em; color: #444; }
+        .sub-title { font-size: 0.9em; margin: 14px 0 6px; color: #1e3a5f; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.84em; margin-bottom: 10px; }
+        th, td { border: 1px solid #aaa; padding: 6px 10px; text-align: left; vertical-align: top; }
+        th { background-color: #eef4fc; text-align: center; }
+        .center { text-align: center; }
+        .right { text-align: right; }
+        .empty { text-align: center; color: #666; }
+        .muted { color: #666; font-size: 0.9em; }
+        .totals-container { width: 100%; display: flex; justify-content: flex-end; margin-top: 20px; }
+        .totals-table { width: 40%; border: none; }
+        .totals-table td { border: none; padding: 4px 10px; text-align: right; }
+        .totals-table .label { font-weight: bold; color: #333; }
+        .totals-table .total-row td { border-top: 1px solid #aaa; color: #1e3a5f; font-size: 1.2em; font-weight: bold; padding-top: 8px; }
+        .roman-list { margin: 15px 0; padding: 0; font-size: 0.85em; list-style: none; }
+        .roman-list li { display: grid; grid-template-columns: 38px 1fr; gap: 8px; margin-bottom: 8px; text-align: justify; }
+        .roman { font-weight: bold; color: #1e3a5f; }
+        .signature { margin-top: 40px; font-weight: bold; color: #1e3a5f; }
+        footer { margin-top: 40px; font-size: 0.8em; text-align: center; color: #666; border-top: 1px solid #ddd; padding-top: 15px; }
+      </style>
     </head>
     <body>
       <div class="header">
-          <div>
-              ${logoHtml}
-              <div class="address">
-                  <strong>Cliente:</strong> ${quoteData.clientName}<br>
-                  <strong>RFC:</strong> ${quoteData.clientRfc || 'N/D'}
-              </div>
+        <div>
+          ${logoHtml}
+          <div class="address">
+            <strong>Cliente:</strong> ${escapeHtml(quoteData.clientName)}<br>
+            <strong>RFC:</strong> ${escapeHtml(quoteData.clientRfc || 'N/D')}
+            ${quoteData.contactName ? `<br><strong>Atención a:</strong> ${escapeHtml(quoteData.contactName)}` : ''}
           </div>
-          <div style="text-align: right;">
-              <div class="ref">REF: ${quoteData.folio || `Borrador #${quoteData.id}`}</div>
-              <div class="date-line">${dateStr}</div>
-              <div style="font-size: 0.85em; color: #555;">
-                <strong>Vigencia:</strong> ${quoteData.validityDays} días<br>
-                <strong>Frecuencia Global:</strong> ${freqString}
-              </div>
-          </div>
+        </div>
+        <div class="meta-box">
+          <div><span class="ref">Folio:</span> ${escapeHtml(quoteData.folio || `Cotización #${quoteData.id}`)}</div>
+          <div><strong>Fecha:</strong> ${escapeHtml(dateStr)}</div>
+          <div><strong>Quién elaboró:</strong> ${escapeHtml(quoteData.preparedByInitials || 'N/D')}</div>
+          <div><strong>Tipo:</strong> ${escapeHtml(quoteTypeLabel)}</div>
+          <div><strong>Vigencia:</strong> ${escapeHtml(quoteData.validityDays)} días</div>
+        </div>
       </div>
 
-      <p style="font-size: 0.9em; text-align: justify;">Por medio del presente envío propuesta económica referente a la prestación de servicios para el manejo integral de residuos. Dicho servicio se realizará en los sitios autorizados por La Secretaría de Medio Ambiente del Estado de Veracruz, desglosados de la siguiente manera:</p>
+      <p style="font-size: 0.9em; text-align: justify;">
+        Por medio del presente envío propuesta económica referente a la prestación de servicios solicitados,
+        desglosados de la siguiente manera:
+      </p>
 
-      <h2>I. Alcance y Precios por Sucursal</h2>
-      
-      ${servicesHtmlBlocks}
-      
+      <h2>I. Alcance y precios</h2>
+      ${buildServicesHtml(quoteData)}
+
       <div class="totals-container">
         <table class="totals-table">
-            <tr>
-                <td class="label">Subtotal:</td>
-                <td>${formatCurrency(subtotal)}</td>
-            </tr>
-            <tr>
-                <td class="label">IVA (16%):</td>
-                <td>${formatCurrency(iva)}</td>
-            </tr>
-            <tr class="total-row">
-                <td class="label">TOTAL:</td>
-                <td>${formatCurrency(total)}</td>
-            </tr>
+          <tr><td class="label">Subtotal:</td><td>${formatCurrency(subtotal)}</td></tr>
+          <tr><td class="label">IVA (16%):</td><td>${formatCurrency(iva)}</td></tr>
+          <tr class="total-row"><td class="label">TOTAL:</td><td>${formatCurrency(total)}</td></tr>
         </table>
       </div>
 
-      <h2>II. Condiciones Comerciales</h2>
-      <ol class="list">
-          <li><strong>Impuestos:</strong> Los precios indicados son más 16% de IVA.</li>
-          <li><strong>Términos de pago:</strong> Pago por adelantado del concepto de transporte al 100% para la programación del servicio.</li>
-          <li><strong>Vigencia:</strong> La presente cotización tiene una vigencia de ${quoteData.validityDays} días y no cuenta con financiamiento.</li>
-          <li><strong>Aceptación del servicio:</strong> Se requiere sea confirmada la aceptación de la presente cotización, con firma de recibido.</li>
-          <li><strong>Programación del servicio:</strong> Solicitar por escrito al área comercial en un lapso de 8 días hábiles.</li>
-          <li><strong>Suministro de insumos:</strong> Tambos metálicos (200L) disponibles por <strong>$750.00 c/u</strong>.</li>
-          <li><strong>Prestación del servicio:</strong> Residuos peligrosos deben estar envasados y etiquetados.</li>
-      </ol>
-
-      <h2>III. Garantías de Servicio</h2>
-      <p style="font-size: 0.9em;"><strong>SISTEMAS EN MANEJO Y ADMINISTRACION DE RESIDUOS, S.A. DE C.V.</strong> se compromete a:</p>
-      <ol class="list">
-          <li>Puntualidad en la Recolección de los Residuos Peligrosos.</li>
-          <li>Uso de Equipo de Seguridad acorde a la naturaleza de los residuos.</li>
-          <li>Transporte en vehículos con autorización de SEDEMA, SCT y SEMARNAT.</li>
-      </ol>
+      ${buildConditionsHtml(quoteData)}
 
       <div class="signature">
-          <p>ATENTAMENTE</p>
-          <p style="margin-top: 10px;">Departamento Comercial</p>
+        <p>ATENTAMENTE</p>
+        <p style="margin-top: 10px;">Departamento Comercial</p>
       </div>
 
       <footer>
-          Todos los precios están expresados en moneda nacional más IVA.<br>
-          Vigencia: ${quoteData.validityDays} días naturales a partir del ${dateStr}.
+        Todos los precios están expresados en moneda nacional más IVA.<br>
+        Vigencia: ${escapeHtml(quoteData.validityDays)} días naturales a partir del ${escapeHtml(dateStr)}.
       </footer>
     </body>
     </html>

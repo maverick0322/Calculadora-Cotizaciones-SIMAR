@@ -1,44 +1,58 @@
 import { IQuoteRepository } from '../../domain/repositories/IQuoteRepository';
-import { QuoteDraft } from '../../../shared/types/Quote';
+import { RESIDUE_SERVICE_TYPES } from '../../../shared/constants/quoteConstants';
+import { QuoteDraft, ServiceType } from '../../../shared/types/Quote';
+import { AppError } from '../errors/AppError';
+
+interface AuditUseCase {
+  execute(payload: { action: string; entity: string; entityId: string; details: string }): unknown;
+}
+
 export class SaveDraftUseCase {
   constructor(
     private readonly repository: IQuoteRepository,
-    private readonly auditUseCase: any 
+    private readonly auditUseCase: AuditUseCase
   ) {}
 
   execute(draftData: QuoteDraft): { success: boolean; id?: number | bigint; message?: string; error?: string } {
-    try {
-      if (!draftData.services || draftData.services.length === 0) {
-        throw new Error('La cotización debe tener al menos un servicio.');
-      }
+    this.validateQuote(draftData);
 
-      const hasNoWastes = draftData.services.some(service => !service.wastes || service.wastes.length === 0);
-      if (hasNoWastes) {
-        throw new Error('Debe incluir al menos un residuo para guardar la cotización.');
-      }
+    const isUpdate = Boolean(draftData.id);
+    const quoteId = this.repository.saveDraft({ ...draftData, status: 'en_proceso' });
 
-      const hasInvalidWaste = draftData.services.some(service => 
-        service.wastes.some(w => w.quantity <= 0)
-      );
-      if (hasInvalidWaste) {
-        throw new Error('La cantidad de los residuos debe ser mayor a 0.');
-      }
+    this.auditUseCase.execute({
+      action: isUpdate ? 'UPDATE_QUOTE_IN_PROGRESS' : 'CREATE_QUOTE_IN_PROGRESS',
+      entity: 'QUOTE',
+      entityId: String(quoteId),
+      details: isUpdate ? 'Cotización en proceso actualizada' : 'Cotización en proceso creada'
+    });
 
-      const isUpdate = !!draftData.id;
-      
-      const newId = this.repository.saveDraft(draftData);
+    return { success: true, id: quoteId, message: 'Cotización en proceso guardada correctamente' };
+  }
 
-      this.auditUseCase.execute({
-        action: isUpdate ? 'UPDATE_DRAFT' : 'CREATE_DRAFT',
-        entity: 'QUOTE',
-        entityId: String(newId),
-        details: isUpdate ? 'Borrador actualizado' : 'Borrador creado'
+  private validateQuote(draftData: QuoteDraft): void {
+    if (!draftData.services || draftData.services.length === 0) {
+      throw new AppError('VALIDATION_ERROR', 'La cotización debe tener al menos un servicio.');
+    }
+
+    const serviceWithoutRequiredWaste = draftData.services.find((service) => {
+      const serviceType = service.serviceType as ServiceType;
+      return RESIDUE_SERVICE_TYPES.includes(serviceType as (typeof RESIDUE_SERVICE_TYPES)[number]) && service.wastes.length === 0;
+    });
+
+    if (serviceWithoutRequiredWaste) {
+      throw new AppError('VALIDATION_ERROR', 'Los servicios de residuos deben incluir al menos un residuo.', {
+        serviceId: serviceWithoutRequiredWaste.id
       });
+    }
 
-      return { success: true, id: newId, message: 'Draft saved successfully' };
-    } catch (error: any) {
-      console.error("Error saving draft:", error);
-      throw error;
+    const invalidWasteService = draftData.services.find((service) =>
+      service.wastes.some((waste) => waste.quantity <= 0)
+    );
+
+    if (invalidWasteService) {
+      throw new AppError('VALIDATION_ERROR', 'La cantidad de los residuos debe ser mayor a 0.', {
+        serviceId: invalidWasteService.id
+      });
     }
   }
 }

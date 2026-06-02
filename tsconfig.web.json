@@ -3,8 +3,7 @@
   "include": [
     "src/renderer/src/**/*",
     "src/shared/**/*",
-    "src/preload/*.d.ts",
-    "src/**/*"
+    "src/preload/*.d.ts"
   ],
   "compilerOptions": {
     "ignoreDeprecations": "5.0",
