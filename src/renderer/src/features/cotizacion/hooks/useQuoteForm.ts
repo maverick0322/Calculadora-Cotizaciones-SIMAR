@@ -39,6 +39,16 @@ const createDefaultService = (): ServiceItem => ({
   extraCosts: []
 });
 
+type FormRoadType = RoadType | '' | undefined;
+
+const normalizeRoadType = (roadType: FormRoadType): RoadType | undefined => {
+  if (!roadType) {
+    return undefined;
+  }
+
+  return roadType;
+};
+
 export const useQuoteForm = (editId?: number | null) => {
   const form = useForm<QuoteFormValues>({
     resolver: zodResolver(quoteSchema) as unknown as Resolver<QuoteFormValues>,
@@ -108,13 +118,11 @@ export const useQuoteForm = (editId?: number | null) => {
   const submitDraft = async (data: QuoteFormValues, subtotal: number = 0, total: number = 0): Promise<boolean> => {
     try {
       const cleanedServices = data.services.map(service => {
-        const cleanRoadType = service.logistics.roadType as RoadType | undefined;
-
         return {
           ...service,
           logistics: {
             ...service.logistics,
-            roadType: cleanRoadType
+            roadType: normalizeRoadType(service.logistics.roadType as FormRoadType)
           }
         };
       });

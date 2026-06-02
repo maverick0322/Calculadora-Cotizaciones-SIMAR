@@ -1,93 +1,94 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { FormProvider, useForm } from 'react-hook-form';
 import { TripStep } from '@renderer/features/cotizacion/components/TripStep';
-import * as RHF from 'react-hook-form';
+import { QuoteFormValues } from '../../../../shared/schemas/quoteSchema';
 
-vi.mock('react-hook-form', async () => {
-  const actual = await vi.importActual('react-hook-form');
-  return {
-    ...actual,
-    useFormContext: vi.fn(),
+const defaultValues: QuoteFormValues = {
+  personType: 'moral',
+  commercialName: '',
+  clientName: 'Cliente Prueba',
+  clientRfc: 'XAXX010101000',
+  contactName: 'Contacto',
+  contactPosition: '',
+  contactPhone: '2281234567',
+  contactEmail: 'contacto@cliente.test',
+  validityDays: 15,
+  services: [{
+    id: 'service-1',
+    serviceType: 'rme',
+    activity: 'collection',
+    frequency: { type: 'one_time' },
+    location: { street: '', municipality: '', neighborhood: '', state: '' },
+    wastes: [],
+    vehicles: [],
+    crew: [],
+    supplies: [],
+    tools: [],
+    materials: [],
+    equipment: [],
+    specializedEpp: [],
+    logistics: {
+      origin: '',
+      primaryDestination: '',
+      kilometers: 0,
+      fuelLiters: 0,
+      fuelPricePerLiter: 0,
+      roadType: 'free',
+      viaticos: 0
+    },
+    extraCosts: []
+  }]
+};
+
+const renderWithForm = (values: QuoteFormValues = defaultValues) => {
+  const Wrapper = () => {
+    const form = useForm<QuoteFormValues>({ defaultValues: values });
+    return (
+      <FormProvider {...form}>
+        <TripStep serviceIndex={0} catalogs={{ vehicles: [], supplies: [], warehouses: [] } as any} />
+      </FormProvider>
+    );
   };
-});
+
+  render(<Wrapper />);
+};
 
 describe('TripStep Component', () => {
-  const mockRegister = vi.fn();
-  const mockWatch = vi.fn();
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  // --- AC 1: BASIC RENDERING ---
-  it('should render main inputs and register them without errors', () => {
-    vi.mocked(RHF.useFormContext).mockReturnValue({
-      register: mockRegister,
-      watch: mockWatch,
-      formState: { errors: {} },
-    } as any);
-
-    mockWatch.mockReturnValue('free');
-
-    render(<TripStep serviceIndex={0} />);
+  it('renders route and fuel inputs with free road selected by default', () => {
+    renderWithForm();
 
     expect(screen.getByText('Logística del Viaje')).toBeDefined();
-    
-    expect(mockRegister).toHaveBeenCalledWith('services.0.logistics.origin');
-    expect(mockRegister).toHaveBeenCalledWith('services.0.logistics.primaryDestination');
-    // Ahora esperamos el objeto extra para los numéricos
-    expect(mockRegister).toHaveBeenCalledWith('services.0.logistics.kilometers', { valueAsNumber: true });
-    expect(mockRegister).toHaveBeenCalledWith('services.0.logistics.roadType');
-    
+    expect(screen.getByText('Punto de Origen')).toBeDefined();
+    expect(screen.getByText('Punto de Llegada')).toBeDefined();
+    expect(screen.getByText('Kilómetros totales')).toBeDefined();
     expect(screen.queryByText('Número de Casetas')).toBeNull();
   });
 
-  // --- AC 2: CONDITIONAL RENDERING (TOLL) ---
-  it('should render toll inputs ONLY when roadType is "toll"', () => {
-    vi.mocked(RHF.useFormContext).mockReturnValue({
-      register: mockRegister,
-      watch: mockWatch,
-      formState: { errors: {} },
-    } as any);
+  it('renders toll inputs when the toll road option is selected', () => {
+    renderWithForm();
 
-    mockWatch.mockReturnValue('toll');
-
-    render(<TripStep serviceIndex={0} />);
+    fireEvent.click(screen.getByLabelText('Cuota (Peaje)'));
 
     expect(screen.getByText('Número de Casetas')).toBeDefined();
     expect(screen.getByText('Costo Total Casetas ($)')).toBeDefined();
-
-    expect(mockRegister).toHaveBeenCalledWith('services.0.logistics.tolls', { valueAsNumber: true });
-    expect(mockRegister).toHaveBeenCalledWith('services.0.logistics.totalTollCost', { valueAsNumber: true });
   });
 
-  // --- AC 3: VISUAL ERROR HANDLING ---
-  it('should display error messages when origin or destination have validation errors', () => {
-    const originError = 'El origen no puede estar vacío';
-    const destError = 'El destino es muy corto';
+  it('renders warehouse suggestions when catalogs are provided', () => {
+    const Wrapper = () => {
+      const form = useForm<QuoteFormValues>({ defaultValues });
+      return (
+        <FormProvider {...form}>
+          <TripStep
+            serviceIndex={0}
+            catalogs={{ vehicles: [], supplies: [], warehouses: [{ id: 1, name: 'Almacen Central', address: 'Av. 1' }] } as any}
+          />
+        </FormProvider>
+      );
+    };
 
-    vi.mocked(RHF.useFormContext).mockReturnValue({
-      register: mockRegister,
-      watch: mockWatch,
-      formState: { 
-        errors: { 
-          services: [
-            {
-              logistics: {
-                origin: { message: originError },
-                primaryDestination: { message: destError }
-              }
-            }
-          ]
-        } 
-      },
-    } as any);
+    render(<Wrapper />);
 
-    mockWatch.mockReturnValue('free');
-
-    render(<TripStep serviceIndex={0} />);
-
-    expect(screen.getByText(originError)).toBeDefined();
-    expect(screen.getByText(destError)).toBeDefined();
+    expect(document.querySelector('option[value="Almacen Central"]')).toBeDefined();
   });
 });

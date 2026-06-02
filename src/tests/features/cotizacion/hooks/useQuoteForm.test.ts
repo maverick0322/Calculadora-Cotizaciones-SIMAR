@@ -32,10 +32,14 @@ describe('useQuoteForm Hook', () => {
         id: '123',
         activity: 'collection',
         location: { street: 'Av 1', municipality: 'X', neighborhood: 'Y', state: 'Z' },
-        wastes: [{ name: 'B', type: 'domestic', quantity: 1, unit: 'kg' }],
+        wastes: [{ name: 'B', type: 'domestic', classification: 'N/A', clave: 'N/A', quantity: 1, unit: 'kg', pricePerUnit: 0 }],
         vehicles: [],
         crew: [],
         supplies: [],
+        tools: [],
+        materials: [],
+        equipment: [],
+        specializedEpp: [],
         extraCosts: [],
         logistics: {
           origin: 'A',
@@ -50,7 +54,7 @@ describe('useQuoteForm Hook', () => {
         }
       }
     ],
-    status: 'draft',
+    status: 'en_proceso',
     createdAt: 100000
   });
 
@@ -64,7 +68,7 @@ describe('useQuoteForm Hook', () => {
     const { result } = renderHook(() => useQuoteForm(10));
     await waitFor(() => {
       expect(window.api.getDraftById).toHaveBeenCalledWith(10);
-      expect(toast.success).toHaveBeenCalledWith('Borrador listo para editar', expect.any(Object));
+      expect(toast.success).toHaveBeenCalledWith('Cotización lista para editar', expect.any(Object));
     });
   });
 
@@ -72,13 +76,16 @@ describe('useQuoteForm Hook', () => {
     vi.mocked(window.api.getDraftById).mockResolvedValue({ success: false, error: 'Not found' });
     renderHook(() => useQuoteForm(99));
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('No se pudo cargar el borrador', expect.any(Object));
+      expect(toast.error).toHaveBeenCalledWith('No se pudo cargar la cotización', expect.any(Object));
     });
   });
 
   it('should format payload, clean roadType, and inject metadata before saving', async () => {
     vi.mocked(window.api.saveDraft).mockResolvedValue({ success: true, id: 5 });
+    vi.mocked(window.api.getDraftById).mockResolvedValue({ success: true, data: getValidMockDraft() });
     const { result } = renderHook(() => useQuoteForm(5)); // Simulamos que estamos editando el draft 5
+
+    await waitFor(() => expect(window.api.getDraftById).toHaveBeenCalledWith(5));
 
     let successResult = false;
     
@@ -95,7 +102,7 @@ describe('useQuoteForm Hook', () => {
 
     expect(successResult).toBe(true);
     expect(calledPayload.id).toBe(5);
-    expect(calledPayload.status).toBe('draft');
+    expect(calledPayload.status).toBe('en_proceso');
     expect(calledPayload.subtotal).toBe(100);
     expect(calledPayload.total).toBe(116);
     // Verificamos que el roadType vacío se limpió a undefined
