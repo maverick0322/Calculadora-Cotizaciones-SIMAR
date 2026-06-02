@@ -15,10 +15,11 @@ describe('SummaryStep Component', () => {
       {
         id: 's1',
         activity: 'collection',
+        frequency: { type: 'weekly', duration: 12 },
         location: { street: 'Av. Principal 100', municipality: 'Ciudad A', neighborhood: 'Centro', state: 'Estado X' },
         logistics: { origin: 'Punto A', primaryDestination: 'Planta 1', kilometers: 15, fuelLiters: 5, fuelPricePerLiter: 20, roadType: 'toll', tolls: 1, totalTollCost: 50, viaticos: 0 },
         wastes: [
-          { name: 'Cartón', type: 'recyclable', quantity: 50, unit: 'kg' }
+          { name: 'Cartón', type: 'recyclable', classification: 'N/A', clave: 'N/A', quantity: 50, unit: 'kg', pricePerUnit: 0 }
         ],
         vehicles: [{ vehicleId: 1, name: 'Camioneta', quantity: 1, unitPrice: 500 }],
         crew: [{ type: 'driver', quantity: 1, dailySalary: 300 }],
@@ -28,6 +29,7 @@ describe('SummaryStep Component', () => {
       {
         id: 's2',
         activity: 'final_disposal',
+        frequency: { type: 'one_time' },
         location: { street: 'Sucursal Norte', municipality: 'Ciudad B', neighborhood: 'Norte', state: 'Estado Y' },
         logistics: { origin: 'Punto B', primaryDestination: 'Planta 2', kilometers: 30, fuelLiters: 10, fuelPricePerLiter: 20, roadType: 'free', viaticos: 0 },
         wastes: [],
@@ -46,7 +48,7 @@ describe('SummaryStep Component', () => {
     expect(screen.getByText('ACME123456')).toBeDefined();
     expect(screen.getByText('30 Días')).toBeDefined();
     // Verifica que la función getFrequencyString formatea bien los periodos
-    expect(screen.getByText('Semanal (por 12 periodos)')).toBeDefined(); 
+    expect(screen.getByText(/Semanal \(por 12 periodos\)/)).toBeDefined(); 
   });
 
   it('should render multiple services correctly', () => {

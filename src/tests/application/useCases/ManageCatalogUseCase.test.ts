@@ -40,14 +40,17 @@ describe('ManageCatalogUseCase', () => {
   // --- AC 2: RUTAS DE CREACIÓN ---
   describe('Add Actions', () => {
     it('should route to the correct add method with mapped payload', async () => {
-      await useCase.execute('add', 'vehicle', { name: 'V1', vehicleType: 'T1', capacityKg: 100, basePrice: 50 });
-      expect(mockRepository.addVehicle).toHaveBeenCalledWith('V1', 'T1', 100, 50);
+      const vehiclePayload = { name: 'V1', vehicleType: 'T1', capacityKg: 100, basePrice: 50 };
+      await useCase.execute('add', 'vehicle', vehiclePayload);
+      expect(mockRepository.addVehicle).toHaveBeenCalledWith(vehiclePayload);
 
-      await useCase.execute('add', 'supply', { name: 'S1', unit: 'kg', suggestedPrice: 10 });
-      expect(mockRepository.addSupply).toHaveBeenCalledWith('S1', 'kg', 10);
+      const supplyPayload = { name: 'S1', unit: 'kg', suggestedPrice: 10 };
+      await useCase.execute('add', 'supply', supplyPayload);
+      expect(mockRepository.addSupply).toHaveBeenCalledWith(supplyPayload);
 
-      await useCase.execute('add', 'warehouse', { name: 'W1', address: 'Calle 1' });
-      expect(mockRepository.addWarehouse).toHaveBeenCalledWith('W1', 'Calle 1');
+      const warehousePayload = { name: 'W1', address: 'Calle 1' };
+      await useCase.execute('add', 'warehouse', warehousePayload);
+      expect(mockRepository.addWarehouse).toHaveBeenCalledWith(warehousePayload);
     });
   });
 

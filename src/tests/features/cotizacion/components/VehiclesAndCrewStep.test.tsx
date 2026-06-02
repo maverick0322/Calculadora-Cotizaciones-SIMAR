@@ -1,102 +1,104 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { FormProvider, useForm } from 'react-hook-form';
 import { VehiclesAndCrewStep } from '@renderer/features/cotizacion/components/VehiclesAndCrewStep';
-import * as RHF from 'react-hook-form';
+import { QuoteFormValues } from '../../../../shared/schemas/quoteSchema';
 
-vi.mock('react-hook-form', async () => {
-  const actual = await vi.importActual('react-hook-form');
-  return {
-    ...actual,
-    useFormContext: vi.fn(),
-    useFieldArray: vi.fn(),
-  };
+const buildDefaultValues = (overrides: Partial<QuoteFormValues['services'][number]> = {}): QuoteFormValues => ({
+  personType: 'moral',
+  commercialName: '',
+  clientName: 'Cliente Prueba',
+  clientRfc: 'XAXX010101000',
+  contactName: 'Contacto',
+  contactPosition: '',
+  contactPhone: '2281234567',
+  contactEmail: 'contacto@cliente.test',
+  validityDays: 15,
+  services: [{
+    id: 'service-1',
+    serviceType: 'rme',
+    activity: 'collection',
+    frequency: { type: 'one_time' },
+    location: { street: '', municipality: '', neighborhood: '', state: '' },
+    wastes: [],
+    vehicles: [],
+    crew: [],
+    supplies: [],
+    tools: [],
+    materials: [],
+    equipment: [],
+    specializedEpp: [],
+    logistics: {
+      origin: '',
+      primaryDestination: '',
+      kilometers: 10,
+      fuelLiters: 0,
+      fuelPricePerLiter: 20,
+      roadType: 'free',
+      viaticos: 0
+    },
+    extraCosts: [],
+    ...overrides
+  }]
 });
 
-describe('VehiclesAndCrewStep Component', () => {
-  const mockRegister = vi.fn();
-  const mockSetValue = vi.fn();
-  
-  const mockCatalogs = {
-    warehouses: [],
-    supplies: [],
-    vehicles: [
-      { id: 1, name: 'Camioneta 3.5T', vehicle_type: 'camioneta', capacity_kg: 3500, base_price: 1500 }
-    ]
+const catalogs = {
+  warehouses: [],
+  supplies: [],
+  vehicles: [{
+    id: 1,
+    vehicle_key: 'VH-001',
+    plate: 'ABC-123',
+    name: 'Camioneta 3.5T',
+    model_name: 'Modelo 2026',
+    price_per_day: 1500,
+    price_per_ton: 400,
+    price_per_m3: 120,
+    fuel_efficiency_km_l: 8.5
+  }]
+};
+
+const renderWithForm = (values = buildDefaultValues()) => {
+  const Wrapper = () => {
+    const form = useForm<QuoteFormValues>({ defaultValues: values });
+    return (
+      <FormProvider {...form}>
+        <VehiclesAndCrewStep serviceIndex={0} catalogs={catalogs as any} />
+      </FormProvider>
+    );
   };
 
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
+  render(<Wrapper />);
+};
 
-  // --- AC 1: RENDER AND EMPTY STATES ---
-  it('should render empty states when no vehicles or crew are added', () => {
-    vi.mocked(RHF.useFormContext).mockReturnValue({
-      register: mockRegister,
-      setValue: mockSetValue,
-      control: {},
-      formState: { errors: {} }
-    } as any);
-
-    // Simulamos que ambos FieldArray están vacíos
-    vi.mocked(RHF.useFieldArray).mockReturnValue({
-      fields: [],
-      append: vi.fn(),
-      remove: vi.fn()
-    } as any);
-
-    render(<VehiclesAndCrewStep serviceIndex={0} catalogs={mockCatalogs} />);
+describe('VehiclesAndCrewStep Component', () => {
+  it('renders empty states when no vehicles or crew are added', () => {
+    renderWithForm();
 
     expect(screen.getByText('Vehículos Asignados')).toBeDefined();
     expect(screen.getByText('No has asignado ningún vehículo. Haz clic en "Agregar Vehículo".')).toBeDefined();
-    
     expect(screen.getByText('Personal Operativo')).toBeDefined();
-    expect(screen.getByText('No has asignado personal. Recuerda que se necesita al menos un chofer.')).toBeDefined();
+    expect(screen.getByText('No has asignado personal operativo.')).toBeDefined();
   });
 
-  // --- AC 2: RENDER FIELDS ---
-  it('should render fields when items exist', () => {
-    vi.mocked(RHF.useFormContext).mockReturnValue({
-      register: mockRegister,
-      setValue: mockSetValue,
-      control: {},
-      formState: { errors: {} }
-    } as any);
+  it('renders vehicle and crew fields when default values include rows', () => {
+    renderWithForm(buildDefaultValues({
+      vehicles: [{ vehicleId: 1, name: 'Camioneta 3.5T', quantity: 1, unitPrice: 1500 }],
+      crew: [{ type: 'operator', quantity: 1, dailySalary: 400 }]
+    }));
 
-    // Simulamos que hay 1 vehículo y 1 tripulante
-    vi.mocked(RHF.useFieldArray)
-      .mockReturnValueOnce({ fields: [{ id: 'v1' }], append: vi.fn(), remove: vi.fn() } as any) // Vehicles
-      .mockReturnValueOnce({ fields: [{ id: 'c1' }], append: vi.fn(), remove: vi.fn() } as any); // Crew
-
-    render(<VehiclesAndCrewStep serviceIndex={0} catalogs={mockCatalogs} />);
-
-    expect(screen.getByText('Tipo de Vehículo')).toBeDefined();
+    expect(screen.getByText('Unidad Operativa')).toBeDefined();
     expect(screen.getByText('Puesto Operativo')).toBeDefined();
-    expect(mockRegister).toHaveBeenCalledWith('services.0.vehicles.0.vehicleId', { valueAsNumber: true });
-    expect(mockRegister).toHaveBeenCalledWith('services.0.crew.0.dailySalary', { valueAsNumber: true });
+    expect(screen.getByText('Salario Diario ($)')).toBeDefined();
   });
 
-  // --- AC 3: APPEND FUNCTIONALITY ---
-  it('should call append when add buttons are clicked', () => {
-    const appendVehicleMock = vi.fn();
-    const appendCrewMock = vi.fn();
-
-    vi.mocked(RHF.useFormContext).mockReturnValue({
-      register: mockRegister,
-      setValue: mockSetValue,
-      control: {},
-      formState: { errors: {} }
-    } as any);
-
-    vi.mocked(RHF.useFieldArray)
-      .mockReturnValueOnce({ fields: [], append: appendVehicleMock, remove: vi.fn() } as any)
-      .mockReturnValueOnce({ fields: [], append: appendCrewMock, remove: vi.fn() } as any);
-
-    render(<VehiclesAndCrewStep serviceIndex={0} catalogs={mockCatalogs} />);
+  it('adds vehicle and crew rows when add buttons are clicked', () => {
+    renderWithForm();
 
     fireEvent.click(screen.getByRole('button', { name: /Agregar Vehículo/i }));
     fireEvent.click(screen.getByRole('button', { name: /Agregar Personal/i }));
 
-    expect(appendVehicleMock).toHaveBeenCalledTimes(1);
-    expect(appendCrewMock).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('Unidad Operativa')).toBeDefined();
+    expect(screen.getByText('Puesto Operativo')).toBeDefined();
   });
 });

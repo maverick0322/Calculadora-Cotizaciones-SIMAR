@@ -41,7 +41,7 @@ describe('DashboardView Component', () => {
 
     render(<DashboardView onEditClick={mockOnEditClick} currentUser={currentUser} />);
 
-    expect(screen.getByText('Cargando borradores...')).toBeDefined();
+    expect(screen.getByText('Cargando cotizaciones...')).toBeDefined();
   });
 
   // --- AC 2: EMPTY STATE ---
@@ -54,7 +54,7 @@ describe('DashboardView Component', () => {
 
     render(<DashboardView onEditClick={mockOnEditClick} currentUser={currentUser} />);
 
-    expect(screen.getByText(/No se encontraron borradores/i)).toBeDefined();
+    expect(screen.getByText(/No se encontraron cotizaciones en seguimiento/i)).toBeDefined();
   });
 
   // --- AC 3: DATA RENDERING & TRANSLATIONS ---
@@ -66,7 +66,7 @@ describe('DashboardView Component', () => {
         folio: '#100',
         location: 'Centro Histórico',
         wastesSummary: '5 kg de Residuos Domésticos',
-        status: 'draft',   
+        status: 'en_proceso',
         createdAt: 1672531200000
       }
     ];
@@ -84,13 +84,13 @@ describe('DashboardView Component', () => {
     
     // Verificamos el texto completo que trae el summary
     expect(screen.getByText('5 kg de Residuos Domésticos')).toBeDefined();
-    expect(screen.getByText('Borrador')).toBeDefined();
+    expect(screen.getByText('En proceso')).toBeDefined();
   });
 
   // --- AC 4: USER INTERACTION ---
   it('should call onEditClick with the correct draft ID when the edit button is clicked', () => {
     const mockDrafts = [
-      { id: 99, folio: '#099', wastesSummary: 'Orgánico', status: 'draft' }
+      { id: 99, folio: '#099', location: 'Centro', wastesSummary: 'Orgánico', status: 'en_proceso', createdAt: 1672531200000 }
     ];
 
     vi.spyOn(useDraftsModule, 'useDrafts').mockReturnValue({
@@ -101,7 +101,7 @@ describe('DashboardView Component', () => {
 
     render(<DashboardView onEditClick={mockOnEditClick} currentUser={currentUser} />);
 
-    const editButton = screen.getByTitle('Editar Borrador');
+    const editButton = screen.getByTitle('Editar cotización en proceso');
     fireEvent.click(editButton);
 
     expect(mockOnEditClick).toHaveBeenCalledTimes(1);

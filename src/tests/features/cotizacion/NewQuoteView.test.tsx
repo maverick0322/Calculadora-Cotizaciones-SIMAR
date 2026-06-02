@@ -9,13 +9,13 @@ vi.mock('react-hot-toast', () => ({
   default: { loading: vi.fn(), success: vi.fn(), error: vi.fn() }
 }));
 
-// ¡RUTAS CORREGIDAS! Usamos el alias para que los mocks enganchen perfecto
-vi.mock('@renderer/features/cotizacion/components/LocationStep', () => ({ LocationStep: () => <div>LocationStep</div> }));
-vi.mock('@renderer/features/cotizacion/components/WasteStep', () => ({ WasteStep: () => <div>WasteStep</div> }));
-vi.mock('@renderer/features/cotizacion/components/TripStep', () => ({ TripStep: () => <div>TripStep</div> }));
+vi.mock('@renderer/features/cotizacion/components/ClientInfoStep', () => ({ ClientInfoStep: () => <div>ClientInfoStep</div> }));
+vi.mock('@renderer/features/cotizacion/components/ValiditySelector', () => ({ ValiditySelector: () => <div>ValiditySelector</div> }));
+vi.mock('@renderer/features/cotizacion/components/ServicesTabSystem', () => ({ ServicesTabSystem: () => <div>ServicesTabSystem</div> }));
+vi.mock('@renderer/features/cotizacion/components/StickyTotalsFooter', () => ({
+  StickyTotalsFooter: () => <button type="submit">Revisar</button>
+}));
 vi.mock('@renderer/features/cotizacion/components/SummaryStep', () => ({ SummaryStep: () => <div>SummaryStep</div> }));
-vi.mock('@renderer/features/cotizacion/components/VehiclesAndCrewStep', () => ({ VehiclesAndCrewStep: () => <div>VehiclesAndCrewStep</div> }));
-vi.mock('@renderer/features/cotizacion/components/SuppliesStep', () => ({ SuppliesStep: () => <div>SuppliesStep</div> }));
 
 // ESTE ES EL CAUSANTE DEL ERROR: Ahora sí se va a interceptar correctamente
 vi.mock('@renderer/features/cotizacion/hooks/useQuoteCalculator', () => ({
@@ -37,6 +37,10 @@ describe('NewQuoteView Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     isFormValid = true;
+    window.api = {
+      getCatalogs: vi.fn().mockResolvedValue({ success: true, data: { warehouses: [], vehicles: [], supplies: [] } }),
+      manageClientDirectory: vi.fn().mockResolvedValue({ success: true })
+    } as any;
 
     mockGetValues.mockReturnValue({
       clientName: 'Empresa Test',
@@ -78,7 +82,7 @@ describe('NewQuoteView Component', () => {
     expect(screen.getByText('Nueva Cotización')).toBeDefined();
 
     rerender(<NewQuoteView editId={5} />);
-    expect(screen.getByText('Editando Borrador #5')).toBeDefined();
+    expect(screen.getByText('Editando Cotización #5')).toBeDefined();
   });
 
   it('should show error toast when form validation fails', () => {
@@ -101,7 +105,7 @@ describe('NewQuoteView Component', () => {
     fireEvent.click(confirmButton);
 
     await waitFor(() => expect(mockSubmitDraft).toHaveBeenCalledTimes(1));
-    expect(toast.success).toHaveBeenCalledWith('¡Borrador guardado exitosamente!', expect.any(Object));
+    expect(toast.success).toHaveBeenCalledWith('¡Cotización guardada exitosamente!', expect.any(Object));
     expect(mockReset).toHaveBeenCalledTimes(1);
   });
 
@@ -115,7 +119,7 @@ describe('NewQuoteView Component', () => {
     fireEvent.click(confirmButton);
 
     await waitFor(() => expect(mockSubmitDraft).toHaveBeenCalledTimes(1));
-    expect(toast.success).toHaveBeenCalledWith('¡Borrador actualizado!', expect.any(Object));
+    expect(toast.success).toHaveBeenCalledWith('¡Cotización actualizada!', expect.any(Object));
     expect(mockReset).not.toHaveBeenCalled();
   });
 
@@ -129,6 +133,6 @@ describe('NewQuoteView Component', () => {
     fireEvent.click(confirmButton);
 
     await waitFor(() => expect(mockSubmitDraft).toHaveBeenCalledTimes(1));
-    expect(toast.error).toHaveBeenCalledWith('Error al guardar el borrador. Revisa tu conexión.', expect.any(Object));
+    expect(toast.error).toHaveBeenCalledWith('Error al guardar la cotización. Revisa tu conexión.', expect.any(Object));
   });
 });

@@ -36,7 +36,7 @@ describe('LocationStep Component', () => {
     render(<LocationStep serviceIndex={0} />);
 
     expect(screen.getByText('Ubicación de Recolección')).toBeDefined();
-    expect(screen.getByText('Dirección de la sucursal / origen (Calle y Número)')).toBeDefined();
+    expect(screen.getByText('Dirección de la sucursal / origen')).toBeDefined();
     expect(screen.getByText('Código Postal')).toBeDefined();
     expect(screen.getByText('Estado')).toBeDefined();
     expect(screen.getByText('Ciudad / Municipio')).toBeDefined();
