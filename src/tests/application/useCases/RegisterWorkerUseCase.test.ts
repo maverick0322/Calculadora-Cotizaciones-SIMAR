@@ -34,7 +34,7 @@ describe('RegisterWorkerUseCase', () => {
     initials: ' evl ',
     address: ' Calle 1 ',
     email: ' Juan.Perez@SIMAR.COM ',
-    password: 'mypassword',
+    password: '123456',
     superUserKey: 'SIMAR-ADMIN-2026',
     role: 'sales',
     ...overrides
@@ -46,7 +46,7 @@ describe('RegisterWorkerUseCase', () => {
     const result = await useCase.execute(buildValidWorker());
 
     expect(bcrypt.genSaltSync).toHaveBeenCalledWith(10);
-    expect(bcrypt.hashSync).toHaveBeenCalledWith('mypassword', 'fake_salt');
+    expect(bcrypt.hashSync).toHaveBeenCalledWith('123456', 'fake_salt');
     expect(mockWorkerRepo.save).toHaveBeenCalledWith({
       rfc: 'PEPJ800101ABC',
       firstName: 'Juan',
@@ -71,7 +71,7 @@ describe('RegisterWorkerUseCase', () => {
 
     expect(result).toEqual({
       success: false,
-      error: 'La contraseña temporal debe tener al menos 8 caracteres.'
+      error: 'La contraseña temporal debe tener al menos 6 caracteres.'
     });
     expect(mockWorkerRepo.save).not.toHaveBeenCalled();
   });

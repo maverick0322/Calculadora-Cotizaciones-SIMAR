@@ -5,7 +5,7 @@ import { logger } from '../../infrastructure/logging/SafeLogger';
 
 const ADMIN_REGISTRATION_KEY = 'SIMAR-ADMIN-2026';
 const PASSWORD_SALT_ROUNDS = 10;
-const MIN_PASSWORD_LENGTH = 8;
+const MIN_PASSWORD_LENGTH = 6;
 const RFC_PATTERN = /^[A-Z&Ñ]{3,4}\d{6}[A-Z\d]{3}$/i;
 
 export class RegisterWorkerUseCase {
@@ -48,7 +48,7 @@ export class RegisterWorkerUseCase {
     }
 
     if (!worker.password || worker.password.length < MIN_PASSWORD_LENGTH) {
-      throw new Error('La contraseña temporal debe tener al menos 8 caracteres.');
+      throw new Error('La contraseña temporal debe tener al menos 6 caracteres.');
     }
 
     const cleanWorker: WorkerData = {

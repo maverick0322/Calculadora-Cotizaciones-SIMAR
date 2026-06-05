@@ -109,6 +109,25 @@ describe('useQuoteForm Hook', () => {
     expect(calledPayload.services[0].logistics.roadType).toBeUndefined(); 
   });
 
+  it('should preserve loaded quote status and createdAt when saving an edited quote', async () => {
+    vi.mocked(window.api.saveDraft).mockResolvedValue({ success: true, id: 10 });
+    vi.mocked(window.api.getDraftById).mockResolvedValue({
+      success: true,
+      data: { ...getValidMockDraft(), status: 'autorizada', createdAt: 1234567890 }
+    });
+
+    const { result } = renderHook(() => useQuoteForm(10));
+    await waitFor(() => expect(window.api.getDraftById).toHaveBeenCalledWith(10));
+
+    await act(async () => {
+      await result.current.submitDraft(result.current.form.getValues(), 100, 116);
+    });
+
+    const calledPayload = vi.mocked(window.api.saveDraft).mock.calls[0][0];
+    expect(calledPayload.status).toBe('autorizada');
+    expect(calledPayload.createdAt).toBe(1234567890);
+  });
+
   it('should return false when saveDraft catches an exception', async () => {
     vi.mocked(window.api.saveDraft).mockRejectedValue(new Error('Network error'));
     const { result } = renderHook(() => useQuoteForm());

@@ -89,7 +89,7 @@ export class SqliteQuoteRepository implements IQuoteRepository {
           total = @total,
           conditions_json = @conditionsJson,
           replaces_quote_id = @replacesQuoteId
-        WHERE id = @id AND status IN ('en_proceso', 'draft')
+        WHERE id = @id AND status IN ('en_proceso', 'terminada', 'autorizada', 'draft')
       `);
 
       stmt.run({ ...params, id: quote.id });
@@ -137,7 +137,7 @@ export class SqliteQuoteRepository implements IQuoteRepository {
   }
 
   getDraftById(id: number): QuoteDraft | null {
-    const stmt = this.db.prepare(`SELECT * FROM quotes WHERE id = ? AND status IN ('en_proceso', 'draft')`);
+    const stmt = this.db.prepare(`SELECT * FROM quotes WHERE id = ? AND status IN ('en_proceso', 'terminada', 'autorizada', 'draft')`);
     const row = stmt.get(id) as RawQuoteRow | undefined;
     return row ? this.mapRowToDraft(row) : null;
   }
@@ -296,6 +296,37 @@ export class SqliteQuoteRepository implements IQuoteRepository {
     return services.map((service) => ({
       ...service,
       serviceType: service.serviceType ?? 'rme',
+      activity: service.activity ?? 'collection',
+      frequency: {
+        type: service.frequency?.type ?? 'one_time',
+        duration: service.frequency?.duration,
+        customDescription: service.frequency?.customDescription ?? ''
+      },
+      location: {
+        street: service.location?.street ?? '',
+        cp: service.location?.cp ?? '',
+        municipality: service.location?.municipality ?? '',
+        neighborhood: service.location?.neighborhood ?? '',
+        state: service.location?.state ?? '',
+        coordinates: service.location?.coordinates
+      },
+      wastes: service.wastes ?? [],
+      vehicles: service.vehicles ?? [],
+      crew: service.crew ?? [],
+      supplies: service.supplies ?? [],
+      logistics: {
+        origin: service.logistics?.origin ?? '',
+        primaryDestination: service.logistics?.primaryDestination ?? '',
+        secondaryDestination: service.logistics?.secondaryDestination ?? '',
+        kilometers: service.logistics?.kilometers ?? 0,
+        fuelLiters: service.logistics?.fuelLiters ?? 0,
+        fuelPricePerLiter: service.logistics?.fuelPricePerLiter ?? 0,
+        roadType: service.logistics?.roadType,
+        tolls: service.logistics?.tolls ?? 0,
+        totalTollCost: service.logistics?.totalTollCost ?? 0,
+        viaticos: service.logistics?.viaticos ?? 0
+      },
+      extraCosts: service.extraCosts ?? [],
       tools: service.tools ?? [],
       materials: service.materials ?? [],
       equipment: service.equipment ?? [],

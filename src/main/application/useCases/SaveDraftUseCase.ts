@@ -17,7 +17,7 @@ export class SaveDraftUseCase {
     this.validateQuote(draftData);
 
     const isUpdate = Boolean(draftData.id);
-    const quoteId = this.repository.saveDraft({ ...draftData, status: 'en_proceso' });
+    const quoteId = this.repository.saveDraft(draftData);
 
     this.auditUseCase.execute({
       action: isUpdate ? 'UPDATE_QUOTE_IN_PROGRESS' : 'CREATE_QUOTE_IN_PROGRESS',

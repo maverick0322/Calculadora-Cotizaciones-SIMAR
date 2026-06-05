@@ -24,14 +24,14 @@ export const DashboardSearchBar = ({ searchTerm, setSearchTerm, selectedMonth, s
         />
       </div>
       {setSelectedMonth && (
-        <div className="relative flex items-center rounded-lg border border-gray-200 bg-white shadow-sm ring-1 ring-transparent transition-all focus-within:border-blue-500 focus-within:ring-blue-100">
+        <div className="relative flex w-full min-w-[13rem] items-center rounded-lg border border-gray-200 bg-white shadow-sm ring-1 ring-transparent transition-all focus-within:border-blue-500 focus-within:ring-blue-100 sm:w-60">
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
             <CalendarDays className="h-4 w-4 text-blue-600" />
           </div>
           <input
             id="quote-month-filter"
             type="month"
-            className="h-10 w-full min-w-40 rounded-lg border-0 bg-transparent pl-10 pr-10 text-sm font-medium text-gray-700 outline-none placeholder:text-gray-400 sm:w-44"
+            className="h-10 w-full rounded-lg border-0 bg-transparent pl-10 pr-10 text-sm font-medium text-gray-700 outline-none placeholder:text-gray-400"
             value={selectedMonth || ''}
             onChange={(e) => setSelectedMonth(e.target.value)}
             aria-label="Filtrar por mes"

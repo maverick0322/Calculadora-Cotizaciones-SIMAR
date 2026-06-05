@@ -101,10 +101,32 @@ describe('DashboardView Component', () => {
 
     render(<DashboardView onEditClick={mockOnEditClick} currentUser={currentUser} />);
 
-    const editButton = screen.getByTitle('Editar cotización en proceso');
+    const editButton = screen.getByTitle('Editar cotización en seguimiento');
     fireEvent.click(editButton);
 
     expect(mockOnEditClick).toHaveBeenCalledTimes(1);
     expect(mockOnEditClick).toHaveBeenCalledWith(99); 
+  });
+
+  it('should allow editing quotes that are finished or authorized but not issued', () => {
+    const mockDrafts = [
+      { id: 20, folio: '#020', location: 'Centro', wastesSummary: 'Servicio terminado', status: 'terminada', createdAt: 1672531200000 },
+      { id: 21, folio: '#021', location: 'Puerto', wastesSummary: 'Servicio autorizado', status: 'autorizada', createdAt: 1672531200000 }
+    ];
+
+    vi.spyOn(useDraftsModule, 'useDrafts').mockReturnValue({
+      drafts: mockDrafts,
+      loading: false,
+      fetchDrafts: vi.fn()
+    } as any);
+
+    render(<DashboardView onEditClick={mockOnEditClick} currentUser={currentUser} />);
+
+    const editButtons = screen.getAllByTitle('Editar cotización en seguimiento');
+    fireEvent.click(editButtons[0]);
+    fireEvent.click(editButtons[1]);
+
+    expect(mockOnEditClick).toHaveBeenCalledWith(20);
+    expect(mockOnEditClick).toHaveBeenCalledWith(21);
   });
 });

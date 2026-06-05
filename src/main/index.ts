@@ -127,7 +127,7 @@ app.whenReady().then(() => {
         ...validation.data,
         id: payload?.id,
         createdAt: payload?.createdAt ?? Date.now(),
-        status: 'en_proceso'
+        status: payload?.id ? (payload?.status ?? 'en_proceso') : 'en_proceso'
       });
 
     } catch (error) {
@@ -155,10 +155,10 @@ app.whenReady().then(() => {
       if (data) {
         return { success: true, data };
       } else {
-        return { success: false, error: 'No se encontró la cotización en proceso.' };
+        return { success: false, error: 'No se encontró la cotización en seguimiento.' };
       }
     } catch (error) {
-      logger.error('Error al obtener cotización en proceso', { quoteId: id, error });
+      logger.error('Error al obtener cotización en seguimiento', { quoteId: id, error });
       return { success: false, error: 'Error inesperado al obtener la cotización.' };
     }
   });
