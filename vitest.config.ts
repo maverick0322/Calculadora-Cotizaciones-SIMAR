@@ -5,6 +5,11 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    coverage: {
+      exclude: [
+        'src/renderer/src/assets/**'
+      ]
+    }
   },
   esbuild: {
     jsx: 'automatic'
