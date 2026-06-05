@@ -57,7 +57,7 @@ describe('SaveDraftUseCase', () => {
     const result = saveDraftUseCase.execute(newDraftPayload);
 
     expect(mockRepository.saveDraft).toHaveBeenCalledTimes(1);
-    expect(mockRepository.saveDraft).toHaveBeenCalledWith({ ...newDraftPayload, status: 'en_proceso' });
+    expect(mockRepository.saveDraft).toHaveBeenCalledWith(newDraftPayload);
     expect(mockAuditUseCase.execute).toHaveBeenCalledTimes(1);
     expect(result).toEqual({ 
       success: true, 
@@ -74,7 +74,7 @@ describe('SaveDraftUseCase', () => {
     const result = saveDraftUseCase.execute(existingDraftPayload);
 
     expect(mockRepository.saveDraft).toHaveBeenCalledTimes(1);
-    expect(mockRepository.saveDraft).toHaveBeenCalledWith({ ...existingDraftPayload, status: 'en_proceso' });
+    expect(mockRepository.saveDraft).toHaveBeenCalledWith(existingDraftPayload);
     expect(mockAuditUseCase.execute).toHaveBeenCalledTimes(1);
     expect(result).toEqual({ 
       success: true, 
