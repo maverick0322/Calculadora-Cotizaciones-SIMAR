@@ -56,7 +56,7 @@ describe('SummaryStep Component', () => {
     
     // Verifica elementos del Servicio 1
     expect(screen.getByText('Servicio 1: Av. Principal 100')).toBeDefined();
-    expect(screen.getByText('Recolección')).toBeDefined(); // Traducción de 'collection'
+    expect(screen.getByText(/Recolección/)).toBeDefined(); // Traducción de 'collection'
     expect(screen.getByText('Ciudad A, Estado X')).toBeDefined();
     expect(screen.getByText('15 km (Cuota (Peaje))')).toBeDefined(); // roadType toll
     expect(screen.getByText('Cartón')).toBeDefined();
@@ -65,7 +65,7 @@ describe('SummaryStep Component', () => {
     
     // Verifica elementos del Servicio 2
     expect(screen.getByText('Servicio 2: Sucursal Norte')).toBeDefined();
-    expect(screen.getByText('Disposición Final')).toBeDefined(); // Traducción
+    expect(screen.getByText(/Disposición Final/)).toBeDefined(); // Traducción
     expect(screen.getByText('Ciudad B, Estado Y')).toBeDefined();
     expect(screen.getByText('30 km (Libre)')).toBeDefined(); // roadType free
   });
@@ -77,5 +77,113 @@ describe('SummaryStep Component', () => {
     expect(screen.getByText('Sin vehículos')).toBeDefined();
     expect(screen.getByText('Sin personal')).toBeDefined();
     expect(screen.getByText('Sin insumos adicionales')).toBeDefined();
+  });
+
+  it('should render summary details for non-residue service types', () => {
+    const dataWithSpecialServices = {
+      ...mockData,
+      services: [
+        {
+          id: 'training',
+          serviceType: 'training',
+          activity: 'collection',
+          frequency: { type: 'one_time' },
+          location: { street: '', municipality: '', neighborhood: '', state: '' },
+          logistics: { origin: '', primaryDestination: '', kilometers: 0, fuelLiters: 0, fuelPricePerLiter: 0, viaticos: 0 },
+          wastes: [],
+          vehicles: [],
+          crew: [],
+          supplies: [],
+          tools: [],
+          materials: [],
+          equipment: [],
+          specializedEpp: [],
+          extraCosts: [],
+          training: {
+            attendeeCount: 12,
+            educationLevels: ['operational'],
+            objective: 'Capacitar al equipo operativo',
+            modality: 'in_person',
+            location: { street: 'Sala 1', municipality: 'Veracruz', neighborhood: 'Centro', state: 'Veracruz' },
+            hours: 4,
+            hourlyUnitPrice: 900,
+            stationery: [{ description: 'Manual impreso', quantity: 12, unitPrice: 80 }],
+            travelExpenses: { travel: 0, tolls: 0, lodging: 0, food: 0, taxis: 0 }
+          }
+        },
+        {
+          id: 'consulting',
+          serviceType: 'environmental_consulting',
+          activity: 'collection',
+          frequency: { type: 'one_time' },
+          location: { street: '', municipality: '', neighborhood: '', state: '' },
+          logistics: { origin: '', primaryDestination: '', kilometers: 0, fuelLiters: 0, fuelPricePerLiter: 0, viaticos: 0 },
+          wastes: [],
+          vehicles: [],
+          crew: [],
+          supplies: [],
+          tools: [],
+          materials: [],
+          equipment: [],
+          specializedEpp: [],
+          extraCosts: [{ description: 'Diagnostico ambiental', amount: 5000 }]
+        },
+        {
+          id: 'cleaning',
+          serviceType: 'ecological_cleaning',
+          activity: 'collection',
+          frequency: { type: 'one_time' },
+          location: { street: '', municipality: '', neighborhood: '', state: '' },
+          logistics: { origin: '', primaryDestination: '', kilometers: 0, fuelLiters: 0, fuelPricePerLiter: 0, viaticos: 0 },
+          wastes: [],
+          vehicles: [],
+          crew: [],
+          supplies: [],
+          tools: [],
+          materials: [],
+          equipment: [],
+          specializedEpp: [],
+          extraCosts: [],
+          ecologicalCleaning: {
+            gasStationName: 'Servicio Norte',
+            location: { street: 'Carretera 10', municipality: 'Boca del Rio', neighborhood: 'Norte', state: 'Veracruz' },
+            surfaceM2: 250,
+            viaticos: 500,
+            hours: 6,
+            hourlyUnitPrice: 700,
+            labor: [{ description: 'Lavado especializado', amount: 2000 }],
+            technicianCount: 3
+          }
+        },
+        {
+          id: 'conditioning',
+          serviceType: 'conditioning',
+          activity: 'collection',
+          frequency: { type: 'one_time' },
+          location: { street: '', municipality: '', neighborhood: '', state: '' },
+          logistics: { origin: '', primaryDestination: '', kilometers: 0, fuelLiters: 0, fuelPricePerLiter: 0, viaticos: 0 },
+          wastes: [],
+          vehicles: [],
+          crew: [],
+          supplies: [],
+          tools: [],
+          materials: [],
+          equipment: [],
+          specializedEpp: [],
+          extraCosts: [],
+          conditioning: { labor: [{ description: 'Rotulado y acomodo', amount: 1500 }] }
+        }
+      ]
+    } as any;
+
+    render(<SummaryStep data={dataWithSpecialServices} />);
+
+    expect(screen.getByText(/Capacitación · Recolección/)).toBeDefined();
+    expect(screen.getByText('Capacitar al equipo operativo')).toBeDefined();
+    expect(screen.getByText(/Manual impreso/)).toBeDefined();
+    expect(screen.getByText('Diagnostico ambiental')).toBeDefined();
+    expect(screen.getByText('Servicio Norte')).toBeDefined();
+    expect(screen.getByText('Lavado especializado')).toBeDefined();
+    expect(screen.getByText('Rotulado y acomodo')).toBeDefined();
   });
 });

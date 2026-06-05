@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useForm, useFieldArray, Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import toast from 'react-hot-toast';
@@ -50,6 +50,7 @@ const normalizeRoadType = (roadType: FormRoadType): RoadType | undefined => {
 };
 
 export const useQuoteForm = (editId?: number | null) => {
+  const loadedDraftRef = useRef<QuoteDraft | null>(null);
   const form = useForm<QuoteFormValues>({
     resolver: zodResolver(quoteSchema) as unknown as Resolver<QuoteFormValues>,
     defaultValues: {
@@ -78,6 +79,7 @@ export const useQuoteForm = (editId?: number | null) => {
 
   useEffect(() => {
     if (!editId) {
+      loadedDraftRef.current = null;
       form.reset();
       return;
     }
@@ -88,6 +90,7 @@ export const useQuoteForm = (editId?: number | null) => {
         const response = await window.api.getDraftById(editId);
         if (response.success && response.data) {
           const draft: QuoteDraft = response.data;
+          loadedDraftRef.current = draft;
           
           form.reset({
             clientName: draft.clientName,
@@ -129,10 +132,10 @@ export const useQuoteForm = (editId?: number | null) => {
 
       const payload: QuoteDraft = {
         id: editId || undefined,
-        status: 'en_proceso',
+        status: loadedDraftRef.current?.status ?? 'en_proceso',
         personType: data.personType,
         commercialName: data.commercialName,
-        createdAt: Date.now(),
+        createdAt: loadedDraftRef.current?.createdAt ?? Date.now(),
         clientName: data.clientName,
         clientRfc: data.clientRfc,
         contactName: data.contactName,   

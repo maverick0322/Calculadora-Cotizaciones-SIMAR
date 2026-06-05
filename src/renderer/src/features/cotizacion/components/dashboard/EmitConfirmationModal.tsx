@@ -16,17 +16,22 @@ interface EmitConfirmationModalProps {
   onConfirm: (payload: IssueQuoteRequest) => void;
 }
 
-const buildInitials = (user: User): string => {
-  const preferredValue = user.initials || user.employee_key || user.full_name;
-  const initials = preferredValue
+export const buildEmissionInitials = (user: User): string => {
+  const explicitInitials = user.initials?.trim().toUpperCase();
+  if (explicitInitials && explicitInitials.length >= 2) return explicitInitials.slice(0, 12);
+
+  const employeeKey = user.employee_key?.trim().toUpperCase().replace(/[^A-Z0-9Ñ]/g, '');
+  if (employeeKey && employeeKey.length >= 2) return employeeKey.slice(0, 12);
+
+  const initials = (user.full_name || '')
     .split(/\s+/)
     .filter(Boolean)
     .map((word) => word[0])
     .join('')
     .toUpperCase()
-    .slice(0, 6);
+    .slice(0, 12);
 
-  return initials || 'SIMAR';
+  return initials.length >= 2 ? initials : 'SIMAR';
 };
 
 const splitCustomConditions = (type: ConditionType, value: string): QuoteConditionSelection[] =>
@@ -57,7 +62,7 @@ export const EmitConfirmationModal = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const preparedByInitials = useMemo(() => buildInitials(currentUser), [currentUser]);
+  const preparedByInitials = useMemo(() => buildEmissionInitials(currentUser), [currentUser]);
 
   useEffect(() => {
     if (!isOpen || !quoteId) return;

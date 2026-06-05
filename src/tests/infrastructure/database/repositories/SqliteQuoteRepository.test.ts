@@ -120,6 +120,31 @@ describe('SqliteQuoteRepository', () => {
     expect(count.count).toBe(1);
   });
 
+  it('loads and updates pre-issued quotes without changing their status', () => {
+    const quoteId = Number(repository.saveDraft(buildDraft()));
+    db.prepare(`UPDATE quotes SET status = 'autorizada' WHERE id = ?`).run(quoteId);
+
+    const loadedQuote = repository.getDraftById(quoteId);
+    repository.saveDraft(buildDraft({
+      id: quoteId,
+      status: 'autorizada',
+      services: [{ ...buildDraft().services[0], location: { street: 'Av. Editada', neighborhood: 'Centro', municipality: 'Xalapa', state: 'Veracruz' } }]
+    }));
+
+    const row = db.prepare('SELECT status, services_json FROM quotes WHERE id = ?').get(quoteId) as any;
+
+    expect(loadedQuote?.status).toBe('autorizada');
+    expect(row.status).toBe('autorizada');
+    expect(row.services_json).toContain('Av. Editada');
+  });
+
+  it('does not load issued quotes through the draft editing lookup', () => {
+    const quoteId = Number(repository.saveDraft(buildDraft()));
+    db.prepare(`UPDATE quotes SET status = 'emitida' WHERE id = ?`).run(quoteId);
+
+    expect(repository.getDraftById(quoteId)).toBeNull();
+  });
+
   it('returns drafts ordered by creation date', () => {
     repository.saveDraft(buildDraft({ createdAt: 1000 }));
     repository.saveDraft(buildDraft({ createdAt: 5000 }));

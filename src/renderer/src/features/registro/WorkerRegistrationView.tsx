@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Eye, EyeOff, RefreshCw, UserPlus, Users } from 'lucide-react';
+import { Eye, EyeOff, Lock, RefreshCw, UserPlus, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { WorkerData, WorkerSummary } from '../../../../shared/types/Worker';
 
@@ -18,7 +18,6 @@ interface WorkerFormState {
   address: string;
   email: string;
   password: string;
-  superUserKey: string;
 }
 
 const INITIAL_FORM_STATE: WorkerFormState = {
@@ -31,11 +30,10 @@ const INITIAL_FORM_STATE: WorkerFormState = {
   initials: '',
   address: '',
   email: '',
-  password: '',
-  superUserKey: ''
+  password: ''
 };
 
-const MIN_PASSWORD_LENGTH = 8;
+const MIN_PASSWORD_LENGTH = 6;
 const RFC_PATTERN = /^[A-Z&Ñ]{3,4}\d{6}[A-Z\d]{3}$/i;
 
 const buildSuggestedInitials = (formData: WorkerFormState): string => {
@@ -54,6 +52,9 @@ export default function WorkerRegistrationView({ onBack }: WorkerRegistrationPro
   const [workers, setWorkers] = useState<WorkerSummary[]>([]);
   const [isLoadingWorkers, setIsLoadingWorkers] = useState(false);
   const [formData, setFormData] = useState<WorkerFormState>(INITIAL_FORM_STATE);
+  const [isSuperKeyModalOpen, setIsSuperKeyModalOpen] = useState(false);
+  const [superUserKey, setSuperUserKey] = useState('');
+  const [superUserKeyError, setSuperUserKeyError] = useState('');
 
   const suggestedInitials = useMemo(() => buildSuggestedInitials(formData), [
     formData.firstName,
@@ -109,8 +110,7 @@ export default function WorkerRegistrationView({ onBack }: WorkerRegistrationPro
     if (!formData.employeeKey.trim()) nextErrors.employeeKey = 'La clave del empleado es requerida';
     if (!formData.initials.trim()) nextErrors.initials = 'Las iniciales son requeridas';
     if (!formData.email.trim()) nextErrors.email = 'El correo es requerido';
-    if (formData.password.length < MIN_PASSWORD_LENGTH) nextErrors.password = 'La contraseña debe tener al menos 8 caracteres';
-    if (!formData.superUserKey.trim()) nextErrors.superUserKey = 'La clave de superusuario es requerida';
+    if (formData.password.length < MIN_PASSWORD_LENGTH) nextErrors.password = 'La contraseña debe tener al menos 6 caracteres';
 
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
@@ -119,11 +119,25 @@ export default function WorkerRegistrationView({ onBack }: WorkerRegistrationPro
   const resetForm = () => {
     setFormData(INITIAL_FORM_STATE);
     setErrors({});
+    setSuperUserKey('');
+    setSuperUserKeyError('');
+    setIsSuperKeyModalOpen(false);
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!validateForm()) return;
+
+    setSuperUserKey('');
+    setSuperUserKeyError('');
+    setIsSuperKeyModalOpen(true);
+  };
+
+  const handleConfirmRegistration = async () => {
+    if (!superUserKey.trim()) {
+      setSuperUserKeyError('La clave de superusuario es requerida');
+      return;
+    }
 
     const toastId = toast.loading('Registrando empleado...');
     const payload: WorkerData = {
@@ -137,7 +151,7 @@ export default function WorkerRegistrationView({ onBack }: WorkerRegistrationPro
       address: formData.address.trim(),
       email: formData.email.trim().toLowerCase(),
       password: formData.password,
-      superUserKey: formData.superUserKey,
+      superUserKey,
       role: 'sales',
       isActive: true
     };
@@ -310,12 +324,6 @@ export default function WorkerRegistrationView({ onBack }: WorkerRegistrationPro
               {renderError('password')}
             </div>
 
-            <div>
-              <label htmlFor="superUserKey" className="block text-sm font-medium text-gray-700 mb-1">Clave de superusuario</label>
-              <input id="superUserKey" name="superUserKey" type="password" value={formData.superUserKey} onChange={handleInputChange} className={inputClass('superUserKey')} />
-              {renderError('superUserKey')}
-            </div>
-
             <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2 sm:justify-end">
               <button
                 type="button"
@@ -334,6 +342,56 @@ export default function WorkerRegistrationView({ onBack }: WorkerRegistrationPro
           </form>
         </section>
       </div>
+
+      {isSuperKeyModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 px-4">
+          <div className="w-full max-w-md rounded-lg bg-white shadow-xl border border-gray-200">
+            <div className="flex items-center gap-3 border-b border-gray-200 px-5 py-4">
+              <Lock className="w-5 h-5 text-blue-600" />
+              <h2 className="text-base font-semibold text-gray-900">Confirmar registro</h2>
+            </div>
+            <div className="px-5 py-5 space-y-4">
+              <div>
+                <label htmlFor="modalSuperUserKey" className="block text-sm font-medium text-gray-700 mb-1">Clave de superusuario</label>
+                <input
+                  id="modalSuperUserKey"
+                  type="password"
+                  value={superUserKey}
+                  onChange={(event) => {
+                    setSuperUserKey(event.target.value);
+                    if (superUserKeyError) setSuperUserKeyError('');
+                  }}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                    superUserKeyError ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                  autoFocus
+                />
+                {superUserKeyError && <p className="mt-1 text-sm text-red-600 font-medium">{superUserKeyError}</p>}
+              </div>
+              <div className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSuperKeyModalOpen(false);
+                    setSuperUserKey('');
+                    setSuperUserKeyError('');
+                  }}
+                  className="px-5 py-2 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmRegistration}
+                  className="px-5 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 shadow-sm"
+                >
+                  Confirmar registro
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

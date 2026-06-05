@@ -102,6 +102,96 @@ const buildProductRows = (service: ServiceItem): string => {
   `;
 };
 
+const buildExtraCostRows = (items: Array<{ description: string; amount: number }>, title: string): string => {
+  if (items.length === 0) return '';
+
+  return `
+    <h4 class="sub-title">${escapeHtml(title)}</h4>
+    <table>
+      <thead>
+        <tr><th>No.</th><th>Concepto</th><th>Total</th></tr>
+      </thead>
+      <tbody>
+        ${items.map((item, index) => `
+          <tr>
+            <td class="center">${index + 1}</td>
+            <td>${escapeHtml(item.description)}</td>
+            <td class="right">${formatCurrency(item.amount || 0)}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+};
+
+const buildTrainingHtml = (service: ServiceItem): string => {
+  if (!service.training) return '';
+
+  const training = service.training;
+  const locationParts = training.location
+    ? [training.location.street, training.location.neighborhood, training.location.municipality, training.location.state].filter(Boolean)
+    : [];
+  const travelTotal = training.travelExpenses
+    ? Object.values(training.travelExpenses).reduce((total, amount) => total + Number(amount || 0), 0)
+    : 0;
+  const stationeryRows = training.stationery.length > 0 ? `
+    <h4 class="sub-title">Papelería de capacitación</h4>
+    <table>
+      <thead><tr><th>No.</th><th>Material</th><th>Cantidad</th><th>Total</th></tr></thead>
+      <tbody>
+        ${training.stationery.map((item, index) => `
+          <tr>
+            <td class="center">${index + 1}</td>
+            <td>${escapeHtml(item.description)}</td>
+            <td class="center">${escapeHtml(item.quantity)}</td>
+            <td class="right">${formatCurrency(item.quantity * (item.unitPrice || 0))}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  ` : '';
+
+  return `
+    <h4 class="sub-title">Datos de capacitación</h4>
+    <table>
+      <tbody>
+        <tr><th>Personal a capacitar</th><td>${escapeHtml(training.attendeeCount)}</td><th>Modalidad</th><td>${training.modality === 'in_person' ? 'Presencial' : 'En línea'}</td></tr>
+        <tr><th>Horas</th><td>${escapeHtml(training.hours)}</td><th>Precio por hora</th><td>${formatCurrency(training.hourlyUnitPrice || 0)}</td></tr>
+        <tr><th>Objetivo</th><td colspan="3">${escapeHtml(training.objective)}</td></tr>
+        <tr><th>Niveles</th><td colspan="3">${escapeHtml(training.educationLevels.join(', ') || 'N/D')}</td></tr>
+        ${locationParts.length > 0 ? `<tr><th>Ubicación</th><td colspan="3">${escapeHtml(locationParts.join(', '))}</td></tr>` : ''}
+        ${travelTotal > 0 ? `<tr><th>Viáticos</th><td colspan="3">${formatCurrency(travelTotal)}</td></tr>` : ''}
+      </tbody>
+    </table>
+    ${stationeryRows}
+  `;
+};
+
+const buildEcologicalCleaningHtml = (service: ServiceItem): string => {
+  if (!service.ecologicalCleaning) return '';
+
+  const cleaning = service.ecologicalCleaning;
+  const locationParts = [cleaning.location?.street, cleaning.location?.neighborhood, cleaning.location?.municipality, cleaning.location?.state].filter(Boolean);
+
+  return `
+    <h4 class="sub-title">Datos de limpieza ecológica</h4>
+    <table>
+      <tbody>
+        <tr><th>Gasolinera</th><td>${escapeHtml(cleaning.gasStationName)}</td><th>Superficie</th><td>${escapeHtml(cleaning.surfaceM2)} m²</td></tr>
+        <tr><th>Técnicos</th><td>${escapeHtml(cleaning.technicianCount)}</td><th>Horas</th><td>${escapeHtml(cleaning.hours)} · ${formatCurrency(cleaning.hourlyUnitPrice || 0)}/h</td></tr>
+        <tr><th>Viáticos</th><td>${formatCurrency(cleaning.viaticos || 0)}</td><th>Ubicación</th><td>${escapeHtml(locationParts.join(', ') || 'N/D')}</td></tr>
+      </tbody>
+    </table>
+    ${buildExtraCostRows(cleaning.labor, 'Mano de obra de limpieza')}
+  `;
+};
+
+const buildConditioningHtml = (service: ServiceItem): string => {
+  if (!service.conditioning) return '';
+
+  return buildExtraCostRows(service.conditioning.labor, 'Mano de obra de acondicionamiento');
+};
+
 const buildServiceTable = (service: ServiceItem): string => {
   if (service.serviceType === 'rpbi') {
     return `
@@ -133,6 +223,10 @@ const buildServicesHtml = (quoteData: QuoteDraft): string =>
     const serviceName = SERVICE_TYPE_LABELS[service.serviceType] || service.serviceType;
     const serviceTable = buildServiceTable(service);
     const productTable = buildProductRows(service);
+    const trainingTable = buildTrainingHtml(service);
+    const cleaningTable = buildEcologicalCleaningHtml(service);
+    const conditioningTable = buildConditioningHtml(service);
+    const extraCostsTable = buildExtraCostRows(service.extraCosts, 'Cargos adicionales');
 
     return `
       <div class="service-block">
@@ -143,6 +237,10 @@ const buildServicesHtml = (quoteData: QuoteDraft): string =>
         ` : ''}
         ${serviceTable}
         ${productTable}
+        ${trainingTable}
+        ${cleaningTable}
+        ${conditioningTable}
+        ${extraCostsTable}
       </div>
     `;
   }).join('');

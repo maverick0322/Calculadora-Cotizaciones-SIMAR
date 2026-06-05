@@ -3,6 +3,8 @@ import type { Database as DatabaseType } from 'better-sqlite3';
 import { app } from 'electron';
 import path from 'path';
 import { runSepomexSeeder } from './seeders/sepomexSeeder';
+import { runDemoQuotesSeeder } from './seeders/demoQuotesSeeder';
+import { runDemoUsersSeeder } from './seeders/demoUsersSeeder';
 import residuosCatalog from './catalogo_residuos.json';
 import { logger } from '../logging/SafeLogger';
 import { SERVICE_TYPES } from '../../../shared/constants/quoteConstants';
@@ -357,6 +359,8 @@ export const initDatabase = () => {
 
             runSepomexSeeder(db);
             seedDefaultConditions();
+            runDemoUsersSeeder(db);
+            runDemoQuotesSeeder(db);
         });
 
         seedTransaction();

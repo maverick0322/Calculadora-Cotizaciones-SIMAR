@@ -58,7 +58,7 @@ export const DraftsTable = ({ drafts, loading, searchTerm, isPdfLoading, onEditC
               const locationToShow = draft.location || 'Sin dirección';
               const wastesToShow = draft.wastesSummary || 'No especificado';
               const statusToShow = QUOTE_STATUS_LABELS[draft.status] || draft.status || 'En proceso';
-              const canEdit = draft.status === 'en_proceso' || draft.status === 'draft';
+              const canEdit = ['en_proceso', 'terminada', 'autorizada', 'draft'].includes(draft.status);
               const nextStatusLabel = nextStatusLabels[draft.status];
 
               return (
@@ -86,7 +86,7 @@ export const DraftsTable = ({ drafts, loading, searchTerm, isPdfLoading, onEditC
                         onClick={() => onEditClick(Number(draft.id))} 
                         disabled={isPdfLoading || !canEdit}
                         className="inline-flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 text-gray-600 hover:text-blue-600 transition-colors disabled:opacity-50" 
-                        title={canEdit ? 'Editar cotización en proceso' : 'Solo se editan cotizaciones en proceso'}
+                        title={canEdit ? 'Editar cotización en seguimiento' : 'Solo se editan cotizaciones sin emitir'}
                       >
                         <Pencil className="w-4 h-4" />
                       </button>
