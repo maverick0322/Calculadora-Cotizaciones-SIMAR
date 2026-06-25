@@ -375,36 +375,6 @@ Including:
 
 ---
 
-# 📝 Repository Description
-
-### About
-
-> Enterprise-grade desktop application for automated waste management quoting, logistics calculation, and secure PDF generation. Built with Electron, React, TypeScript, and SQLite following Clean Architecture principles.
-
----
-
-# 🏷️ Repository Topics
-
-```text
-electron
-react
-typescript
-sqlite
-clean-architecture
-desktop-app
-vite
-pdf-generation
-software-engineering
-solid-principles
-electron-builder
-audit-trail
-offline-first
-enterprise-software
-quote-management
-```
-
----
-
 # 📄 License
 
 This project is distributed under the terms specified in the repository license.
